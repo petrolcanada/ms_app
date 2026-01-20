@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import theme from './theme';
 import FundList from './components/FundList';
+import FundDetail from './components/FundDetail';
 
 // Create a QueryClient instance with default options
 const queryClient = new QueryClient({
@@ -34,6 +35,7 @@ function App() {
               </Typography>
               <Routes>
                 <Route path="/" element={<FundList />} />
+                <Route path="/funds/:id" element={<FundDetail />} />
               </Routes>
             </Container>
           </Box>

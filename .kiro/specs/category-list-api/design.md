@@ -101,7 +101,7 @@ const { getAllCategories } = require('../controllers/categoryController');
 
 // GET /api/categories - Get all distinct category names
 router.get('/', getAllCategories);
-
+F
 module.exports = router;
 ```
 

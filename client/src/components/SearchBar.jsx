@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -13,18 +13,24 @@ import SearchIcon from '@mui/icons-material/Search';
  */
 const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const onSearchRef = useRef(onSearch);
+
+  // Keep ref updated with latest onSearch callback
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
 
   // Debounce the search term changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      onSearch(searchTerm);
+      onSearchRef.current(searchTerm);
     }, debounceMs);
 
     // Cleanup function to clear timeout if searchTerm changes before delay
     return () => {
       clearTimeout(timer);
     };
-  }, [searchTerm, debounceMs, onSearch]);
+  }, [searchTerm, debounceMs]);
 
   const handleChange = (event) => {
     setSearchTerm(event.target.value);

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fundService } from '../services/api';
 
 /**
@@ -28,7 +28,7 @@ export const useFunds = ({ page = 1, limit = 20, search = '', type = '', categor
       const response = await fundService.getAllFunds(params);
       return response.data;
     },
-    keepPreviousData: true, // Keep previous data while fetching new page
+    placeholderData: keepPreviousData, // Keep previous data while fetching new page (React Query v5)
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

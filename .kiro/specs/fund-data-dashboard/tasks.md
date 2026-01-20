@@ -155,21 +155,21 @@ This implementation plan provides a structured approach to building the fund dat
     - **Property 8: Search term matching**
     - **Validates: Requirements 6.1**
 
-- [ ] 10. Implement fund detail view
-  - [ ] 10.1 Create FundDetail component
+- [x] 10. Implement fund detail view
+  - [x] 10.1 Create FundDetail component
     - Implement `client/src/components/FundDetail.jsx`
     - Display comprehensive fund information in sections
     - Show basic info, fees, managers, performance
     - Add loading and error states
     - _Requirements: 1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 3.3_
   
-  - [ ] 10.2 Create custom hook for fund detail
+  - [x] 10.2 Create custom hook for fund detail
     - Implement `client/src/hooks/useFundDetail.js`
     - Use React Query's useQuery to fetch single fund
     - Handle loading and error states
     - _Requirements: 8.2_
   
-  - [ ] 10.3 Add routing for fund detail
+  - [x] 10.3 Add routing for fund detail
     - Add route in App.jsx for /funds/:id
     - Add navigation from FundList to FundDetail
     - _Requirements: 1.1_

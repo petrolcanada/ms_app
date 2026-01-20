@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -25,6 +26,7 @@ import FilterPanel from './FilterPanel';
  * Includes search and filter functionality
  */
 const FundList = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(0); // MUI TablePagination uses 0-based indexing
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,24 +44,28 @@ const FundList = () => {
     category: filters.category,
   });
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = useCallback((event, newPage) => {
     setPage(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = useCallback((event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0); // Reset to first page when changing rows per page
-  };
+  }, []);
 
-  const handleSearch = (term) => {
+  const handleSearch = useCallback((term) => {
     setSearchTerm(term);
     setPage(0); // Reset to first page when searching
-  };
+  }, []);
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setPage(0); // Reset to first page when filters change
-  };
+  }, []);
+
+  const handleFundClick = useCallback((fundId) => {
+    navigate(`/funds/${fundId}`);
+  }, [navigate]);
 
   const funds = data?.data || [];
   const pagination = data?.pagination || { total: 0, totalPages: 0 };
@@ -172,7 +178,14 @@ const FundList = () => {
                   <TableRow
                     key={fund._id}
                     hover
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                    onClick={() => handleFundClick(fund._id)}
+                    sx={{ 
+                      '&:last-child td, &:last-child th': { border: 0 },
+                      cursor: 'pointer',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
                   >
                     <TableCell component="th" scope="row">
                       <Typography variant="body2" fontWeight="medium">
