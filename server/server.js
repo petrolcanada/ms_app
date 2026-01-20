@@ -20,31 +20,18 @@ app.get('/health', (req, res) => {
 
 // API Routes
 const fundsRouter = require('./routes/funds');
+const categoriesRouter = require('./routes/categories');
 app.use('/api/funds', fundsRouter);
+app.use('/api/categories', categoriesRouter);
 
-// Basic error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-  
-  res.status(statusCode).json({
-    error: {
-      message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-    },
-  });
-});
+// Import centralized error handlers
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: {
-      message: 'Route not found',
-    },
-  });
-});
+// 404 handler - must come after all valid routes
+app.use(notFoundHandler);
+
+// Centralized error handler - must be last middleware
+app.use(errorHandler);
 
 // Start server
 const startServer = async () => {

@@ -47,7 +47,8 @@ This implementation plan provides a structured approach to building the fund dat
     - Validate filter parameters
     - _Requirements: 10.2_
   
-  - [ ]* 3.3 Write property test for pagination
+  - [x] 3.3 Write property test for pagination
+
     - **Property 10: Pagination correctness**
     - **Validates: Requirements 8.1**
   
@@ -71,7 +72,7 @@ This implementation plan provides a structured approach to building the fund dat
     - **Validates: Requirements 2.3**
 
 - [ ] 5. Implement error handling
-  - [ ] 5.1 Create centralized error handler
+  - [x] 5.1 Create centralized error handler
     - Implement `server/middleware/errorHandler.js`
     - Handle database errors (503 for connection issues)
     - Handle validation errors (400 with details)
@@ -91,35 +92,35 @@ This implementation plan provides a structured approach to building the fund dat
   - Manually test API endpoints with sample requests
   - Ask the user if questions arise
 
-- [ ] 7. Set up React frontend foundation
-  - [ ] 7.1 Create React app structure
+- [x] 7. Set up React frontend foundation
+  - [x] 7.1 Create React app structure
     - Set up `client/src/` with App.jsx and index.jsx
     - Configure React Router with basic routes
     - Set up MUI theme in `client/src/theme.js`
     - Wrap app with ThemeProvider
     - _Requirements: 7.2_
   
-  - [ ] 7.2 Configure React Query
+  - [x] 7.2 Configure React Query
     - Create QueryClient in App.jsx
     - Wrap app with QueryClientProvider
     - Configure default query options (staleTime, cacheTime)
     - _Requirements: 8.1_
   
-  - [ ] 7.3 Create API service layer
+  - [x] 7.3 Create API service layer
     - Implement `client/src/services/api.js` with Axios instance
     - Configure base URL from environment variables
     - Add request/response interceptors for error handling
     - _Requirements: 8.1_
 
-- [ ] 8. Implement fund list view
-  - [ ] 8.1 Create FundList component
+- [x] 8. Implement fund list view
+  - [x] 8.1 Create FundList component
     - Implement `client/src/components/FundList.jsx`
     - Display funds in MUI DataGrid or Table
     - Show columns: name, ticker, type, category, MER, rank
     - Add loading and error states
     - _Requirements: 1.1, 1.2, 2.1, 5.1_
   
-  - [ ] 8.2 Create custom hook for funds data
+  - [x] 8.2 Create custom hook for funds data
     - Implement `client/src/hooks/useFunds.js`
     - Use React Query's useQuery to fetch funds
     - Handle pagination state
@@ -130,21 +131,21 @@ This implementation plan provides a structured approach to building the fund dat
     - **Property 1: Complete field rendering**
     - **Validates: Requirements 1.1, 1.2, 2.1, 2.2, 3.1, 3.3, 4.1, 4.2, 5.1, 5.2**
 
-- [ ] 9. Implement search and filter functionality
-  - [ ] 9.1 Create SearchBar component
+- [x] 9. Implement search and filter functionality
+  - [x] 9.1 Create SearchBar component
     - Implement `client/src/components/SearchBar.jsx`
     - Add debounced text input
     - Emit search term changes to parent
     - _Requirements: 6.1_
   
-  - [ ] 9.2 Create FilterPanel component
+  - [x] 9.2 Create FilterPanel component
     - Implement `client/src/components/FilterPanel.jsx`
     - Add dropdown for fund type (Mutual Fund, ETF)
     - Add dropdown for category
     - Emit filter changes to parent
     - _Requirements: 6.2, 6.3_
   
-  - [ ] 9.3 Integrate search and filters with FundList
+  - [x] 9.3 Integrate search and filters with FundList
     - Add SearchBar and FilterPanel to FundList
     - Update useFunds hook to accept search and filter parameters
     - Update API calls with query parameters

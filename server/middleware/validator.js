@@ -2,6 +2,8 @@
  * Validation middleware for API requests
  */
 
+const { AppError } = require('./errorHandler');
+
 /**
  * Validate pagination parameters
  * Ensures page >= 1 and limit > 0
@@ -13,12 +15,9 @@ const validatePagination = (req, res, next) => {
   if (page !== undefined) {
     const pageNum = parseInt(page);
     if (isNaN(pageNum) || pageNum < 1) {
-      return res.status(400).json({
-        error: {
-          message: 'Invalid pagination parameter',
-          details: 'Page must be a positive integer (>= 1)',
-        },
-      });
+      const error = new AppError('Page must be a positive integer (>= 1)', 400);
+      error.details = 'Invalid pagination parameter';
+      return next(error);
     }
   }
   
@@ -26,22 +25,16 @@ const validatePagination = (req, res, next) => {
   if (limit !== undefined) {
     const limitNum = parseInt(limit);
     if (isNaN(limitNum) || limitNum <= 0) {
-      return res.status(400).json({
-        error: {
-          message: 'Invalid pagination parameter',
-          details: 'Limit must be a positive integer (> 0)',
-        },
-      });
+      const error = new AppError('Limit must be a positive integer (> 0)', 400);
+      error.details = 'Invalid pagination parameter';
+      return next(error);
     }
     
     // Optional: Set maximum limit to prevent excessive data retrieval
     if (limitNum > 100) {
-      return res.status(400).json({
-        error: {
-          message: 'Invalid pagination parameter',
-          details: 'Limit cannot exceed 100',
-        },
-      });
+      const error = new AppError('Limit cannot exceed 100', 400);
+      error.details = 'Invalid pagination parameter';
+      return next(error);
     }
   }
   
@@ -57,32 +50,23 @@ const validateFilters = (req, res, next) => {
   
   // Validate search parameter
   if (search !== undefined && typeof search !== 'string') {
-    return res.status(400).json({
-      error: {
-        message: 'Invalid filter parameter',
-        details: 'Search must be a string',
-      },
-    });
+    const error = new AppError('Search must be a string', 400);
+    error.details = 'Invalid filter parameter';
+    return next(error);
   }
   
   // Validate type parameter
   if (type !== undefined && typeof type !== 'string') {
-    return res.status(400).json({
-      error: {
-        message: 'Invalid filter parameter',
-        details: 'Type must be a string',
-      },
-    });
+    const error = new AppError('Type must be a string', 400);
+    error.details = 'Invalid filter parameter';
+    return next(error);
   }
   
   // Validate category parameter
   if (category !== undefined && typeof category !== 'string') {
-    return res.status(400).json({
-      error: {
-        message: 'Invalid filter parameter',
-        details: 'Category must be a string',
-      },
-    });
+    const error = new AppError('Category must be a string', 400);
+    error.details = 'Invalid filter parameter';
+    return next(error);
   }
   
   next();
@@ -96,12 +80,9 @@ const validateFundId = (req, res, next) => {
   const { id } = req.params;
   
   if (!id || typeof id !== 'string' || id.trim() === '') {
-    return res.status(400).json({
-      error: {
-        message: 'Invalid fund ID',
-        details: 'Fund ID must be a non-empty string',
-      },
-    });
+    const error = new AppError('Fund ID must be a non-empty string', 400);
+    error.details = 'Invalid fund ID';
+    return next(error);
   }
   
   next();

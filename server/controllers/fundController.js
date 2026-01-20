@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { AppError } = require('../middleware/errorHandler');
 
 /**
  * Get all funds with pagination, search, and filtering
@@ -20,7 +21,7 @@ const getAllFunds = async (req, res, next) => {
     
     const offset = (page - 1) * limit;
     
-    // Build dynamic query - selecting key columns from the table
+    // Build dynamic query - selecting key columns from the latest materialized view
     let queryText = `
       SELECT 
         _id,
@@ -37,7 +38,7 @@ const getAllFunds = async (req, res, next) => {
         providercompanyname,
         legalstructure,
         securitytype
-      FROM ms.fund_share_class_basic_info_ca_openend
+      FROM ms.mv_fund_share_class_basic_info_ca_openend_latest
       WHERE 1=1
     `;
     
@@ -80,7 +81,7 @@ const getAllFunds = async (req, res, next) => {
     // Get total count for pagination
     let countQuery = `
       SELECT COUNT(*) as total
-      FROM ms.fund_share_class_basic_info_ca_openend
+      FROM ms.mv_fund_share_class_basic_info_ca_openend_latest
       WHERE 1=1
     `;
     
@@ -138,19 +139,108 @@ const getFundById = async (req, res, next) => {
     const { id } = req.params;
     
     const queryText = `
-      SELECT *
-      FROM ms.fund_share_class_basic_info_ca_openend
+      SELECT 
+        data_inserted_at,
+        status_code,
+        status_message,
+        _id,
+        _idtype,
+        amfcategory,
+        ausinvestmentvehicleregionareacode,
+        ausinvestmentvehicleregionareacodeisoalpha2,
+        advisorycompanyid,
+        advisorycompanyname,
+        aggregatedcategoryname,
+        brandingid,
+        brandingname,
+        broadassetclass,
+        broadcategorygroup,
+        broadcategorygroupid,
+        canadarisklevelverbal,
+        canadatimehorizon,
+        categorycode,
+        categorycurrencyid,
+        categoryname,
+        currency,
+        currencyid,
+        custodiancompanyid,
+        custodiancompanyname,
+        distributionfrequency,
+        distributionstatus,
+        distributorcompanies,
+        dividenddistributionfrequencydetails,
+        domicile,
+        domicileid,
+        exchangeid,
+        fixeddistribution,
+        fundid,
+        fundlegalname,
+        fundname,
+        fundservdetails,
+        fundservs,
+        fundstandardname,
+        globalcategoryid,
+        globalcategoryname,
+        globalfundreports,
+        highnetworth,
+        ific,
+        inceptiondate,
+        indexstrategybox,
+        indexstrategyboxverbal,
+        invesmtentdecisionmakingprocess,
+        investmentphilsophy,
+        legalname,
+        legalstructure,
+        localphone,
+        mexcode,
+        mstarid,
+        morningstarindexid,
+        morningstarindexname,
+        multilingualnames,
+        operationready,
+        performanceid,
+        performanceready,
+        previousfundname,
+        previousfundnameenddate,
+        productfocus,
+        producttype,
+        providercompanyid,
+        providercompanyname,
+        providercompanyphonenumber,
+        providercompanywebsite,
+        registeredunder1940act,
+        restrictedfund,
+        restructuredate,
+        securitytype,
+        shareclasstype,
+        terminationdate,
+        ticker,
+        tollfreephone,
+        ukreportingstartdate,
+        ukreportingstatus,
+        umbrellacompanyid,
+        umbrellacompanyname,
+        valor,
+        wkn,
+        _name,
+        _hashkey,
+        _runid,
+        _timestampfrom,
+        _timestampto,
+        fault_faultstring,
+        fault_detail_errorcode,
+        morningstarcategorygroupid,
+        morningstarcategorygroupname,
+        _currencyid,
+        prospectusobjective
+      FROM ms.mv_fund_share_class_basic_info_ca_openend_latest
       WHERE _id = $1
     `;
     
     const result = await pool.query(queryText, [id]);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: {
-          message: 'Fund not found',
-        },
-      });
+      throw new AppError(`Fund with ID ${id} not found`, 404);
     }
     
     res.status(200).json({
