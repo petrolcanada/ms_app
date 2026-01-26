@@ -1,17 +1,18 @@
 const { pool } = require('../db/config/db');
 const { AppError } = require('../middleware/errorHandler');
 
-const mergeDomainRows = (basicInfoRows, performanceRows) => {
+const mergeDomainRows = domainRows => {
   const merged = new Map();
   
-  basicInfoRows.forEach(row => {
-    merged.set(row._id, { basicInfo: row });
-  });
-  
-  performanceRows.forEach(row => {
-    const fund = merged.get(row._id) || {};
-    fund.performance = row;
-    merged.set(row._id, fund);
+  Object.entries(domainRows).forEach(([key, rows]) => {
+    if (!Array.isArray(rows)) {
+      return;
+    }
+    rows.forEach(row => {
+      const fund = merged.get(row._id) || {};
+      fund[key] = row;
+      merged.set(row._id, fund);
+    });
   });
   
   return Array.from(merged.values());
@@ -277,7 +278,7 @@ const getFundById = async (req, res, next) => {
 const getBasicInfoAtDate = async (req, res, next) => {
   try {
     const { fundIds } = req.body;
-    const asofDate = req.asofDate || new Date(req.body.asofDate);
+    const asofDate = req.asofDate || req.body.asofDate;
     
     const result = await pool.query(
       'SELECT * FROM ms.fn_get_basic_info_at_date($1, $2)',
@@ -285,7 +286,7 @@ const getBasicInfoAtDate = async (req, res, next) => {
     );
     
     res.status(200).json({
-      asofDate: asofDate.toISOString(),
+      asofDate,
       funds: result.rows,
     });
   } catch (err) {
@@ -303,7 +304,7 @@ const getBasicInfoAtDate = async (req, res, next) => {
 const getPerformanceAtDate = async (req, res, next) => {
   try {
     const { fundIds } = req.body;
-    const asofDate = req.asofDate || new Date(req.body.asofDate);
+    const asofDate = req.asofDate || req.body.asofDate;
     
     const result = await pool.query(
       'SELECT * FROM ms.fn_get_performance_at_date($1, $2)',
@@ -311,11 +312,141 @@ const getPerformanceAtDate = async (req, res, next) => {
     );
     
     res.status(200).json({
-      asofDate: asofDate.toISOString(),
+      asofDate,
       funds: result.rows,
     });
   } catch (err) {
     console.error('Error fetching performance domain:', err);
+    next(err);
+  }
+};
+
+/**
+ * Get fees domain by fund IDs at an as-of date
+ * @route POST /api/funds/domains/fees
+ * @body {string[]} fundIds - Fund _ids
+ * @body {string} asofDate - YYYY-MM-DD
+ */
+const getFeesAtDate = async (req, res, next) => {
+  try {
+    const { fundIds } = req.body;
+    const asofDate = req.asofDate || req.body.asofDate;
+    
+    const result = await pool.query(
+      'SELECT * FROM ms.fn_get_all_fees_at_date($1, $2)',
+      [fundIds, asofDate]
+    );
+    
+    res.status(200).json({
+      asofDate,
+      funds: result.rows,
+    });
+  } catch (err) {
+    console.error('Error fetching fees domain:', err);
+    next(err);
+  }
+};
+
+/**
+ * Get ratings domain by fund IDs at an as-of date
+ * @route POST /api/funds/domains/ratings
+ * @body {string[]} fundIds - Fund _ids
+ * @body {string} asofDate - YYYY-MM-DD
+ */
+const getRatingsAtDate = async (req, res, next) => {
+  try {
+    const { fundIds } = req.body;
+    const asofDate = req.asofDate || req.body.asofDate;
+    
+    const result = await pool.query(
+      'SELECT * FROM ms.fn_get_ratings_at_date($1, $2)',
+      [fundIds, asofDate]
+    );
+    
+    res.status(200).json({
+      asofDate,
+      funds: result.rows,
+    });
+  } catch (err) {
+    console.error('Error fetching ratings domain:', err);
+    next(err);
+  }
+};
+
+/**
+ * Get risk domain by fund IDs at an as-of date
+ * @route POST /api/funds/domains/risk
+ * @body {string[]} fundIds - Fund _ids
+ * @body {string} asofDate - YYYY-MM-DD
+ */
+const getRiskAtDate = async (req, res, next) => {
+  try {
+    const { fundIds } = req.body;
+    const asofDate = req.asofDate || req.body.asofDate;
+    
+    const result = await pool.query(
+      'SELECT * FROM ms.fn_get_all_risk_at_date($1, $2)',
+      [fundIds, asofDate]
+    );
+    
+    res.status(200).json({
+      asofDate,
+      funds: result.rows,
+    });
+  } catch (err) {
+    console.error('Error fetching risk domain:', err);
+    next(err);
+  }
+};
+
+/**
+ * Get flows domain by fund IDs at an as-of date
+ * @route POST /api/funds/domains/flows
+ * @body {string[]} fundIds - Fund _ids
+ * @body {string} asofDate - YYYY-MM-DD
+ */
+const getFlowsAtDate = async (req, res, next) => {
+  try {
+    const { fundIds } = req.body;
+    const asofDate = req.asofDate || req.body.asofDate;
+    
+    const result = await pool.query(
+      'SELECT * FROM ms.fn_get_flows_at_date($1, $2)',
+      [fundIds, asofDate]
+    );
+    
+    res.status(200).json({
+      asofDate,
+      funds: result.rows,
+    });
+  } catch (err) {
+    console.error('Error fetching flows domain:', err);
+    next(err);
+  }
+};
+
+/**
+ * Get assets domain by fund IDs at an as-of date
+ * @route POST /api/funds/domains/assets
+ * @body {string[]} fundIds - Fund _ids
+ * @body {string} asofDate - YYYY-MM-DD
+ */
+const getAssetsAtDate = async (req, res, next) => {
+  try {
+    const { fundIds } = req.body;
+    const asofDate = req.asofDate || req.body.asofDate;
+    
+    const result = await pool.query(
+      'SELECT * FROM ms.fn_get_assets_at_date($1, $2)',
+      [fundIds, asofDate]
+    );
+    
+    res.status(200).json({
+      asofDate,
+      funds: result.rows,
+    });
+  } catch (err) {
+    console.error('Error fetching assets domain:', err);
     next(err);
   }
 };
@@ -330,7 +461,7 @@ const getPerformanceAtDate = async (req, res, next) => {
 const getFundDomainsAtDate = async (req, res, next) => {
   try {
     const { fundIds, domains } = req.body;
-    const asofDate = req.asofDate || new Date(req.body.asofDate);
+    const asofDate = req.asofDate || req.body.asofDate;
     
     const queries = [];
     const queryKeys = [];
@@ -345,6 +476,31 @@ const getFundDomainsAtDate = async (req, res, next) => {
       queryKeys.push('performance');
     }
     
+    if (domains.includes('fees')) {
+      queries.push(pool.query('SELECT * FROM ms.fn_get_all_fees_at_date($1, $2)', [fundIds, asofDate]));
+      queryKeys.push('fees');
+    }
+    
+    if (domains.includes('ratings')) {
+      queries.push(pool.query('SELECT * FROM ms.fn_get_ratings_at_date($1, $2)', [fundIds, asofDate]));
+      queryKeys.push('ratings');
+    }
+    
+    if (domains.includes('risk')) {
+      queries.push(pool.query('SELECT * FROM ms.fn_get_all_risk_at_date($1, $2)', [fundIds, asofDate]));
+      queryKeys.push('risk');
+    }
+    
+    if (domains.includes('flows')) {
+      queries.push(pool.query('SELECT * FROM ms.fn_get_flows_at_date($1, $2)', [fundIds, asofDate]));
+      queryKeys.push('flows');
+    }
+    
+    if (domains.includes('assets')) {
+      queries.push(pool.query('SELECT * FROM ms.fn_get_assets_at_date($1, $2)', [fundIds, asofDate]));
+      queryKeys.push('assets');
+    }
+    
     const results = await Promise.all(queries);
     const domainRows = {};
     
@@ -353,12 +509,12 @@ const getFundDomainsAtDate = async (req, res, next) => {
     });
     
     let funds = [];
-    if (domainRows.basicInfo || domainRows.performance) {
-      funds = mergeDomainRows(domainRows.basicInfo || [], domainRows.performance || []);
+    if (Object.keys(domainRows).length > 0) {
+      funds = mergeDomainRows(domainRows);
     }
     
     res.status(200).json({
-      asofDate: asofDate.toISOString(),
+      asofDate,
       funds,
     });
   } catch (err) {
@@ -372,5 +528,10 @@ module.exports = {
   getFundById,
   getBasicInfoAtDate,
   getPerformanceAtDate,
+  getFeesAtDate,
+  getRatingsAtDate,
+  getRiskAtDate,
+  getFlowsAtDate,
+  getAssetsAtDate,
   getFundDomainsAtDate,
 };

@@ -25,6 +25,9 @@ const FUNCTION_FILES = [
   '08_assets_at_date.sql'
 ];
 
+const onlyIndex = process.argv.indexOf('--only');
+const onlyFile = onlyIndex !== -1 ? process.argv[onlyIndex + 1] : null;
+
 /**
  * Deploy a single SQL function file
  */
@@ -34,6 +37,16 @@ async function deployFunction(filename) {
   console.log(`\n📄 Deploying: ${filename}`);
   
   try {
+    if (filename === '05_fees_at_date.sql') {
+      // Drop fee functions to allow return type changes
+      const dropSql = `
+        DROP FUNCTION IF EXISTS ms.fn_get_all_fees_at_date(TEXT[], DATE);
+        DROP FUNCTION IF EXISTS ms.fn_get_fee_levels_at_date(TEXT[], DATE);
+        DROP FUNCTION IF EXISTS ms.fn_get_prospectus_fees_at_date(TEXT[], DATE);
+        DROP FUNCTION IF EXISTS ms.fn_get_annual_report_fees_at_date(TEXT[], DATE);
+      `;
+      await pool.query(dropSql);
+    }
     // Read SQL file
     const sql = fs.readFileSync(filepath, 'utf8');
     
@@ -57,8 +70,10 @@ async function deployAllFunctions() {
   console.log('=' .repeat(60));
   
   const results = [];
-  
-  for (const filename of FUNCTION_FILES) {
+
+  const filesToDeploy = onlyFile ? [onlyFile] : FUNCTION_FILES;
+
+  for (const filename of filesToDeploy) {
     const result = await deployFunction(filename);
     results.push(result);
   }

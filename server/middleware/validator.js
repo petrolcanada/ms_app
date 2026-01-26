@@ -130,14 +130,31 @@ const validateAsofDateBody = (req, res, next) => {
     return next(error);
   }
   
-  const parsed = new Date(asofDate);
+  if (typeof asofDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(asofDate)) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+  
+  const parsed = new Date(`${asofDate}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
     error.details = 'Invalid asofDate';
     return next(error);
   }
   
-  req.asofDate = parsed;
+  const [year, month, day] = asofDate.split('-').map(Number);
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() + 1 !== month ||
+    parsed.getUTCDate() !== day
+  ) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+  
+  req.asofDate = asofDate;
   next();
 };
 
@@ -153,10 +170,18 @@ const validateDomainsBody = (req, res, next) => {
     return next(error);
   }
   
-  const allowed = new Set(['basicInfo', 'performance']);
+  const allowed = new Set([
+    'basicInfo',
+    'performance',
+    'fees',
+    'ratings',
+    'risk',
+    'flows',
+    'assets',
+  ]);
   const invalid = domains.find(domain => !allowed.has(domain));
   if (invalid) {
-    const error = new AppError('domains must include only basicInfo or performance', 400);
+    const error = new AppError('domains must include only basicInfo, performance, fees, ratings, risk, flows, or assets', 400);
     error.details = 'Invalid domains';
     return next(error);
   }

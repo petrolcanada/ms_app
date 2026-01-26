@@ -172,8 +172,8 @@ RETURNS TABLE (
   
   -- Fee Level Data
   feeleveldate TEXT,
-  feelevel INTEGER,
-  feelevelrank INTEGER,
+  feelevel TEXT,
+  feelevelrank TEXT,
   
   -- Metadata
   status_code NUMERIC,
@@ -194,8 +194,8 @@ AS $$
     
     -- Fee Level Data
     f.feeleveldate,
-    f.feelevel::INTEGER,
-    f.feelevelrank::INTEGER,
+    f.feelevel,
+    f.feelevelrank,
     
     -- Metadata
     f.status_code,
@@ -246,8 +246,8 @@ RETURNS TABLE (
   
   -- Fee Levels
   feeleveldate TEXT,
-  feelevel INTEGER,
-  feelevelrank INTEGER
+  feelevel TEXT,
+  feelevelrank TEXT
 )
 LANGUAGE sql
 STABLE
