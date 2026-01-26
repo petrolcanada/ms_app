@@ -9,9 +9,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
-const FUNCTIONS_DIR = path.join(__dirname, 'functions');
+const FUNCTIONS_DIR = path.join(__dirname, '../db/sql/functions');
 
 // Function files in deployment order
 const FUNCTION_FILES = [
@@ -219,7 +219,7 @@ async function main() {
     console.log('   1. Test functions with sample queries');
     console.log('   2. Update backend API controllers to use these functions');
     console.log('   3. Monitor query performance and adjust indexes as needed');
-    console.log('\n📖 See server/sql/functions/README.md for usage examples');
+    console.log('\n📖 See server/db/sql/functions/README.md for usage examples');
     
     process.exit(0);
   } catch (error) {

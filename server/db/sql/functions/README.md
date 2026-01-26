@@ -62,7 +62,7 @@ psql -h localhost -U postgres -d your_database -f sql/functions/01_basic_info_at
 ### Option 3: Use the Deployment Script
 
 ```bash
-node sql/deploy-functions.js
+node tools/deploy-functions.js
 ```
 
 ## Usage Patterns
@@ -311,6 +311,6 @@ WHERE monthenddate <= '2024-6-30'  -- Missing leading zero
 
 ## Related Documentation
 
-- `server/docs/schema-summary.md` - Complete schema documentation
-- `server/docs/tables.yaml` - Table configuration and sync details
+- `server/db/docs/schema-summary.md` - Complete schema documentation
+- `server/db/docs/tables.yaml` - Table configuration and sync details
 - `.kiro/specs/fund-analytics-platform/design.md` - API architecture design

@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
 /**
  * Get all distinct category names

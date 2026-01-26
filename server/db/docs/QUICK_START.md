@@ -28,7 +28,7 @@ SELECT * FROM ms.fn_get_basic_info_at_date(
 
 ```javascript
 // Get fund details
-const { pool } = require('./config/db');
+const { pool } = require('./db/config/db');
 
 async function getFundDetails(fundId) {
   const fundIds = [fundId];

@@ -88,8 +88,87 @@ const validateFundId = (req, res, next) => {
   next();
 };
 
+/**
+ * Validate fundIds in request body
+ * Ensures fundIds is a non-empty array of non-empty strings
+ */
+const validateFundIdsBody = (req, res, next) => {
+  const { fundIds } = req.body;
+  
+  if (!Array.isArray(fundIds) || fundIds.length === 0) {
+    const error = new AppError('fundIds must be a non-empty array', 400);
+    error.details = 'Invalid fundIds';
+    return next(error);
+  }
+  
+  const invalidId = fundIds.find(id => typeof id !== 'string' || id.trim() === '');
+  if (invalidId !== undefined) {
+    const error = new AppError('fundIds must contain non-empty strings', 400);
+    error.details = 'Invalid fundIds';
+    return next(error);
+  }
+  
+  if (fundIds.length > 100) {
+    const error = new AppError('fundIds cannot exceed 100 items', 400);
+    error.details = 'Invalid fundIds';
+    return next(error);
+  }
+  
+  next();
+};
+
+/**
+ * Validate asofDate in request body
+ * Ensures asofDate is provided and is a valid date
+ */
+const validateAsofDateBody = (req, res, next) => {
+  const { asofDate } = req.body;
+  
+  if (!asofDate) {
+    const error = new AppError('asofDate is required (YYYY-MM-DD)', 400);
+    error.details = 'Missing asofDate';
+    return next(error);
+  }
+  
+  const parsed = new Date(asofDate);
+  if (Number.isNaN(parsed.getTime())) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+  
+  req.asofDate = parsed;
+  next();
+};
+
+/**
+ * Validate requested domains in request body
+ */
+const validateDomainsBody = (req, res, next) => {
+  const { domains } = req.body;
+  
+  if (!Array.isArray(domains) || domains.length === 0) {
+    const error = new AppError('domains must be a non-empty array', 400);
+    error.details = 'Invalid domains';
+    return next(error);
+  }
+  
+  const allowed = new Set(['basicInfo', 'performance']);
+  const invalid = domains.find(domain => !allowed.has(domain));
+  if (invalid) {
+    const error = new AppError('domains must include only basicInfo or performance', 400);
+    error.details = 'Invalid domains';
+    return next(error);
+  }
+  
+  next();
+};
+
 module.exports = {
   validatePagination,
   validateFilters,
   validateFundId,
+  validateFundIdsBody,
+  validateAsofDateBody,
+  validateDomainsBody,
 };

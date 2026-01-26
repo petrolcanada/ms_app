@@ -21,7 +21,7 @@ Pulls raw metadata from PostgreSQL `information_schema` for the 'ms' schema and 
 
 ```bash
 # From project root
-node server/scripts/exportSchemaMetadata.js
+node server/tools/exportSchemaMetadata.js
 
 # Or with npm script
 cd server
@@ -30,7 +30,7 @@ npm run export-schema
 
 ### Environment Variables
 
-The script uses your existing database configuration from `server/config/db.js`, which reads these environment variables from your `.env` file:
+The script uses your existing database configuration from `server/db/config/db.js`, which reads these environment variables from your `.env` file:
 
 ```bash
 POSTGRES_HOST=localhost        # Database host
@@ -44,7 +44,7 @@ Make sure your `.env` file is properly configured in the `server` directory.
 
 ### Output Files
 
-All files are saved to `server/docs/`:
+All files are saved to `server/db/docs/`:
 
 #### 1. schema-metadata.json
 Complete metadata in JSON format, organized by table:
@@ -106,10 +106,10 @@ High-level summary including:
 ✅ Schema metadata exported successfully!
 
 Generated files:
-  - server/docs/schema-metadata.json
-  - server/docs/schema-metadata.md
-  - server/docs/schema-columns.csv
-  - server/docs/schema-summary.md
+  - server/db/docs/schema-metadata.json
+  - server/db/docs/schema-metadata.md
+  - server/db/docs/schema-columns.csv
+  - server/db/docs/schema-summary.md
 
 ✨ Done!
 ```
@@ -134,6 +134,22 @@ npm run docs:schema
 ```
 
 ---
+
+## Deploy SQL Functions + Indexes
+
+**Script:** `deploy-functions.js`
+
+Deploys the SQL functions from `server/db/sql/functions/` and creates the recommended indexes.
+
+### Usage
+
+```bash
+cd server
+npm run deploy-functions
+
+# or
+node tools/deploy-functions.js
+```
 
 ## Other Scripts
 

@@ -160,7 +160,7 @@ const categoryPerformance = await getCategoryPerformance('CAEQUITY', new Date())
 // routes/fundRoutes.js
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
 // GET /api/funds/:id
 router.get('/:id', async (req, res, next) => {
@@ -357,7 +357,7 @@ For better code organization, create a service layer:
 
 ```javascript
 // services/fundService.js
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
 class FundService {
   async getFundDetails(fundId, asofDate = new Date()) {

@@ -113,8 +113,8 @@ AS $$
     p.fault_detail_errorcode
   FROM ms.month_end_trailing_total_returns_ca_openend p
   WHERE p._id = ANY(p_fund_ids)
-    -- Exact match: monthenddate = asofdate
-    AND p.monthenddate = p_asof_date::TEXT
+    -- Exact match on date portion: monthenddate (text) -> date
+    AND to_date(p.monthenddate, 'YYYY-MM-DD') = p_asof_date
   -- Get the last record based on _timestampfrom
   ORDER BY p._id, p._timestampfrom DESC;
 $$;

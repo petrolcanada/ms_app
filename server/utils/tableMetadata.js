@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
 /**
  * Get metadata for a specific table

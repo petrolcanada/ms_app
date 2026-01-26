@@ -3,7 +3,7 @@ const express = require('express');
 const fc = require('fast-check');
 const { getAllFunds } = require('../controllers/fundController');
 const { validatePagination, validateFilters } = require('../middleware/validator');
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 
 // Create a test Express app
 const createTestApp = () => {

@@ -124,19 +124,23 @@ All functions are marked as `STABLE`:
 ## File Structure
 
 ```
-server/sql/
-├── functions/
-│   ├── 01_basic_info_at_date.sql
-│   ├── 02_performance_at_date.sql
-│   ├── 03_rankings_at_date.sql
-│   ├── 04_ratings_at_date.sql
-│   ├── 05_fees_at_date.sql
-│   ├── 06_risk_at_date.sql
-│   ├── 07_flows_at_date.sql
-│   ├── 08_assets_at_date.sql
-│   └── README.md
-├── deploy-functions.js
-└── IMPLEMENTATION_SUMMARY.md (this file)
+server/
+├── db/
+│   ├── sql/
+│   │   └── functions/
+│   │       ├── 01_basic_info_at_date.sql
+│   │       ├── 02_performance_at_date.sql
+│   │       ├── 03_rankings_at_date.sql
+│   │       ├── 04_ratings_at_date.sql
+│   │       ├── 05_fees_at_date.sql
+│   │       ├── 06_risk_at_date.sql
+│   │       ├── 07_flows_at_date.sql
+│   │       ├── 08_assets_at_date.sql
+│   │       └── README.md
+│   └── docs/
+│       └── IMPLEMENTATION_SUMMARY.md (this file)
+└── tools/
+    └── deploy-functions.js
 ```
 
 ## Deployment
@@ -258,9 +262,9 @@ Based on the architecture:
 
 ## Related Documentation
 
-- `server/sql/functions/README.md` - Detailed usage guide
-- `server/docs/schema-summary.md` - Complete schema documentation
-- `server/docs/tables.yaml` - Table configuration
+- `server/db/sql/functions/README.md` - Detailed usage guide
+- `server/db/docs/schema-summary.md` - Complete schema documentation
+- `server/db/docs/tables.yaml` - Table configuration
 - `.kiro/specs/fund-analytics-platform/design.md` - API architecture design
 - `.kiro/specs/fund-analytics-platform/requirements.md` - Requirements document
 

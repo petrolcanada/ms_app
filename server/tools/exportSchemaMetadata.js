@@ -5,10 +5,10 @@
  * and saves it to the docs folder in multiple formats for easy reference.
  * 
  * Usage:
- *   node server/scripts/exportSchemaMetadata.js
+ *   node server/tools/exportSchemaMetadata.js
  */
 
-const { pool } = require('../config/db');
+const { pool } = require('../db/config/db');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -114,7 +114,7 @@ async function exportSchemaMetadata() {
     );
 
     // Create output directory if it doesn't exist
-    const docsDir = path.join(__dirname, '../docs');
+    const docsDir = path.join(__dirname, '../db/docs');
     await fs.mkdir(docsDir, { recursive: true });
 
     // Export in multiple formats
@@ -125,10 +125,10 @@ async function exportSchemaMetadata() {
 
     console.log('\n✅ Schema metadata exported successfully!');
     console.log('\nGenerated files:');
-    console.log('  - server/docs/schema-metadata.json');
-    console.log('  - server/docs/schema-metadata.md');
-    console.log('  - server/docs/schema-columns.csv');
-    console.log('  - server/docs/schema-summary.md');
+    console.log('  - server/db/docs/schema-metadata.json');
+    console.log('  - server/db/docs/schema-metadata.md');
+    console.log('  - server/db/docs/schema-columns.csv');
+    console.log('  - server/db/docs/schema-summary.md');
 
   } catch (error) {
     console.error('❌ Error exporting schema metadata:', error);
