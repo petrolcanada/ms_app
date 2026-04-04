@@ -2,8 +2,8 @@
 -- Function: Get Fund Basic Info at Specific Date
 -- =====================================================
 -- Table: fund_share_class_basic_info_ca_openend
--- Date Sensitivity: Temporal tracking only (_timestampfrom, _timestampto)
--- Pattern: last record _timestampfrom<=asofdate and asofdate<=data_inserted_at per _ID
+-- Date Sensitivity: monthenddate (resampled to month-end grid)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION ms.fn_get_basic_info_at_date(
@@ -126,9 +126,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get the version of basic info that was valid at the asof date
-  -- Pattern: last record _timestampfrom<=asofdate and asofdate<=data_inserted_at per _ID
-  SELECT DISTINCT ON (b._id)
+  SELECT
     -- Core Identifiers
     b._id,
     b._idtype,
@@ -175,7 +173,7 @@ AS $$
     
     -- Fund Characteristics
     b.producttype,
-    b.securitytype,
+    CASE b.securitytype WHEN 'FO' THEN 'Mutual Fund' WHEN 'FE' THEN 'ETF' ELSE b.securitytype END AS securitytype,
     b.shareclasstype,
     b.legalstructure,
     b.productfocus,
@@ -242,10 +240,7 @@ AS $$
     b.multilingualnames
   FROM ms.fund_share_class_basic_info_ca_openend b
   WHERE b._id = ANY(p_fund_ids)
-    -- Temporal filtering: _timestampfrom <= asofdate AND asofdate <= data_inserted_at
-    AND b._timestampfrom <= p_asof_date
-    AND p_asof_date <= b.data_inserted_at
-  ORDER BY b._id, b._timestampfrom DESC;
+    AND b.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================
@@ -367,8 +362,8 @@ FROM ms.fn_get_basic_info_at_date(
 -- =====================================================
 -- Notes
 -- =====================================================
--- 1. This table has NO dedicated date column (like monthenddate)
--- 2. It uses temporal tracking: _timestampfrom <= asofdate <= data_inserted_at
+-- 1. Table resampled to month-end grid: one row per (_ID, monthenddate)
+-- 2. Simple exact-match on monthenddate — no temporal dedup needed
 -- 3. This represents "snapshot" data - fund characteristics at a point in time
 -- 4. Use this to get fund metadata as it existed on a specific date
 -- 5. Important for historical analysis when fund names/categories changed

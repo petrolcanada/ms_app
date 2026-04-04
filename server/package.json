@@ -7,8 +7,7 @@
     "start": "nodemon server.js",
     "start:prod": "node server.js",
     "test": "jest",
-    "inspect-table": "node tools/inspectTable.js",
-    "scan-schema": "node tools/scanMsSchema.js",
+    "inspect-table": "node tools/tableMetadata.js",
     "export-schema": "node tools/exportSchemaMetadata.js",
     "docs:schema": "node tools/exportSchemaMetadata.js",
     "deploy-functions": "node tools/deploy-functions.js"

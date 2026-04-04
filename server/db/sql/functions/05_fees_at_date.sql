@@ -2,12 +2,12 @@
 -- Function: Get Fee Information at Specific Date
 -- =====================================================
 -- Tables: prospectus_fees_ca_openend, annual_report_fees_ca_openend, fee_levels_ca_openend
--- Date Sensitivity: Snapshot tables with temporal tracking + report dates
--- Pattern: last record date_column<=asofdate per _ID
+-- All resampled to month-end grid via monthenddate
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This function combines data from 3 fee-related tables
 -- =====================================================
 
--- Prospectus Fees (snapshot with temporal tracking)
+-- Prospectus Fees (resampled to month-end grid via monthenddate)
 CREATE OR REPLACE FUNCTION ms.fn_get_prospectus_fees_at_date(
   p_fund_ids TEXT[],
   p_asof_date DATE
@@ -49,9 +49,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get prospectus fees where prospectusdate <= asofdate
-  -- Pattern: last record prospectusdate<=asofdate per _ID
-  SELECT DISTINCT ON (p._id)
+  SELECT
     -- Core Identifiers
     p._id,
     p._idtype,
@@ -86,12 +84,10 @@ AS $$
     p.status_message
   FROM ms.prospectus_fees_ca_openend p
   WHERE p._id = ANY(p_fund_ids)
-    -- Last record where prospectusdate <= asofdate
-    AND p.prospectusdate <= p_asof_date::TEXT
-  ORDER BY p._id, p.prospectusdate DESC;
+    AND p.monthenddate = p_asof_date::TEXT;
 $$;
 
--- Annual Report Fees (report-based with temporal tracking)
+-- Annual Report Fees (resampled to month-end grid via monthenddate)
 CREATE OR REPLACE FUNCTION ms.fn_get_annual_report_fees_at_date(
   p_fund_ids TEXT[],
   p_asof_date DATE
@@ -125,9 +121,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get annual report fees where annualreportdate <= asofdate
-  -- Pattern: last record annualreportdate<=asofdate per _ID
-  SELECT DISTINCT ON (a._id)
+  SELECT
     -- Core Identifiers
     a._id,
     a._idtype,
@@ -154,12 +148,10 @@ AS $$
     a.fault_detail_errorcode
   FROM ms.annual_report_fees_ca_openend a
   WHERE a._id = ANY(p_fund_ids)
-    -- Last record where annualreportdate <= asofdate
-    AND a.annualreportdate <= p_asof_date::TEXT
-  ORDER BY a._id, a.annualreportdate DESC;
+    AND a.monthenddate = p_asof_date::TEXT;
 $$;
 
--- Fee Levels (time-series with temporal tracking)
+-- Fee Levels (resampled to month-end grid via monthenddate)
 CREATE OR REPLACE FUNCTION ms.fn_get_fee_levels_at_date(
   p_fund_ids TEXT[],
   p_asof_date DATE
@@ -184,9 +176,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get fee level data where feeleveldate <= asofdate
-  -- Pattern: last record feeleveldate<=asofdate per _ID
-  SELECT DISTINCT ON (f._id)
+  SELECT
     -- Core Identifiers
     f._id,
     f._idtype,
@@ -204,9 +194,7 @@ AS $$
     f.fault_detail_errorcode
   FROM ms.fee_levels_ca_openend f
   WHERE f._id = ANY(p_fund_ids)
-    -- Last record where feeleveldate <= asofdate
-    AND f.feeleveldate <= p_asof_date::TEXT
-  ORDER BY f._id, f.feeleveldate DESC;
+    AND f.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- Combined Fee Function (all fee data in one call)

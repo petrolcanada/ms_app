@@ -77,28 +77,51 @@ api.interceptors.response.use(
   }
 );
 
-// API service methods
+const DOMAIN_KEY_TO_PATH = {
+  basicInfo: 'basic-info',
+  performance: 'performance',
+  rankings: 'rankings',
+  fees: 'fees',
+  ratings: 'ratings',
+  risk: 'risk',
+  flows: 'flows',
+  assets: 'assets',
+};
+
 export const fundService = {
-  // Get all funds with optional filters and pagination
   getAllFunds: (params = {}) => {
     return api.get('/api/funds', { params });
   },
-  
-  // Get a single fund by ID
+
   getFundById: (id) => {
     return api.get(`/api/funds/${id}`);
   },
-  
-  // Get fund rankings by category
-  getRankingsByCategory: (category) => {
-    return api.get(`/api/funds/rankings/${category}`);
+
+  fetchDomain: (domainKey, fundIds, asofDate) => {
+    const path = DOMAIN_KEY_TO_PATH[domainKey] || domainKey;
+    return api.post(`/api/funds/domains/${path}`, { fundIds, asofDate });
+  },
+
+  fetchMultipleDomains: (domains, fundIds, asofDate) => {
+    const body = { domains, fundIds };
+    if (asofDate) body.asofDate = asofDate;
+    return api.post('/api/funds/domains', body);
+  },
+
+  getScreenerData: (params = {}) => {
+    return api.get('/api/funds/screener', { params, timeout: 30000 });
+  },
+};
+
+export const dateService = {
+  getAvailableDates: () => {
+    return api.get('/api/funds/domains/available-dates');
   },
 };
 
 export const categoryService = {
-  // Get category performance data
-  getCategoryPerformance: () => {
-    return api.get('/api/categories/performance');
+  getCategories: () => {
+    return api.get('/api/categories');
   },
 };
 

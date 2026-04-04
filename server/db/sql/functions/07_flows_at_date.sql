@@ -2,8 +2,8 @@
 -- Function: Get Fund Flow Data at Specific Date
 -- =====================================================
 -- Table: fund_flow_details_ca_openend
--- Date Sensitivity: estfundlevelnetflowdatemoend (time-series) + temporal tracking
--- Pattern: last record estfundlevelnetflowdatemoend<=asofdate per _ID
+-- Date Sensitivity: monthenddate (= estfundlevelnetflowdatemoend)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This is a TIME-SERIES table with monthly flow data
 -- =====================================================
 
@@ -61,9 +61,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get flow data where estfundlevelnetflowdatemoend <= asofdate
-  -- Pattern: last record estfundlevelnetflowdatemoend<=asofdate per _ID
-  SELECT DISTINCT ON (f._id)
+  SELECT
     -- Core Identifiers
     f._id,
     f._idtype,
@@ -111,9 +109,7 @@ AS $$
     f.fault_detail_errorcode
   FROM ms.fund_flow_details_ca_openend f
   WHERE f._id = ANY(p_fund_ids)
-    -- Last record where estfundlevelnetflowdatemoend <= asofdate
-    AND f.estfundlevelnetflowdatemoend <= p_asof_date::TEXT
-  ORDER BY f._id, f.estfundlevelnetflowdatemoend DESC;
+    AND f.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================
@@ -137,7 +133,6 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get ALL flow data points within the date range
   SELECT 
     f._id,
     f._name,
@@ -147,13 +142,9 @@ AS $$
     f._currencyid
   FROM ms.fund_flow_details_ca_openend f
   WHERE f._id = p_fund_id
-    -- Time-series filtering: get all data points in range
-    AND f.estfundlevelnetflowdatemoend >= p_start_date::TEXT
-    AND f.estfundlevelnetflowdatemoend <= p_end_date::TEXT
-    -- Temporal filtering: use version valid at end date
-    AND f._timestampfrom <= p_end_date
-    AND p_end_date <= f.data_inserted_at
-  ORDER BY f.estfundlevelnetflowdatemoend ASC;
+    AND f.monthenddate >= p_start_date::TEXT
+    AND f.monthenddate <= p_end_date::TEXT
+  ORDER BY f.monthenddate ASC;
 $$;
 
 -- =====================================================

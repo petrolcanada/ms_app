@@ -8,7 +8,7 @@
  *   node server/tools/exportSchemaMetadata.js
  */
 
-const { pool } = require('../db/config/db');
+const { pool } = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 

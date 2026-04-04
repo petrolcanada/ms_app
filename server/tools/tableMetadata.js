@@ -1,4 +1,4 @@
-const { pool } = require('../db/config/db');
+const { pool } = require('../config/db');
 
 /**
  * Get metadata for a specific table
@@ -8,7 +8,6 @@ const { pool } = require('../db/config/db');
  */
 async function getTableMetadata(schemaName, tableName) {
   try {
-    // Get column information
     const columnsQuery = `
       SELECT 
         column_name,
@@ -27,7 +26,6 @@ async function getTableMetadata(schemaName, tableName) {
     
     const columnsResult = await pool.query(columnsQuery, [schemaName, tableName]);
     
-    // Get primary key information
     const pkQuery = `
       SELECT a.attname AS column_name
       FROM pg_index i
@@ -38,7 +36,6 @@ async function getTableMetadata(schemaName, tableName) {
     
     const pkResult = await pool.query(pkQuery, [`${schemaName}.${tableName}`]);
     
-    // Get indexes information
     const indexQuery = `
       SELECT
         i.relname AS index_name,

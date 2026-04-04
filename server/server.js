@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const { testConnection } = require('./db/config/db');
+const { testConnection } = require('./config/db');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 

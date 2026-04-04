@@ -1,22 +1,14 @@
 const request = require('supertest');
 const express = require('express');
 const fundsRouter = require('../routes/funds');
-const { pool } = require('../db/config/db');
+const { errorHandler } = require('../middleware/errorHandler');
+const { pool } = require('../config/db');
 
 const createTestApp = () => {
   const app = express();
   app.use(express.json());
   app.use('/api/funds', fundsRouter);
-
-  // Error handler
-  app.use((err, req, res, next) => {
-    res.status(err.statusCode || 500).json({
-      error: {
-        message: err.message || 'Internal server error',
-      },
-    });
-  });
-
+  app.use(errorHandler);
   return app;
 };
 

@@ -1,123 +1,68 @@
 import React from 'react';
-import {
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Button,
-} from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import ClearIcon from '@mui/icons-material/Clear';
+import Box from '@mui/material/Box';
 import { useCategories } from '../hooks/useCategories';
 
-/**
- * FilterPanel Component
- * Provides dropdown filters for fund type and category
- * 
- * @param {Object} props
- * @param {Object} props.filters - Current filter values { type: string, category: string }
- * @param {function} props.onFilterChange - Callback function called when filters change
- */
+const selectStyle = {
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius)',
+  color: 'var(--text-2)',
+  fontFamily: 'var(--font-body)',
+  fontSize: '13px',
+  padding: '10px 16px',
+  cursor: 'pointer',
+  outline: 'none',
+  transition: 'all 180ms ease',
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+  whiteSpace: 'nowrap',
+};
+
 const FilterPanel = ({ filters, onFilterChange }) => {
-  // Fetch categories from API with automatic fallback to defaults
-  const { data: categories = [], isLoading } = useCategories();
-  const handleTypeChange = (event) => {
-    onFilterChange({
-      ...filters,
-      type: event.target.value,
-    });
+  const { data: categories = [] } = useCategories();
+
+  const handleTypeChange = (e) => {
+    onFilterChange({ ...filters, type: e.target.value });
   };
 
-  const handleCategoryChange = (event) => {
-    onFilterChange({
-      ...filters,
-      category: event.target.value,
-    });
+  const handleCategoryChange = (e) => {
+    onFilterChange({ ...filters, category: e.target.value });
   };
-
-  const handleClearFilters = () => {
-    onFilterChange({
-      type: '',
-      category: '',
-    });
-  };
-
-  const hasActiveFilters = filters.type || filters.category;
 
   return (
-    <Box sx={{ mb: 2 }}>
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="type-filter-label">Fund Type</InputLabel>
-            <Select
-              labelId="type-filter-label"
-              id="type-filter"
-              value={filters.type || ''}
-              onChange={handleTypeChange}
-              label="Fund Type"
-            >
-              <MenuItem value="">
-                <em>All Types</em>
-              </MenuItem>
-              <MenuItem value="Mutual Fund">Mutual Fund</MenuItem>
-              <MenuItem value="ETF">ETF</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="category-filter-label">Category</InputLabel>
-            <Select
-              labelId="category-filter-label"
-              id="category-filter"
-              value={filters.category || ''}
-              onChange={handleCategoryChange}
-              label="Category"
-            >
-              <MenuItem value="">
-                <em>All Categories</em>
-              </MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {hasActiveFilters && (
-          <Grid item xs={12} sm={4} md={2}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<ClearIcon />}
-              onClick={handleClearFilters}
-              fullWidth
-            >
-              Clear Filters
-            </Button>
-          </Grid>
-        )}
-
-        <Grid item xs={12} sm={12} md="auto">
-          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-            <FilterListIcon sx={{ mr: 0.5, fontSize: 20 }} />
-            {hasActiveFilters ? (
-              <span style={{ fontSize: '0.875rem' }}>
-                {[filters.type, filters.category].filter(Boolean).length} filter(s) active
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.875rem' }}>No filters applied</span>
-            )}
-          </Box>
-        </Grid>
-      </Grid>
-    </Box>
+    <>
+      <Box
+        component="select"
+        value={filters.type || ''}
+        onChange={handleTypeChange}
+        sx={{
+          ...selectStyle,
+          '&:hover': { borderColor: 'var(--border-hover)', background: 'var(--bg-surface-hover)', color: 'var(--text-1)' },
+        }}
+      >
+        <option value="">All Types</option>
+        <option value="Mutual Fund">Mutual Fund</option>
+        <option value="ETF">ETF</option>
+      </Box>
+      <Box
+        component="select"
+        value={filters.category || ''}
+        onChange={handleCategoryChange}
+        sx={{
+          ...selectStyle,
+          '&:hover': { borderColor: 'var(--border-hover)', background: 'var(--bg-surface-hover)', color: 'var(--text-1)' },
+        }}
+      >
+        <option value="">All Categories</option>
+        {categories.map((cat) => (
+          <option key={cat} value={cat}>{cat}</option>
+        ))}
+      </Box>
+    </>
   );
 };
 

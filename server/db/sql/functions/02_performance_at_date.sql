@@ -2,8 +2,8 @@
 -- Function: Get Performance Returns at Specific Date
 -- =====================================================
 -- Table: month_end_trailing_total_returns_ca_openend
--- Date Sensitivity: monthenddate (time-series) + temporal tracking
--- Pattern: exactly monthenddate=asofdate, last record per _ID based on _timestampfrom
+-- Date Sensitivity: monthenddate (time-series)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This is a TIME-SERIES table with monthly data points
 -- =====================================================
 
@@ -62,9 +62,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get performance data where monthenddate EXACTLY matches asofdate
-  -- Pattern: exactly monthenddate=asofdate, last record per _ID based on _timestampfrom
-  SELECT DISTINCT ON (p._id)
+  SELECT
     -- Core Identifiers
     p._id,
     p._idtype,
@@ -113,10 +111,7 @@ AS $$
     p.fault_detail_errorcode
   FROM ms.month_end_trailing_total_returns_ca_openend p
   WHERE p._id = ANY(p_fund_ids)
-    -- Exact match on date portion: monthenddate (text) -> date
-    AND to_date(p.monthenddate, 'YYYY-MM-DD') = p_asof_date
-  -- Get the last record based on _timestampfrom
-  ORDER BY p._id, p._timestampfrom DESC;
+    AND p.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================
@@ -223,8 +218,6 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get ALL data points within the date range
-  -- Use the version that was valid at the END date
   SELECT 
     p._id,
     p._name,
@@ -235,12 +228,8 @@ AS $$
     p.returnytd::NUMERIC
   FROM ms.month_end_trailing_total_returns_ca_openend p
   WHERE p._id = p_fund_id
-    -- Time-series filtering: get all data points in range
     AND p.monthenddate >= p_start_date::TEXT
     AND p.monthenddate <= p_end_date::TEXT
-    -- Temporal filtering: use version valid at end date
-    AND p._timestampfrom <= p_end_date
-    AND p_end_date <= p.data_inserted_at
   ORDER BY p.monthenddate ASC;
 $$;
 
@@ -297,12 +286,11 @@ SELECT * FROM ms.fn_get_performance_at_date(
 -- =====================================================
 -- Notes
 -- =====================================================
--- 1. This table has BOTH monthenddate (time-series) AND temporal tracking
+-- 1. One row per (_ID, monthenddate) — no temporal dedup needed
 -- 2. monthenddate: The date the performance data represents (e.g., "2024-06-30")
--- 3. _timestampfrom/data_inserted_at: When this version of the data was loaded
--- 4. IMPORTANT: monthenddate is TEXT, not DATE type - comparison works with YYYY-MM-DD format
--- 5. Returns data ONLY for exact monthenddate match (not "on or before")
--- 6. For time-series analysis, use fn_get_performance_history instead
--- 7. Performance data is typically updated monthly (month-end)
--- 8. Returns 44 columns total including all trailing and cumulative returns
--- 9. Trailing returns are annualized, cumulative returns are total percentage gains
+-- 3. IMPORTANT: monthenddate is TEXT, not DATE type - comparison works with YYYY-MM-DD format
+-- 4. Returns data ONLY for exact monthenddate match (not "on or before")
+-- 5. For time-series analysis, use fn_get_performance_history instead
+-- 6. Performance data is typically updated monthly (month-end)
+-- 7. Returns 44 columns total including all trailing and cumulative returns
+-- 8. Trailing returns are annualized, cumulative returns are total percentage gains

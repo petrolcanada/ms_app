@@ -1,405 +1,494 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  Typography,
-  CircularProgress,
-  Alert,
-  Button,
-  Grid,
-  Divider,
-  Chip,
-  Card,
-  CardContent,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import React, { useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useFundDetail } from '../hooks/useFundDetail';
+import { useDomains } from '../hooks/useDomains';
+import KpiCard from './KpiCard';
+import MetricRow from './MetricRow';
+import PerfBar from './PerfBar';
+import StarRating from './StarRating';
+import SignalBadge from './SignalBadge';
+import { DomainCard, DomainGrid } from './DomainTab';
+import AsOfDateSelector from './AsOfDateSelector';
 
-/**
- * FundDetail Component
- * Displays comprehensive information for a single fund
- * Shows basic info, fees, managers, and performance in organized sections
- */
+const TABS = [
+  { key: 'performance', label: 'Performance' },
+  { key: 'fees', label: 'Fees' },
+  { key: 'ratings', label: 'Ratings' },
+  { key: 'risk', label: 'Risk' },
+  { key: 'flows', label: 'Flows' },
+  { key: 'assets', label: 'Assets' },
+  { key: 'basic', label: 'Basic Info' },
+];
+
 const FundDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: fund, isLoading, isError, error } = useFundDetail(id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState('performance');
+  const [asofDate, setAsofDate] = useState(searchParams.get('asof') || '');
 
-  const handleBack = () => {
-    navigate('/');
+  const handleDateChange = (newDate) => {
+    setAsofDate(newDate);
+    setSearchParams(newDate ? { asof: newDate } : {}, { replace: true });
   };
 
-  // Loading state
-  if (isLoading) {
+  const { data: fundResp, isLoading: fundLoading, isError: fundError, error: fundErr } = useFundDetail(id);
+  const { data: domainData, isLoading: domainLoading, isError: domainError } = useDomains(id, {
+    asofDate: asofDate || undefined,
+  });
+
+  const fund = fundResp?.data || fundResp;
+
+  if (fundLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-        }}
-      >
-        <CircularProgress />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress sx={{ color: 'var(--emerald)' }} />
       </Box>
     );
   }
 
-  // Error state
-  if (isError) {
+  if (fundError) {
     return (
-      <Box sx={{ my: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          <Typography variant="body1" fontWeight="bold">
-            Error loading fund details
-          </Typography>
-          <Typography variant="body2">
-            {error?.message || 'An unexpected error occurred. Please try again.'}
-          </Typography>
-        </Alert>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
+      <Box>
+        <BackLink onClick={() => navigate('/')} />
+        <Box
+          sx={{
+            background: 'var(--red-soft)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius)',
+            padding: '20px',
+            color: 'var(--red)',
+            fontSize: '13px',
+          }}
         >
-          Back to Fund List
-        </Button>
+          {fundErr?.message || 'Failed to load fund details.'}
+        </Box>
       </Box>
     );
   }
 
-  // No data state
   if (!fund) {
     return (
-      <Box sx={{ my: 2 }}>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body1">Fund not found</Typography>
-        </Alert>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
-        >
-          Back to Fund List
-        </Button>
+      <Box>
+        <BackLink onClick={() => navigate('/')} />
+        <Box sx={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>Fund not found</Box>
       </Box>
     );
   }
 
-  // Helper function to format currency
-  const formatCurrency = (value) => {
-    if (value === null || value === undefined) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
+  const perf = domainData?.performance || {};
+  const rankings = domainData?.rankings || {};
+  const fees = domainData?.fees || {};
+  const ratings = domainData?.ratings || {};
+  const risk = domainData?.risk || {};
+  const flows = domainData?.flows || {};
+  const assets = domainData?.assets || {};
+  const basicInfo = domainData?.basicInfo || {};
+
+  const fmt = (v, suffix = '') => {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    return `${n >= 0 ? '+' : ''}${n.toFixed(2)}${suffix}`;
   };
 
-  // Helper function to format percentage
-  const formatPercentage = (value) => {
-    if (value === null || value === undefined) return 'N/A';
-    return `${Number(value).toFixed(2)}%`;
+  const fmtPct = (v) => fmt(v, '%');
+  const fmtPlain = (v) => {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    return n.toFixed(2);
   };
 
-  // Helper function to format date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const valColor = (v) => {
+    if (v === null || v === undefined || v === '') return undefined;
+    const n = Number(v);
+    if (isNaN(n)) return undefined;
+    if (n > 0) return 'var(--emerald)';
+    if (n < 0) return 'var(--red)';
+    return undefined;
+  };
+
+  const renderTabContent = () => {
+    if (domainLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: '60px' }}>
+          <CircularProgress size={28} sx={{ color: 'var(--emerald)' }} />
+        </Box>
+      );
+    }
+
+    if (domainError) {
+      return (
+        <Box
+          sx={{
+            background: 'var(--red-soft)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius)',
+            padding: '20px',
+            color: 'var(--red)',
+            fontSize: '13px',
+          }}
+        >
+          Failed to load domain data. The data may not be available for the current date.
+        </Box>
+      );
+    }
+
+    switch (activeTab) {
+      case 'performance':
+        return <PerformanceTab perf={perf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />;
+      case 'fees':
+        return <FeesTab fees={fees} fmtPct={fmtPct} />;
+      case 'ratings':
+        return <RatingsTab ratings={ratings} />;
+      case 'risk':
+        return <RiskTab risk={risk} fmtPct={fmtPct} fmtPlain={fmtPlain} valColor={valColor} />;
+      case 'flows':
+        return <FlowsTab flows={flows} />;
+      case 'assets':
+        return <AssetsTab assets={assets} />;
+      case 'basic':
+        return <BasicInfoTab fund={fund} basicInfo={basicInfo} />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
-      {/* Back Button */}
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={handleBack}
-        sx={{ mb: 3 }}
-      >
-        Back to Fund List
-      </Button>
+    <Box>
+      <BackLink onClick={() => navigate('/')} />
 
       {/* Fund Header */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {fund.fundname || fund._name || 'N/A'}
-            </Typography>
-            {fund.legalname && fund.legalname !== fund.fundname && (
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Legal Name: {fund.legalname}
-              </Typography>
-            )}
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <Chip
-                label={fund.ticker || 'N/A'}
-                variant="outlined"
-                size="small"
-              />
-              <Chip
-                label={fund.securitytype || fund.legalstructure || 'N/A'}
-                color={fund.securitytype === 'ETF' ? 'primary' : 'default'}
-                size="small"
-              />
-            </Box>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px' }}>
+        <Box>
+          <Box
+            component="h1"
+            sx={{
+              fontFamily: 'var(--font-head)',
+              fontSize: '28px',
+              fontWeight: 600,
+              color: 'var(--text-1)',
+              letterSpacing: '-0.03em',
+              mb: '8px',
+            }}
+          >
+            {fund.fundname || fund._name || 'Unknown Fund'}
           </Box>
-          {fund.nav && (
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="caption" color="text.secondary">
-                Net Asset Value
-              </Typography>
-              <Typography variant="h5" color="primary">
-                {formatCurrency(fund.nav)}
-              </Typography>
-            </Box>
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-3)' }}>
+            <FundBadge type={fund.securitytype || fund.legalstructure} />
+            <Separator />
+            <span>{fund.categoryname || fund.globalcategoryname || '—'}</span>
+            <Separator />
+            <span>Inception: {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}</span>
+          </Box>
         </Box>
-      </Paper>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+          <AsOfDateSelector value={asofDate} onChange={handleDateChange} />
+          <SignalBadge signal="hold" size="large" />
+        </Box>
+      </Box>
 
-      <Grid container spacing={3}>
-        {/* Basic Information Section */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Basic Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Category
-                  </Typography>
-                  <Typography variant="body1">
-                    {fund.categoryname || fund.globalcategoryname || 'N/A'}
-                  </Typography>
-                </Box>
-                
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Inception Date
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDate(fund.inceptiondate)}
-                  </Typography>
-                </Box>
-                
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Domicile
-                  </Typography>
-                  <Typography variant="body1">
-                    {fund.domicile || 'N/A'}
-                  </Typography>
-                </Box>
-                
-                {fund.currency && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Currency
-                    </Typography>
-                    <Typography variant="body1">
-                      {fund.currency}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* KPI Row */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', mb: '32px' }}>
+        <KpiCard
+          label="1-Year Return"
+          value={fmtPct(perf.return1yr)}
+          valueColor={valColor(perf.return1yr)}
+          delay={80}
+        />
+        <KpiCard
+          label="3-Year Annualized"
+          value={fmtPct(perf.return3yr)}
+          valueColor={valColor(perf.return3yr)}
+          delay={140}
+        />
+        <KpiCard
+          label="MER"
+          value={fees.mer != null ? `${Number(fees.mer).toFixed(2)}%` : '—'}
+          delay={200}
+        />
+        <KpiCard
+          label="Morningstar Rating"
+          value={<StarRating rating={ratings.ratingoverall} size="small" />}
+          delay={260}
+        />
+        <KpiCard
+          label="Net Assets"
+          value={assets.fundnetassets != null ? `$${(Number(assets.fundnetassets) / 1e6).toFixed(0)}M` : '—'}
+          delay={320}
+        />
+      </Box>
 
-        {/* Fees and Costs Section */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Fees and Costs
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Management Expense Ratio (MER)
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {fund.mer ? formatPercentage(fund.mer) : 'N/A'}
-                  </Typography>
-                </Box>
-                
-                {fund.frontLoad !== undefined && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Front-End Load
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatPercentage(fund.frontLoad)}
-                    </Typography>
-                  </Box>
-                )}
-                
-                {fund.backLoad !== undefined && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Back-End Load
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatPercentage(fund.backLoad)}
-                    </Typography>
-                  </Box>
-                )}
-                
-                {fund.transactionFee !== undefined && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Transaction Fee
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatPercentage(fund.transactionFee)}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Domain Tabs */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: '4px',
+          mb: '24px',
+          borderBottom: '1px solid var(--border)',
+          pb: 0,
+        }}
+      >
+        {TABS.map((tab) => (
+          <Box
+            key={tab.key}
+            component="button"
+            onClick={() => setActiveTab(tab.key)}
+            sx={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              fontWeight: 500,
+              color: activeTab === tab.key ? 'var(--emerald)' : 'var(--text-3)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '10px 18px',
+              borderBottom: activeTab === tab.key ? '2px solid var(--emerald)' : '2px solid transparent',
+              mb: '-1px',
+              transition: 'all var(--transition)',
+              '&:hover': { color: activeTab === tab.key ? 'var(--emerald)' : 'var(--text-2)' },
+            }}
+          >
+            {tab.label}
+          </Box>
+        ))}
+      </Box>
 
-        {/* Portfolio Managers Section */}
-        {fund.managers && fund.managers.length > 0 && (
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Portfolio Managers
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {fund.managers.map((manager, index) => (
-                    <Box key={index}>
-                      <Typography variant="body1" fontWeight="medium">
-                        {manager.name || 'N/A'}
-                      </Typography>
-                      {manager.tenure !== undefined && (
-                        <Typography variant="caption" color="text.secondary">
-                          Tenure: {manager.tenure} years
-                        </Typography>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Performance Section */}
-        {fund.performance && (
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Performance
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {fund.performance.ytd !== undefined && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Year-to-Date (YTD)
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatPercentage(fund.performance.ytd)}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {fund.performance.oneYear !== undefined && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        1 Year
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatPercentage(fund.performance.oneYear)}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {fund.performance.threeYear !== undefined && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        3 Year
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatPercentage(fund.performance.threeYear)}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {fund.performance.fiveYear !== undefined && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        5 Year
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatPercentage(fund.performance.fiveYear)}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Ranking Section */}
-        {(fund.rank !== undefined || fund.totalInCategory !== undefined) && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Category Ranking
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {fund.rank !== undefined && (
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Rank
-                      </Typography>
-                      <Typography variant="h5" color="primary">
-                        #{fund.rank}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {fund.totalInCategory !== undefined && (
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Total in Category
-                      </Typography>
-                      <Typography variant="h5">
-                        {fund.totalInCategory}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
+      {/* Tab Content */}
+      <Box sx={{ animation: 'fadeIn 300ms ease' }} key={activeTab}>
+        {renderTabContent()}
+      </Box>
     </Box>
+  );
+};
+
+/* ── Sub-components ─────────────────────── */
+
+const BackLink = ({ onClick }) => (
+  <Box
+    component="button"
+    onClick={onClick}
+    sx={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '13px',
+      color: 'var(--text-3)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      mb: '24px',
+      padding: 0,
+      transition: 'color var(--transition)',
+      '&:hover': { color: 'var(--emerald)' },
+    }}
+  >
+    &#8592; Back to Explorer
+  </Box>
+);
+
+const FundBadge = ({ type }) => {
+  if (!type) return null;
+  return (
+    <Box
+      component="span"
+      sx={{
+        fontSize: '10px',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        padding: '3px 8px',
+        borderRadius: '4px',
+        color: 'var(--text-3)',
+        background: 'rgba(100, 116, 139, 0.12)',
+      }}
+    >
+      {type}
+    </Box>
+  );
+};
+
+const Separator = () => <span style={{ color: 'var(--text-4)' }}>&middot;</span>;
+
+/* ── Tab panels ─────────────────────────── */
+
+const PerformanceTab = ({ perf, rankings, fmtPct, valColor }) => {
+  const horizons = [
+    { label: 'YTD', key: 'returnytd' },
+    { label: '1 Year', key: 'return1yr' },
+    { label: '3 Year', key: 'return3yr' },
+    { label: '5 Year', key: 'return5yr' },
+    { label: '10 Year', key: 'return10yr' },
+    { label: 'Inception', key: 'returnsinceinception' },
+  ];
+
+  const maxAbs = horizons.reduce((max, h) => {
+    const v = Math.abs(Number(perf[h.key]) || 0);
+    return v > max ? v : max;
+  }, 1);
+
+  return (
+    <DomainGrid>
+      <DomainCard title="Return by Time Horizon" fullWidth>
+        <Box>
+          {horizons.map((h) => {
+            const val = Number(perf[h.key]) || 0;
+            return (
+              <PerfBar
+                key={h.key}
+                label={h.label}
+                value={fmtPct(perf[h.key])}
+                percentage={(Math.abs(val) / maxAbs) * 80}
+              />
+            );
+          })}
+        </Box>
+      </DomainCard>
+      <DomainCard title="Category Rank (Percentile)">
+        <MetricRow label="1 Year" value={rankings.rank1yr != null ? rankings.rank1yr : '—'} />
+        <MetricRow label="3 Year" value={rankings.rank3yr != null ? rankings.rank3yr : '—'} />
+        <MetricRow label="5 Year" value={rankings.rank5yr != null ? rankings.rank5yr : '—'} />
+      </DomainCard>
+      <DomainCard title="Cumulative Returns">
+        <MetricRow label="2 Year" value={fmtPct(perf.cumulativereturn2yr)} valueColor={valColor(perf.cumulativereturn2yr)} />
+        <MetricRow label="3 Year" value={fmtPct(perf.cumulativereturn3yr)} valueColor={valColor(perf.cumulativereturn3yr)} />
+        <MetricRow label="5 Year" value={fmtPct(perf.cumulativereturn5yr)} valueColor={valColor(perf.cumulativereturn5yr)} />
+        <MetricRow label="10 Year" value={fmtPct(perf.cumulativereturn10yr)} valueColor={valColor(perf.cumulativereturn10yr)} />
+        <MetricRow label="Since Inception" value={fmtPct(perf.cumulativereturnsinceinception)} valueColor={valColor(perf.cumulativereturnsinceinception)} />
+      </DomainCard>
+    </DomainGrid>
+  );
+};
+
+const FeesTab = ({ fees, fmtPct }) => (
+  <DomainGrid>
+    <DomainCard title="Fee Breakdown">
+      <MetricRow label="Management Expense Ratio (MER)" value={fmtPct(fees.mer)} />
+      <MetricRow label="Net Expense Ratio" value={fmtPct(fees.netexpenseratio)} />
+      <MetricRow label="Gross Expense Ratio" value={fmtPct(fees.grossexpenseratio)} />
+      <MetricRow label="Management Fee" value={fmtPct(fees.actualmanagementfee)} />
+      <MetricRow label="Trading Expense Ratio (TER)" value={fmtPct(fees.tradingexpenseratio)} />
+      <MetricRow label="Performance Fee" value={fees.performancefee != null ? fmtPct(fees.performancefee) : '—'} />
+    </DomainCard>
+    <DomainCard title="Other Fees">
+      <MetricRow label="Administration Fee" value={fmtPct(fees.administrationfee)} />
+      <MetricRow label="Trustee Fee" value={fmtPct(fees.trusteefee)} />
+      <MetricRow label="Transaction Fee" value={fmtPct(fees.transactionfee)} />
+      <MetricRow label="Switching Fee" value={fmtPct(fees.switchingfee)} />
+      <MetricRow label="Fee Level" value={fees.feelevel || '—'} />
+    </DomainCard>
+  </DomainGrid>
+);
+
+const RatingsTab = ({ ratings }) => (
+  <DomainGrid>
+    <DomainCard title="Morningstar Star Ratings">
+      <Box sx={{ mb: '12px' }}>
+        <StarRating rating={ratings.ratingoverall} size="large" />
+      </Box>
+      <MetricRow label="Overall Rating" value={ratings.ratingoverall ? `${ratings.ratingoverall} Stars` : '—'} valueColor="var(--amber)" />
+      <MetricRow label="3-Year Rating" value={ratings.rating3year ? `${ratings.rating3year} Stars` : '—'} valueColor="var(--amber)" />
+      <MetricRow label="5-Year Rating" value={ratings.rating5year ? `${ratings.rating5year} Stars` : '—'} valueColor="var(--amber)" />
+      <MetricRow label="10-Year Rating" value={ratings.rating10year ? `${ratings.rating10year} Stars` : '—'} valueColor="var(--amber)" />
+    </DomainCard>
+    <DomainCard title="Risk-Adjusted Performance">
+      <MetricRow label="Return (Overall)" value={ratings.returnoverall != null ? Number(ratings.returnoverall).toFixed(2) : '—'} />
+      <MetricRow label="Risk (Overall)" value={ratings.riskoverall != null ? Number(ratings.riskoverall).toFixed(2) : '—'} />
+      <MetricRow label="Performance Score (3Y)" value={ratings.performancescore3yr != null ? Number(ratings.performancescore3yr).toFixed(2) : '—'} />
+      <MetricRow label="Risk Score (3Y)" value={ratings.riskscore3yr != null ? Number(ratings.riskscore3yr).toFixed(2) : '—'} />
+    </DomainCard>
+  </DomainGrid>
+);
+
+const RiskTab = ({ risk, fmtPct, fmtPlain, valColor }) => (
+  <DomainGrid>
+    <DomainCard title="Risk Metrics (3-Year)">
+      <MetricRow label="Standard Deviation" value={fmtPct(risk.stddev3yr)} />
+      <MetricRow label="Sharpe Ratio" value={fmtPlain(risk.sharperatio3yr)} valueColor={valColor(risk.sharperatio3yr)} />
+      <MetricRow label="Beta" value={fmtPlain(risk.beta3yr)} />
+      <MetricRow label="Alpha" value={fmtPlain(risk.alpha3yr)} valueColor={valColor(risk.alpha3yr)} />
+      <MetricRow label="R-Squared" value={fmtPlain(risk.rsquared3yr)} />
+      <MetricRow label="Information Ratio" value={fmtPlain(risk.informationratio3yr)} valueColor={valColor(risk.informationratio3yr)} />
+    </DomainCard>
+    <DomainCard title="Drawdown & Capture">
+      <MetricRow label="Max Drawdown (3Y)" value={fmtPct(risk.maxdrawdown3yr)} valueColor={valColor(risk.maxdrawdown3yr)} />
+      <MetricRow label="Upside Capture" value={fmtPct(risk.captureratioupside3yr)} valueColor="var(--emerald)" />
+      <MetricRow label="Downside Capture" value={fmtPct(risk.captureratiodownside3yr)} />
+    </DomainCard>
+  </DomainGrid>
+);
+
+const FlowsTab = ({ flows }) => {
+  const fmtMoney = (v) => {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    const abs = Math.abs(n);
+    const sign = n >= 0 ? '+' : '-';
+    if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
+    return `${sign}$${abs.toLocaleString()}`;
+  };
+
+  return (
+    <DomainGrid>
+      <DomainCard title="Fund-Level Net Flows">
+        <MetricRow label="Net Flows (1M)" value={fmtMoney(flows.estfundlevelnetflow1momoend)} valueColor={Number(flows.estfundlevelnetflow1momoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow label="Net Flows (3M)" value={fmtMoney(flows.estfundlevelnetflow3momoend)} valueColor={Number(flows.estfundlevelnetflow3momoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow label="Net Flows (1Y)" value={fmtMoney(flows.estfundlevelnetflow1yrmoend)} valueColor={Number(flows.estfundlevelnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow label="Net Flows (YTD)" value={fmtMoney(flows.estfundlevelnetflowytdmoend)} valueColor={Number(flows.estfundlevelnetflowytdmoend) > 0 ? 'var(--emerald)' : undefined} />
+      </DomainCard>
+      <DomainCard title="Share Class Net Flows">
+        <MetricRow label="Net Flows (1M)" value={fmtMoney(flows.estshareclassnetflow1momoend)} valueColor={Number(flows.estshareclassnetflow1momoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow label="Net Flows (3M)" value={fmtMoney(flows.estshareclassnetflow3momoend)} valueColor={Number(flows.estshareclassnetflow3momoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow label="Net Flows (1Y)" value={fmtMoney(flows.estshareclassnetflow1yrmoend)} valueColor={Number(flows.estshareclassnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined} />
+      </DomainCard>
+    </DomainGrid>
+  );
+};
+
+const AssetsTab = ({ assets }) => {
+  const fmtAssets = (v) => {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
+    return `$${n.toLocaleString()}`;
+  };
+
+  return (
+    <DomainGrid>
+      <DomainCard title="Asset Data">
+        <MetricRow label="Fund Net Assets" value={fmtAssets(assets.fundnetassets)} />
+        <MetricRow label="Normalized Net Assets" value={fmtAssets(assets.normalizedfundnetassets)} />
+        <MetricRow label="Surveyed Net Assets" value={fmtAssets(assets.surveyedfundnetassets)} />
+        <MetricRow label="As-Of Date" value={assets.netassetsdate || '—'} />
+      </DomainCard>
+    </DomainGrid>
+  );
+};
+
+const BasicInfoTab = ({ fund, basicInfo }) => {
+  const info = { ...fund, ...basicInfo };
+  return (
+    <DomainGrid>
+      <DomainCard title="Fund Identification">
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 32px' }}>
+          <MetricRow label="Legal Name" value={info.legalname || info.fundname || '—'} useBodyFont />
+          <MetricRow label="Fund Family" value={info.providercompanyname || '—'} useBodyFont />
+          <MetricRow label="Morningstar Category" value={info.categoryname || info.globalcategoryname || '—'} useBodyFont />
+          <MetricRow label="Fund Type" value={info.securitytype || info.legalstructure || '—'} useBodyFont />
+          <MetricRow label="Inception Date" value={info.inceptiondate ? new Date(info.inceptiondate).toLocaleDateString('en-CA') : '—'} />
+          <MetricRow label="Currency" value={info.currency || '—'} />
+          <MetricRow label="Domicile" value={info.domicile || '—'} useBodyFont />
+          <MetricRow label="Broad Asset Class" value={info.broadassetclass || '—'} useBodyFont />
+        </Box>
+      </DomainCard>
+    </DomainGrid>
   );
 };
 

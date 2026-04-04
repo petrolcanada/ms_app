@@ -11,25 +11,25 @@ import { fundService } from '../services/api';
  * @param {string} options.category - Filter by fund category
  * @returns {Object} React Query result with funds data, pagination, loading, and error states
  */
-export const useFunds = ({ page = 1, limit = 20, search = '', type = '', category = '' } = {}) => {
+export const useFunds = ({ page = 1, limit = 20, search = '', type = '', category = '', asofDate = '' } = {}) => {
   return useQuery({
-    queryKey: ['funds', { page, limit, search, type, category }],
+    queryKey: ['funds', { page, limit, search, type, category, asofDate }],
     queryFn: async () => {
       const params = {
         page,
         limit,
       };
       
-      // Only add optional parameters if they have values
       if (search) params.search = search;
       if (type) params.type = type;
       if (category) params.category = category;
+      if (asofDate) params.asofDate = asofDate;
       
       const response = await fundService.getAllFunds(params);
       return response.data;
     },
-    placeholderData: keepPreviousData, // Keep previous data while fetching new page (React Query v5)
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
   });
 };
 

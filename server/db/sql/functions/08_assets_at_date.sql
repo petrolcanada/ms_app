@@ -2,8 +2,8 @@
 -- Function: Get Net Assets at Specific Date
 -- =====================================================
 -- Table: fund_level_net_assets_ca_openend
--- Date Sensitivity: netassetsdate (time-series) + temporal tracking
--- Pattern: last record netassetsdate<=asofdate per _ID
+-- Date Sensitivity: monthenddate (resampled to month-end grid)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This is a TIME-SERIES table with periodic asset data
 -- =====================================================
 
@@ -38,9 +38,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get net assets data where netassetsdate <= asofdate
-  -- Pattern: last record netassetsdate<=asofdate per _ID
-  SELECT DISTINCT ON (a._id)
+  SELECT
     -- Core Identifiers
     a._id,
     a._idtype,
@@ -65,9 +63,7 @@ AS $$
     a.status_message
   FROM ms.fund_level_net_assets_ca_openend a
   WHERE a._id = ANY(p_fund_ids)
-    -- Last record where netassetsdate <= asofdate
-    AND a.netassetsdate <= p_asof_date::TEXT
-  ORDER BY a._id, a.netassetsdate DESC;
+    AND a.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================
@@ -91,7 +87,6 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get ALL asset data points within the date range
   SELECT 
     a._id,
     a._name,
@@ -101,13 +96,9 @@ AS $$
     a.surveyedfundnetassets::NUMERIC
   FROM ms.fund_level_net_assets_ca_openend a
   WHERE a._id = p_fund_id
-    -- Time-series filtering: get all data points in range
-    AND a.netassetsdate >= p_start_date::TEXT
-    AND a.netassetsdate <= p_end_date::TEXT
-    -- Temporal filtering: use version valid at end date
-    AND a._timestampfrom <= p_end_date
-    AND p_end_date <= a.data_inserted_at
-  ORDER BY a.netassetsdate ASC;
+    AND a.monthenddate >= p_start_date::TEXT
+    AND a.monthenddate <= p_end_date::TEXT
+  ORDER BY a.monthenddate ASC;
 $$;
 
 -- =====================================================

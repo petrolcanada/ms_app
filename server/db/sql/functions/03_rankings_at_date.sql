@@ -2,8 +2,8 @@
 -- Function: Get Performance Rankings at Specific Date
 -- =====================================================
 -- Table: month_end_trailing_total_return_percentile_and_absolute_ranks_c
--- Date Sensitivity: monthenddate (time-series) + temporal tracking
--- Pattern: exactly monthenddate=asofdate, last record per _ID based on _timestampfrom
+-- Date Sensitivity: monthenddate (time-series)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This is a TIME-SERIES table with monthly ranking data
 -- =====================================================
 
@@ -223,9 +223,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get ranking data where monthenddate EXACTLY matches asofdate
-  -- Pattern: exactly monthenddate=asofdate, last record per _ID based on _timestampfrom
-  SELECT DISTINCT ON (r._id)
+  SELECT
     -- Core Identifiers
     r._id,
     r._idtype,
@@ -435,10 +433,7 @@ AS $$
     r.status_message
   FROM ms.month_end_trailing_total_return_percentile_and_absolute_ranks_c r
   WHERE r._id = ANY(p_fund_ids)
-    -- Exact match: monthenddate = asofdate
-    AND r.monthenddate = p_asof_date::TEXT
-  -- Get the last record based on _timestampfrom
-  ORDER BY r._id, r._timestampfrom DESC;
+    AND r.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================

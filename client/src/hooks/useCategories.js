@@ -28,8 +28,8 @@ export const useCategories = () => {
       const response = await api.get('/api/categories');
       return response.data.data;
     },
-    staleTime: Infinity, // Categories don't change frequently
-    cacheTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60,
     retry: 1, // Only retry once on failure
     onError: (error) => {
       console.error('Failed to fetch categories:', error);

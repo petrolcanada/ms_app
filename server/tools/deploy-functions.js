@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('../db/config/db');
+const { pool } = require('../config/db');
 
 const FUNCTIONS_DIR = path.join(__dirname, '../db/sql/functions');
 
@@ -22,7 +22,8 @@ const FUNCTION_FILES = [
   '05_fees_at_date.sql',
   '06_risk_at_date.sql',
   '07_flows_at_date.sql',
-  '08_assets_at_date.sql'
+  '08_assets_at_date.sql',
+  '09_screener_at_date.sql',
 ];
 
 const onlyIndex = process.argv.indexOf('--only');

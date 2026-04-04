@@ -2,8 +2,8 @@
 -- Function: Get Morningstar Ratings at Specific Date
 -- =====================================================
 -- Table: morningstar_rating_ca_openend
--- Date Sensitivity: ratingdate (time-series) + temporal tracking
--- Pattern: exactly ratingdate=asofdate, last record per _ID based on _timestampfrom
+-- Date Sensitivity: ratingdate (time-series)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- This is a TIME-SERIES table with periodic rating updates
 -- =====================================================
 
@@ -18,23 +18,23 @@ RETURNS TABLE (
   _name TEXT,
   ratingdate TEXT,
   
-  -- Star Ratings (1-5 stars)
-  rating3year INTEGER,
-  rating5year INTEGER,
-  rating10year INTEGER,
-  ratingoverall INTEGER,
+  -- Star Ratings (1-5 stars, stored as decimals in some records)
+  rating3year NUMERIC,
+  rating5year NUMERIC,
+  rating10year NUMERIC,
+  ratingoverall NUMERIC,
   
-  -- Returns
-  return3year NUMERIC,
-  return5year NUMERIC,
-  return10year NUMERIC,
-  returnoverall NUMERIC,
+  -- Returns (verbal: High / Above Average / Average / Below Average / Low)
+  return3year TEXT,
+  return5year TEXT,
+  return10year TEXT,
+  returnoverall TEXT,
   
-  -- Risk Measures
-  risk3year NUMERIC,
-  risk5year NUMERIC,
-  risk10year NUMERIC,
-  riskoverall NUMERIC,
+  -- Risk Measures (verbal: High / Above Average / Average / Below Average / Low)
+  risk3year TEXT,
+  risk5year TEXT,
+  risk10year TEXT,
+  riskoverall TEXT,
   
   -- Risk-Adjusted Returns
   riskadjustedreturn3yr NUMERIC,
@@ -55,25 +55,25 @@ RETURNS TABLE (
   riskscoreoverall NUMERIC,
   
   -- Category Context
-  numberoffunds3year INTEGER,
-  numberoffunds5year INTEGER,
-  numberoffunds10year INTEGER,
-  numberoffundsoverall INTEGER,
+  numberoffunds3year NUMERIC,
+  numberoffunds5year NUMERIC,
+  numberoffunds10year NUMERIC,
+  numberoffundsoverall NUMERIC,
   
   -- Performance Category Ranks
-  perfcatrank3year INTEGER,
-  perfcatrank5year INTEGER,
-  perfcatrank10year INTEGER,
+  perfcatrank3year NUMERIC,
+  perfcatrank5year NUMERIC,
+  perfcatrank10year NUMERIC,
   
   -- Risk Category Ranks
-  riskcatrank3year INTEGER,
-  riskcatrank5year INTEGER,
-  riskcatrank10year INTEGER,
+  riskcatrank3year NUMERIC,
+  riskcatrank5year NUMERIC,
+  riskcatrank10year NUMERIC,
   
   -- Rating Category Ranks
-  ratingcatrank3year INTEGER,
-  ratingcatrank5year INTEGER,
-  ratingcatrank10year INTEGER,
+  ratingcatrank3year NUMERIC,
+  ratingcatrank5year NUMERIC,
+  ratingcatrank10year NUMERIC,
   
   -- Metadata
   status_code NUMERIC,
@@ -82,9 +82,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get rating data where ratingdate EXACTLY matches asofdate
-  -- Pattern: exactly ratingdate=asofdate, last record per _ID based on _timestampfrom
-  SELECT DISTINCT ON (m._id)
+  SELECT
     -- Core Identifiers
     m._id,
     m._idtype,
@@ -92,22 +90,22 @@ AS $$
     m.ratingdate,
     
     -- Star Ratings
-    m.rating3year::INTEGER,
-    m.rating5year::INTEGER,
-    m.rating10year::INTEGER,
-    m.ratingoverall::INTEGER,
+    m.rating3year::NUMERIC,
+    m.rating5year::NUMERIC,
+    m.rating10year::NUMERIC,
+    m.ratingoverall::NUMERIC,
     
-    -- Returns
-    m.return3year::NUMERIC,
-    m.return5year::NUMERIC,
-    m.return10year::NUMERIC,
-    m.returnoverall::NUMERIC,
+    -- Returns (verbal descriptors)
+    m.return3year::TEXT,
+    m.return5year::TEXT,
+    m.return10year::TEXT,
+    m.returnoverall::TEXT,
     
-    -- Risk Measures
-    m.risk3year::NUMERIC,
-    m.risk5year::NUMERIC,
-    m.risk10year::NUMERIC,
-    m.riskoverall::NUMERIC,
+    -- Risk Measures (verbal descriptors)
+    m.risk3year::TEXT,
+    m.risk5year::TEXT,
+    m.risk10year::TEXT,
+    m.riskoverall::TEXT,
     
     -- Risk-Adjusted Returns
     m.riskadjustedreturn3yr::NUMERIC,
@@ -128,35 +126,32 @@ AS $$
     m.riskscoreoverall::NUMERIC,
     
     -- Category Context
-    m.numberoffunds3year::INTEGER,
-    m.numberoffunds5year::INTEGER,
-    m.numberoffunds10year::INTEGER,
-    m.numberoffundsoverall::INTEGER,
+    m.numberoffunds3year::NUMERIC,
+    m.numberoffunds5year::NUMERIC,
+    m.numberoffunds10year::NUMERIC,
+    m.numberoffundsoverall::NUMERIC,
     
     -- Performance Category Ranks
-    m.perfcatrank3year::INTEGER,
-    m.perfcatrank5year::INTEGER,
-    m.perfcatrank10year::INTEGER,
+    m.perfcatrank3year::NUMERIC,
+    m.perfcatrank5year::NUMERIC,
+    m.perfcatrank10year::NUMERIC,
     
     -- Risk Category Ranks
-    m.riskcatrank3year::INTEGER,
-    m.riskcatrank5year::INTEGER,
-    m.riskcatrank10year::INTEGER,
+    m.riskcatrank3year::NUMERIC,
+    m.riskcatrank5year::NUMERIC,
+    m.riskcatrank10year::NUMERIC,
     
     -- Rating Category Ranks
-    m.ratingcatrank3year::INTEGER,
-    m.ratingcatrank5year::INTEGER,
-    m.ratingcatrank10year::INTEGER,
+    m.ratingcatrank3year::NUMERIC,
+    m.ratingcatrank5year::NUMERIC,
+    m.ratingcatrank10year::NUMERIC,
     
     -- Metadata
     m.status_code,
     m.status_message
   FROM ms.morningstar_rating_ca_openend m
   WHERE m._id = ANY(p_fund_ids)
-    -- Exact match: ratingdate = asofdate
-    AND m.ratingdate = p_asof_date::TEXT
-  -- Get the last record based on _timestampfrom
-  ORDER BY m._id, m._timestampfrom DESC;
+    AND m.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- =====================================================

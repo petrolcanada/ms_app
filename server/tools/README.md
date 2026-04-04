@@ -30,7 +30,7 @@ npm run export-schema
 
 ### Environment Variables
 
-The script uses your existing database configuration from `server/db/config/db.js`, which reads these environment variables from your `.env` file:
+The script uses your existing database configuration from `server/config/db.js`, which reads these environment variables from your `.env` file:
 
 ```bash
 POSTGRES_HOST=localhost        # Database host
@@ -153,11 +153,13 @@ node tools/deploy-functions.js
 
 ## Other Scripts
 
-### inspectTable.js
-Inspect a specific table's structure and sample data.
+### tableMetadata.js
+Inspect a specific table's structure: columns, data types, primary keys, and indexes.
 
-### scanMsSchema.js
-Scan the entire 'ms' schema for analysis.
+```bash
+cd server
+npm run inspect-table
+```
 
 ---
 

@@ -2,8 +2,8 @@
 -- Function: Get Risk Metrics at Specific Date
 -- =====================================================
 -- Tables: risk_measure_ca_openend, relative_risk_measure_prospectus_ca_openend
--- Date Sensitivity: enddate (time-series) + temporal tracking
--- This function combines absolute and relative risk measures
+-- All resampled to month-end grid via monthenddate (= enddate)
+-- Pattern: exact monthenddate match — one row per (_ID, monthenddate)
 -- =====================================================
 
 -- Absolute Risk Measures
@@ -42,9 +42,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get risk measures where enddate EXACTLY matches asofdate
-  -- Pattern: exactly enddate=asofdate, last record per _ID based on _timestampfrom
-  SELECT DISTINCT ON (r._id)
+  SELECT
     r._id,
     r.enddate,
     -- Standard Deviation
@@ -73,10 +71,7 @@ AS $$
     r.sharperatio10yr::NUMERIC
   FROM ms.risk_measure_ca_openend r
   WHERE r._id = ANY(p_fund_ids)
-    -- Exact match: enddate = asofdate
-    AND r.enddate = p_asof_date::TEXT
-  -- Get the last record based on _timestampfrom
-  ORDER BY r._id, r._timestampfrom DESC;
+    AND r.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- Relative Risk Measures (vs Benchmark)
@@ -125,9 +120,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 AS $$
-  -- Get relative risk measures where enddate EXACTLY matches asofdate
-  -- Pattern: exactly enddate=asofdate, last record per _ID based on _timestampfrom
-  SELECT DISTINCT ON (rr._id)
+  SELECT
     rr._id,
     rr.enddate,
     rr.indexname,
@@ -166,10 +159,7 @@ AS $$
     rr.informationratio10yr::NUMERIC
   FROM ms.relative_risk_measure_prospectus_ca_openend rr
   WHERE rr._id = ANY(p_fund_ids)
-    -- Exact match: enddate = asofdate
-    AND rr.enddate = p_asof_date::TEXT
-  -- Get the last record based on _timestampfrom
-  ORDER BY rr._id, rr._timestampfrom DESC;
+    AND rr.monthenddate = p_asof_date::TEXT;
 $$;
 
 -- Combined Risk Function (all risk data in one call)

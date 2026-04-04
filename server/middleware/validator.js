@@ -118,16 +118,15 @@ const validateFundIdsBody = (req, res, next) => {
 };
 
 /**
- * Validate asofDate in request body
- * Ensures asofDate is provided and is a valid date
+ * Validate asofDate in request body.
+ * If omitted, the service layer auto-discovers the latest monthenddate from the DB.
+ * If provided, validates it is a well-formed YYYY-MM-DD date.
  */
 const validateAsofDateBody = (req, res, next) => {
   const { asofDate } = req.body;
   
   if (!asofDate) {
-    const error = new AppError('asofDate is required (YYYY-MM-DD)', 400);
-    error.details = 'Missing asofDate';
-    return next(error);
+    return next();
   }
   
   if (typeof asofDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(asofDate)) {
@@ -173,6 +172,7 @@ const validateDomainsBody = (req, res, next) => {
   const allowed = new Set([
     'basicInfo',
     'performance',
+    'rankings',
     'fees',
     'ratings',
     'risk',
@@ -181,11 +181,46 @@ const validateDomainsBody = (req, res, next) => {
   ]);
   const invalid = domains.find(domain => !allowed.has(domain));
   if (invalid) {
-    const error = new AppError('domains must include only basicInfo, performance, fees, ratings, risk, flows, or assets', 400);
+    const error = new AppError('domains must include only basicInfo, performance, rankings, fees, ratings, risk, flows, or assets', 400);
     error.details = 'Invalid domains';
     return next(error);
   }
   
+  next();
+};
+
+const validateAsofDateQuery = (req, res, next) => {
+  const { asofDate } = req.query;
+
+  if (!asofDate) {
+    return next();
+  }
+
+  if (typeof asofDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(asofDate)) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+
+  const parsed = new Date(`${asofDate}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+
+  const [year, month, day] = asofDate.split('-').map(Number);
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() + 1 !== month ||
+    parsed.getUTCDate() !== day
+  ) {
+    const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
+    error.details = 'Invalid asofDate';
+    return next(error);
+  }
+
+  req.asofDate = asofDate;
   next();
 };
 
@@ -195,5 +230,6 @@ module.exports = {
   validateFundId,
   validateFundIdsBody,
   validateAsofDateBody,
+  validateAsofDateQuery,
   validateDomainsBody,
 };
