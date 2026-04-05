@@ -11,13 +11,10 @@ const listFunds = async ({ page = 1, limit = 20, search = '', type = '', categor
 
   return {
     data: result.rows,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+    meta: {
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      ...(asofDate ? { asofDate } : {}),
     },
-    ...(asofDate ? { asofDate } : {}),
   };
 };
 

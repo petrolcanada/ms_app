@@ -2,12 +2,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import useWatchlist from '../hooks/useWatchlist';
+import { useAuth } from '../context/AuthContext';
+import UpgradePrompt from './UpgradePrompt';
 
 const Watchlist = () => {
   const navigate = useNavigate();
-  const { items, remove, clear } = useWatchlist();
+  const { user } = useAuth();
+  const { items, remove, clear } = useWatchlist(user);
 
   const sortedItems = [...items].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+  const FREE_LIMIT = 5;
+  const atLimit = user?.plan !== 'pro' && items.length >= FREE_LIMIT;
 
   return (
     <Box>
@@ -148,6 +153,12 @@ const Watchlist = () => {
               ))}
             </Box>
           </Box>
+        </Box>
+      )}
+
+      {atLimit && (
+        <Box sx={{ mt: '20px' }}>
+          <UpgradePrompt feature="watchlist slots" limit={FREE_LIMIT} compact />
         </Box>
       )}
     </Box>

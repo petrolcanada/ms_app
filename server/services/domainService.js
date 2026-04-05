@@ -31,7 +31,7 @@ const resolveAsofDate = async (asofDate) => {
 const fetchSingleDomain = async (domainKey, fundIds, asofDate) => {
   const effectiveDate = await resolveAsofDate(asofDate);
   const rows = await queryDomain(domainKey, fundIds, effectiveDate);
-  return { asofDate: effectiveDate, funds: rows };
+  return { data: rows, meta: { asofDate: effectiveDate } };
 };
 
 const fetchMultipleDomains = async (domainKeys, fundIds, asofDate) => {
@@ -43,7 +43,7 @@ const fetchMultipleDomains = async (domainKeys, fundIds, asofDate) => {
     funds = mergeDomainRows(domainRows);
   }
 
-  return { asofDate: effectiveDate, funds };
+  return { data: funds, meta: { asofDate: effectiveDate } };
 };
 
 const fetchAvailableDates = async () => {

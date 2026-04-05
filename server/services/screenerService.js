@@ -14,7 +14,7 @@ const getScreenerData = async ({ category, type, asofDate }) => {
   }
 
   const rows = await queryScreener({ category, type, asofDate });
-  const value = { data: rows, total: rows.length };
+  const value = { data: rows, meta: { total: rows.length } };
 
   cache.set(key, { value, ts: Date.now() });
 

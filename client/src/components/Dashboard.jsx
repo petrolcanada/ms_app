@@ -6,6 +6,8 @@ import useDashboard from '../hooks/useDashboard';
 import useAvailableDates from '../hooks/useAvailableDates';
 import StatCard from './StatCard';
 import StarRating from './StarRating';
+import SEO from './SEO';
+import OnboardingTour from './OnboardingTour';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -60,6 +62,8 @@ const Dashboard = () => {
 
   return (
     <Box>
+      <SEO title="Dashboard" path="/dashboard" noIndex />
+      <OnboardingTour />
       {/* Header */}
       <Box sx={{ mb: '32px' }}>
         <Box component="h1" sx={{
@@ -77,7 +81,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Stats */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', mb: '32px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '16px', mb: '32px' }}>
         <StatCard
           label="Total Funds"
           value={stats?.total_funds ? Number(stats.total_funds).toLocaleString() : '—'}
@@ -98,7 +102,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Quick Links */}
-      <Box sx={{ display: 'flex', gap: '12px', mb: '32px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '12px', mb: '32px' }}>
         <QuickLink label="Fund Explorer" sub="Browse all funds" onClick={() => navigate('/explorer')} />
         <QuickLink label="Screener" sub="Rank and filter" onClick={() => navigate('/screener')} />
         <QuickLink label="Watchlist" sub="Your saved funds" onClick={() => navigate('/watchlist')} />
@@ -136,7 +140,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Flows */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '20px' }}>
         <SectionCard title="Largest Inflows (1M)">
           {inflows.map((fund, i) => (
             <FundRow

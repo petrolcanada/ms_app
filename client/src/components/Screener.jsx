@@ -7,6 +7,7 @@ import useCategories from '../hooks/useCategories';
 import useAvailableDates from '../hooks/useAvailableDates';
 import SignalBadge from './SignalBadge';
 import StarRating from './StarRating';
+import UpgradePrompt from './UpgradePrompt';
 
 /* ── Column definitions ── */
 
@@ -120,7 +121,7 @@ const Screener = () => {
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
 
-  const { data, totalFunds, isLoading, isFetching, isError, error } = useScreener({
+  const { data, totalFunds, limited, planLimit, isLoading, isFetching, isError, error } = useScreener({
     category,
     type,
     asofDate,
@@ -374,7 +375,8 @@ const Screener = () => {
               </>
             )}
 
-            <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+            <Box sx={{ overflowX: 'auto' }}>
+            <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <Box component="thead">
                 <Box component="tr">
                   <TH sx={{ width: '50px' }}>#</TH>
@@ -513,6 +515,7 @@ const Screener = () => {
               </Box>
             </Box>
 
+            </Box>
             {/* Pagination */}
             {sortedData.length > 0 && (
               <Box
@@ -534,7 +537,7 @@ const Screener = () => {
                   funds
                 </Box>
                 <Box sx={{ display: 'flex', gap: '4px' }}>
-                  <PageBtn onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+                  <PageBtn aria-label="Previous page" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
                     &#8249;
                   </PageBtn>
                   {pageNumbers.map((p, i) =>
@@ -548,7 +551,7 @@ const Screener = () => {
                       </PageBtn>
                     ),
                   )}
-                  <PageBtn onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>
+                  <PageBtn aria-label="Next page" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>
                     &#8250;
                   </PageBtn>
                 </Box>
@@ -570,6 +573,12 @@ const Screener = () => {
             <LegendItem color="var(--amber)" opacity={0.4} label="Below Average" />
             <LegendItem color="var(--red)" opacity={0.4} label="Bottom Quintile" />
           </Box>
+
+          {limited && (
+            <Box sx={{ mt: '20px' }}>
+              <UpgradePrompt feature="screener results" limit={planLimit} compact />
+            </Box>
+          )}
         </>
       )}
     </Box>
@@ -613,6 +622,10 @@ const thBase = {
 const TH = ({ children, numeric, sorted, onClick, sx: sxOverride }) => (
   <Box
     component="th"
+    role={onClick ? 'columnheader' : undefined}
+    aria-sort={sorted ? 'descending' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     onClick={onClick}
     sx={{
       ...thBase,

@@ -96,7 +96,7 @@ const FundList = () => {
               </PageBtn>
             )
           )}
-          <PageBtn onClick={() => setPage(page + 1)} disabled={page === totalPages || totalPages === 0}>
+          <PageBtn aria-label="Next page" onClick={() => setPage(page + 1)} disabled={page === totalPages || totalPages === 0}>
             &#8250;
           </PageBtn>
         </Box>
@@ -130,7 +130,7 @@ const FundList = () => {
       </Box>
 
       {/* Stat Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', mb: '28px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '16px', mb: '28px' }}>
         <StatCard label="Total Funds" value={pagination.total ? pagination.total.toLocaleString() : '—'} />
         <StatCard label="Avg 1-Year Return" value="—" />
         <StatCard label="Avg MER" value="—" />
@@ -138,10 +138,10 @@ const FundList = () => {
       </Box>
 
       {/* Toolbar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '20px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '20px', flexWrap: 'wrap' }}>
         <SearchBar onSearch={handleSearch} placeholder="Search by fund name, ticker, or ISIN..." />
         <FilterPanel filters={filters} onFilterChange={handleFilterChange} />
-        <Box sx={{ ml: 'auto' }}>
+        <Box sx={{ ml: { xs: 0, sm: 'auto' } }}>
           <AsOfDateSelector value={asofDate} onChange={handleDateChange} />
         </Box>
       </Box>
@@ -225,7 +225,8 @@ const FundList = () => {
             </>
           )}
 
-          <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+          <Box sx={{ overflowX: 'auto' }}>
+          <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '640px' }}>
             <Box component="thead">
               <Box component="tr">
                 {['Fund Name', 'Ticker', 'Type', 'Category', 'Inception'].map((col) => (
@@ -348,6 +349,7 @@ const FundList = () => {
             </Box>
           </Box>
 
+          </Box>
           {pagination.total > 0 && renderPagination()}
         </Box>
       )}
@@ -381,9 +383,11 @@ const TypeBadge = ({ type }) => {
   );
 };
 
-const PageBtn = ({ children, active, disabled, onClick, style }) => (
+const PageBtn = ({ children, active, disabled, onClick, style, 'aria-label': ariaLabel }) => (
   <Box
     component="button"
+    aria-label={ariaLabel}
+    aria-current={active ? 'page' : undefined}
     onClick={disabled ? undefined : onClick}
     disabled={disabled}
     sx={{

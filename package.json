@@ -1,0 +1,33 @@
+{
+  "name": "fundlens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack mutual fund and ETF analytics platform",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:server": "npm start --workspace=server",
+    "dev:client": "npm start --workspace=client",
+    "build": "npm run build --workspace=client",
+    "test": "npm test --workspace=server",
+    "lint": "npm run lint --workspace=server",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,mjs}": [
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1"
+  }
+}

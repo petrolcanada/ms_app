@@ -2,17 +2,17 @@ const { queryPerformanceHistory, queryFlowHistory, queryAssetsHistory } = requir
 
 const fetchPerformanceHistory = async (fundId, startDate, endDate) => {
   const rows = await queryPerformanceHistory(fundId, startDate, endDate);
-  return { fundId, data: rows };
+  return { data: rows, meta: { fundId } };
 };
 
 const fetchFlowHistory = async (fundId, startDate, endDate) => {
   const rows = await queryFlowHistory(fundId, startDate, endDate);
-  return { fundId, data: rows };
+  return { data: rows, meta: { fundId } };
 };
 
 const fetchAssetsHistory = async (fundId, startDate, endDate) => {
   const rows = await queryAssetsHistory(fundId, startDate, endDate);
-  return { fundId, data: rows };
+  return { data: rows, meta: { fundId } };
 };
 
 module.exports = {

@@ -1,6 +1,8 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
+import { useAuth } from '../context/AuthContext';
+import { usePageView } from '../hooks/useAnalytics';
 
 const navLinkStyle = ({ isActive }) => ({
   fontFamily: "var(--font-body)",
@@ -15,6 +17,15 @@ const navLinkStyle = ({ isActive }) => ({
 });
 
 const Layout = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  usePageView();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <>
       {/* Accent gradient line */}
@@ -43,16 +54,17 @@ const Layout = () => {
           sx={{
             maxWidth: '1400px',
             mx: 'auto',
-            px: '32px',
+            px: { xs: '16px', sm: '24px', md: '32px' },
             height: '56px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '16px', md: '40px' } }}>
             <NavLink
-              to="/"
+              to="/dashboard"
+              aria-label="FundLens home"
               style={{
                 fontFamily: "var(--font-head)",
                 fontWeight: 700,
@@ -70,7 +82,7 @@ const Layout = () => {
             </NavLink>
 
             <Box sx={{ display: 'flex', gap: '4px' }}>
-              <NavLink to="/" end style={navLinkStyle}>
+              <NavLink to="/dashboard" end style={navLinkStyle}>
                 Dashboard
               </NavLink>
               <NavLink to="/explorer" style={navLinkStyle}>
@@ -88,22 +100,90 @@ const Layout = () => {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-4)' }}>Press</span>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: '11px',
-                color: 'var(--text-4)',
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-              }}
-            >
-              /
-            </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-4)' }}>to search</span>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: '8px', mr: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-4)' }}>Press</span>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: '11px',
+                  color: 'var(--text-4)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                }}
+              >
+                /
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-4)' }}>to search</span>
+            </Box>
+
+            {user && (
+              <>
+                {user.plan === 'free' && (
+                  <NavLink
+                    to="/pricing"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--emerald)',
+                      textDecoration: 'none',
+                      padding: '4px 12px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: '1px solid rgba(16,185,129,0.2)',
+                      background: 'var(--emerald-soft)',
+                      transition: 'all var(--transition)',
+                    }}
+                  >
+                    Upgrade
+                  </NavLink>
+                )}
+                <NavLink to="/settings" style={navLinkStyle}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Box
+                      sx={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        background: 'var(--emerald-soft)',
+                        border: '1px solid rgba(16,185,129,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'var(--emerald)',
+                      }}
+                    >
+                      {(user.name || user.email || '?')[0].toUpperCase()}
+                    </Box>
+                    <Box sx={{ display: { xs: 'none', lg: 'block' }, fontSize: '12px' }}>
+                      {user.name || user.email.split('@')[0]}
+                    </Box>
+                  </Box>
+                </NavLink>
+                <Box
+                  component="button"
+                  onClick={handleLogout}
+                  sx={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '12px',
+                    color: 'var(--text-4)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    borderRadius: 'var(--radius)',
+                    transition: 'color var(--transition)',
+                    '&:hover': { color: 'var(--text-2)' },
+                  }}
+                >
+                  Log out
+                </Box>
+              </>
+            )}
           </Box>
         </Box>
       </Box>

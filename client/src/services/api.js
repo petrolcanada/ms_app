@@ -9,26 +9,21 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - can be used to add auth tokens, logging, etc.
 api.interceptors.request.use(
   (config) => {
-    // Log request for debugging (can be removed in production)
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    const token = localStorage.getItem('fundlens_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
-    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor - handle errors and transform responses
 api.interceptors.response.use(
-  (response) => {
-    // Log successful response for debugging (can be removed in production)
-    console.log(`API Response: ${response.config.url}`, response.status);
-    return response;
-  },
+  (response) => response,
   (error) => {
     // Handle different error scenarios
     if (error.response) {
@@ -150,6 +145,27 @@ export const categoryService = {
   getCategories: () => {
     return api.get('/api/categories');
   },
+};
+
+export const watchlistApiService = {
+  getAll: () => api.get('/api/watchlist'),
+  add: (item) => api.post('/api/watchlist', item),
+  remove: (fundId) => api.delete(`/api/watchlist/${fundId}`),
+  clear: () => api.delete('/api/watchlist'),
+  sync: (items) => api.post('/api/watchlist/sync', { items }),
+};
+
+export const userApiService = {
+  updateProfile: (data) => api.patch('/api/users/profile', data),
+  updatePassword: (data) => api.patch('/api/users/password', data),
+  deleteAccount: () => api.delete('/api/users'),
+  getSubscription: () => api.get('/api/users/subscription'),
+};
+
+export const checkoutService = {
+  createSession: () => api.post('/api/checkout/create-session'),
+  createPortal: () => api.post('/api/checkout/portal'),
+  getSubscription: () => api.get('/api/checkout/subscription'),
 };
 
 export default api;

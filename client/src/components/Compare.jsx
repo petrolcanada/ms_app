@@ -7,13 +7,18 @@ import { fundService } from '../services/api';
 import SearchBar from './SearchBar';
 import StarRating from './StarRating';
 import AsOfDateSelector from './AsOfDateSelector';
+import UpgradePrompt from './UpgradePrompt';
+import { useAuth } from '../context/AuthContext';
 
-const MAX_FUNDS = 4;
+const PRO_MAX_FUNDS = 4;
+const FREE_MAX_FUNDS = 2;
 
 const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets'];
 
 const Compare = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const MAX_FUNDS = user?.plan === 'pro' ? PRO_MAX_FUNDS : FREE_MAX_FUNDS;
   const [searchParams, setSearchParams] = useSearchParams();
   const initialIds = searchParams.get('ids')?.split(',').filter(Boolean) || [];
 
@@ -42,7 +47,7 @@ const Compare = () => {
       return next;
     });
     setSearchResults([]);
-  }, [setSearchParams]);
+  }, [setSearchParams, MAX_FUNDS]);
 
   const removeFund = useCallback((id) => {
     setFundIds((prev) => {
@@ -64,9 +69,9 @@ const Compare = () => {
   });
 
   const funds = useMemo(() => {
-    if (!domainsData?.funds) return [];
+    if (!domainsData?.data) return [];
     return fundIds.map((id) => {
-      const merged = domainsData.funds.find((f) => {
+      const merged = domainsData.data.find((f) => {
         const fundId = f.basicInfo?._id || f.performance?._id || f.ratings?._id;
         return fundId === id;
       });
@@ -188,6 +193,12 @@ const Compare = () => {
         </Box>
         <AsOfDateSelector value={asofDate} onChange={setAsofDate} />
       </Box>
+
+      {user?.plan !== 'pro' && fundIds.length >= FREE_MAX_FUNDS && (
+        <Box sx={{ mb: '20px' }}>
+          <UpgradePrompt feature="fund comparisons" limit={FREE_MAX_FUNDS} compact />
+        </Box>
+      )}
 
       {/* Empty State */}
       {fundIds.length === 0 && (

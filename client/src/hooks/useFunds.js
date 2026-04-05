@@ -26,7 +26,8 @@ export const useFunds = ({ page = 1, limit = 20, search = '', type = '', categor
       if (asofDate) params.asofDate = asofDate;
       
       const response = await fundService.getAllFunds(params);
-      return response.data;
+      const { data, meta } = response.data;
+      return { data, pagination: meta?.pagination, asofDate: meta?.asofDate };
     },
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,

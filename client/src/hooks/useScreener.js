@@ -18,7 +18,8 @@ export const useScreener = ({ category, type, asofDate } = {}) => {
       if (type) params.type = type;
       if (asofDate) params.asofDate = asofDate;
       const response = await fundService.getScreenerData(params);
-      return response.data;
+      const { data, meta, limited, planLimit } = response.data;
+      return { data, total: meta?.total ?? 0, limited: !!limited, planLimit };
     },
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
@@ -47,7 +48,9 @@ export const useScreener = ({ category, type, asofDate } = {}) => {
 
   return {
     data,
-    totalFunds: query.data?.total || 0,
+    totalFunds: query.data?.total ?? 0,
+    limited: query.data?.limited ?? false,
+    planLimit: query.data?.planLimit,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isDomainsLoading: false,

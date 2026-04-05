@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 
-const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500, disabled = false, instant = false }) => {
+const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500, disabled = false, instant = false, id = 'fund-search' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const onSearchRef = useRef(onSearch);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     onSearchRef.current = onSearch;
@@ -17,10 +18,22 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
     return () => clearTimeout(timer);
   }, [searchTerm, debounceMs, instant]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <Box sx={{ flex: 1, position: 'relative' }}>
       <Box
         component="span"
+        aria-hidden="true"
         sx={{
           position: 'absolute',
           left: '14px',
@@ -35,7 +48,11 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
       </Box>
       <Box
         component="input"
-        type="text"
+        ref={inputRef}
+        id={id}
+        type="search"
+        role="searchbox"
+        aria-label="Search funds"
         placeholder={placeholder}
         value={searchTerm}
         disabled={disabled}

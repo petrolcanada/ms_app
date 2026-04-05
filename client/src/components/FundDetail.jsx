@@ -6,6 +6,7 @@ import { useFundDetail } from '../hooks/useFundDetail';
 import { useDomains } from '../hooks/useDomains';
 import { usePerformanceHistory, useFlowHistory, useAssetsHistory } from '../hooks/useHistory';
 import useWatchlist from '../hooks/useWatchlist';
+import { useAuth } from '../context/AuthContext';
 import KpiCard from './KpiCard';
 import MetricRow from './MetricRow';
 import PerfBar from './PerfBar';
@@ -44,7 +45,8 @@ const FundDetail = () => {
   const { data: perfHistory, isLoading: perfHistoryLoading } = usePerformanceHistory(id);
   const { data: flowHistory, isLoading: flowHistoryLoading } = useFlowHistory(id);
   const { data: assetsHistory, isLoading: assetsHistoryLoading } = useAssetsHistory(id);
-  const { isWatched, toggle: toggleWatchlist } = useWatchlist();
+  const { user } = useAuth();
+  const { isWatched, toggle: toggleWatchlist } = useWatchlist(user);
 
   const fund = fundResp?.data || fundResp;
 
@@ -190,7 +192,7 @@ const FundDetail = () => {
       <BackLink onClick={() => navigate('/explorer')} />
 
       {/* Fund Header */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px', flexWrap: 'wrap' }}>
         <Box>
           <Box
             component="h1"
@@ -216,6 +218,8 @@ const FundDetail = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           <Box
             component="button"
+            aria-label={isWatched(id) ? 'Remove from watchlist' : 'Add to watchlist'}
+            aria-pressed={isWatched(id)}
             onClick={() => toggleWatchlist({
               _id: id,
               fundname: fund.fundname || fund._name,
@@ -286,6 +290,7 @@ const FundDetail = () => {
           mb: '24px',
           borderBottom: '1px solid var(--border)',
           pb: 0,
+          overflowX: 'auto',
         }}
       >
         {TABS.map((tab) => (
@@ -326,6 +331,7 @@ const FundDetail = () => {
 const BackLink = ({ onClick }) => (
   <Box
     component="button"
+    aria-label="Back to Fund Explorer"
     onClick={onClick}
     sx={{
       display: 'inline-flex',

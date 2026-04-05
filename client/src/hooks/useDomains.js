@@ -13,7 +13,7 @@ export const useDomains = (fundId, { domains = ALL_DOMAINS, asofDate } = {}) => 
     queryKey: ['domains', fundId, domains, asofDate],
     queryFn: async () => {
       const response = await fundService.fetchMultipleDomains(domains, [fundId], asofDate);
-      const funds = response.data?.funds || [];
+      const funds = response.data?.data || [];
       return funds[0] || {};
     },
     enabled: !!fundId && domains.length > 0,

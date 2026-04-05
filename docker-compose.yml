@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fundlens
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: fundlens
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      CORS_ORIGIN: http://localhost:5000
+      CLIENT_URL: http://localhost:5000
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      # Optional: Stripe keys (payments disabled without these)
+      # STRIPE_SECRET_KEY: sk_...
+      # STRIPE_WEBHOOK_SECRET: whsec_...
+      # STRIPE_PRICE_ID: price_...
+      # Optional: Resend email (emails logged to console without this)
+      # RESEND_API_KEY: re_...
+      # FROM_EMAIL: "FundLens <noreply@fundlens.app>"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Dev-only: run the CRA dev server for hot-reload
+  client-dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:5000
+    command: sh -c "npm install && npm start"
+    profiles:
+      - dev
+
+volumes:
+  pgdata:

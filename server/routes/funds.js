@@ -28,9 +28,25 @@ const {
   validateAsofDateQuery,
   validateDomainsBody,
 } = require('../middleware/validator');
+const { optionalAuth } = require('../middleware/auth');
+const { attachLimits } = require('../middleware/planGate');
 
-// GET /api/funds/screener - Lean single-query screener endpoint
-router.get('/screener', validateFilters, validateAsofDateQuery, getScreener);
+// GET /api/funds/screener - plan-limited screener
+router.get('/screener', optionalAuth, attachLimits, validateFilters, validateAsofDateQuery, (req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = (data) => {
+    if (data?.data && Array.isArray(data.data) && req.planLimits?.screenerLimit < Infinity) {
+      const limit = req.planLimits.screenerLimit;
+      if (data.data.length > limit) {
+        data.data = data.data.slice(0, limit);
+        data.limited = true;
+        data.planLimit = limit;
+      }
+    }
+    return originalJson(data);
+  };
+  next();
+}, getScreener);
 
 // GET /api/funds - Get all funds with pagination, filters, and optional as-of date
 router.get('/', validatePagination, validateFilters, validateAsofDateQuery, getAllFunds);
