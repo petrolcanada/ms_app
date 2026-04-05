@@ -15,6 +15,11 @@ const {
 } = require('../controllers/domainController');
 const { getScreener } = require('../controllers/screenerController');
 const {
+  getPerformanceHistory,
+  getFlowHistory,
+  getAssetsHistory,
+} = require('../controllers/historyController');
+const {
   validatePagination,
   validateFilters,
   validateFundId,
@@ -59,6 +64,15 @@ router.get('/domains/available-dates', getAvailableDates);
 
 // POST /api/funds/domains - Get multiple domains by fund IDs
 router.post('/domains', validateFundIdsBody, validateAsofDateBody, validateDomainsBody, getFundDomainsAtDate);
+
+// GET /api/funds/:id/history/performance
+router.get('/:id/history/performance', validateFundId, getPerformanceHistory);
+
+// GET /api/funds/:id/history/flows
+router.get('/:id/history/flows', validateFundId, getFlowHistory);
+
+// GET /api/funds/:id/history/assets
+router.get('/:id/history/assets', validateFundId, getAssetsHistory);
 
 // GET /api/funds/:id - Get single fund by ID (must be last to avoid capturing /domains)
 router.get('/:id', validateFundId, getFundById);

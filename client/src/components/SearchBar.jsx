@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 
-const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500 }) => {
+const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500, disabled = false, instant = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const onSearchRef = useRef(onSearch);
 
@@ -10,11 +10,12 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
   }, [onSearch]);
 
   useEffect(() => {
+    const delay = instant ? 250 : debounceMs;
     const timer = setTimeout(() => {
       onSearchRef.current(searchTerm);
-    }, debounceMs);
+    }, delay);
     return () => clearTimeout(timer);
-  }, [searchTerm, debounceMs]);
+  }, [searchTerm, debounceMs, instant]);
 
   return (
     <Box sx={{ flex: 1, position: 'relative' }}>
@@ -37,6 +38,7 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
         type="text"
         placeholder={placeholder}
         value={searchTerm}
+        disabled={disabled}
         onChange={(e) => setSearchTerm(e.target.value)}
         sx={{
           width: '100%',

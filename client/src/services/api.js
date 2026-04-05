@@ -119,6 +119,33 @@ export const dateService = {
   },
 };
 
+export const historyService = {
+  getPerformanceHistory: (fundId, startDate, endDate) => {
+    return api.get(`/api/funds/${fundId}/history/performance`, {
+      params: { startDate, endDate },
+    });
+  },
+  getFlowHistory: (fundId, startDate, endDate) => {
+    return api.get(`/api/funds/${fundId}/history/flows`, {
+      params: { startDate, endDate },
+    });
+  },
+  getAssetsHistory: (fundId, startDate, endDate) => {
+    return api.get(`/api/funds/${fundId}/history/assets`, {
+      params: { startDate, endDate },
+    });
+  },
+};
+
+export const dashboardService = {
+  getDashboard: (params = {}) => {
+    return api.get('/api/dashboard', { params });
+  },
+  getCategoryOverview: (category, params = {}) => {
+    return api.get(`/api/dashboard/category/${encodeURIComponent(category)}`, { params });
+  },
+};
+
 export const categoryService = {
   getCategories: () => {
     return api.get('/api/categories');

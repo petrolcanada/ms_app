@@ -71,10 +71,19 @@ const Layout = () => {
 
             <Box sx={{ display: 'flex', gap: '4px' }}>
               <NavLink to="/" end style={navLinkStyle}>
+                Dashboard
+              </NavLink>
+              <NavLink to="/explorer" style={navLinkStyle}>
                 Explorer
               </NavLink>
               <NavLink to="/screener" style={navLinkStyle}>
                 Screener
+              </NavLink>
+              <NavLink to="/compare" style={navLinkStyle}>
+                Compare
+              </NavLink>
+              <NavLink to="/watchlist" style={navLinkStyle}>
+                Watchlist
               </NavLink>
             </Box>
           </Box>

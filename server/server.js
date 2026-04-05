@@ -22,8 +22,10 @@ app.get('/health', (req, res) => {
 // API Routes
 const fundsRouter = require('./routes/funds');
 const categoriesRouter = require('./routes/categories');
+const dashboardRouter = require('./routes/dashboard');
 app.use('/api/funds', fundsRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Import centralized error handlers
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

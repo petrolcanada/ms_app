@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useFundDetail } from '../hooks/useFundDetail';
 import { useDomains } from '../hooks/useDomains';
+import { usePerformanceHistory, useFlowHistory, useAssetsHistory } from '../hooks/useHistory';
+import useWatchlist from '../hooks/useWatchlist';
 import KpiCard from './KpiCard';
 import MetricRow from './MetricRow';
 import PerfBar from './PerfBar';
@@ -11,6 +13,7 @@ import StarRating from './StarRating';
 import SignalBadge from './SignalBadge';
 import { DomainCard, DomainGrid } from './DomainTab';
 import AsOfDateSelector from './AsOfDateSelector';
+import { PerformanceHistoryChart, FlowHistoryChart, AssetsHistoryChart } from './HistoryChart';
 
 const TABS = [
   { key: 'performance', label: 'Performance' },
@@ -38,6 +41,10 @@ const FundDetail = () => {
   const { data: domainData, isLoading: domainLoading, isError: domainError } = useDomains(id, {
     asofDate: asofDate || undefined,
   });
+  const { data: perfHistory, isLoading: perfHistoryLoading } = usePerformanceHistory(id);
+  const { data: flowHistory, isLoading: flowHistoryLoading } = useFlowHistory(id);
+  const { data: assetsHistory, isLoading: assetsHistoryLoading } = useAssetsHistory(id);
+  const { isWatched, toggle: toggleWatchlist } = useWatchlist();
 
   const fund = fundResp?.data || fundResp;
 
@@ -52,7 +59,7 @@ const FundDetail = () => {
   if (fundError) {
     return (
       <Box>
-        <BackLink onClick={() => navigate('/')} />
+        <BackLink onClick={() => navigate('/explorer')} />
         <Box
           sx={{
             background: 'var(--red-soft)',
@@ -72,7 +79,7 @@ const FundDetail = () => {
   if (!fund) {
     return (
       <Box>
-        <BackLink onClick={() => navigate('/')} />
+        <BackLink onClick={() => navigate('/explorer')} />
         <Box sx={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>Fund not found</Box>
       </Box>
     );
@@ -139,7 +146,14 @@ const FundDetail = () => {
 
     switch (activeTab) {
       case 'performance':
-        return <PerformanceTab perf={perf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />;
+        return (
+          <>
+            <PerformanceTab perf={perf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />
+            <Box sx={{ mt: '20px' }}>
+              <PerformanceHistoryChart data={perfHistory} isLoading={perfHistoryLoading} />
+            </Box>
+          </>
+        );
       case 'fees':
         return <FeesTab fees={fees} fmtPct={fmtPct} />;
       case 'ratings':
@@ -147,9 +161,23 @@ const FundDetail = () => {
       case 'risk':
         return <RiskTab risk={risk} fmtPct={fmtPct} fmtPlain={fmtPlain} valColor={valColor} />;
       case 'flows':
-        return <FlowsTab flows={flows} />;
+        return (
+          <>
+            <FlowsTab flows={flows} />
+            <Box sx={{ mt: '20px' }}>
+              <FlowHistoryChart data={flowHistory} isLoading={flowHistoryLoading} />
+            </Box>
+          </>
+        );
       case 'assets':
-        return <AssetsTab assets={assets} />;
+        return (
+          <>
+            <AssetsTab assets={assets} />
+            <Box sx={{ mt: '20px' }}>
+              <AssetsHistoryChart data={assetsHistory} isLoading={assetsHistoryLoading} />
+            </Box>
+          </>
+        );
       case 'basic':
         return <BasicInfoTab fund={fund} basicInfo={basicInfo} />;
       default:
@@ -159,7 +187,7 @@ const FundDetail = () => {
 
   return (
     <Box>
-      <BackLink onClick={() => navigate('/')} />
+      <BackLink onClick={() => navigate('/explorer')} />
 
       {/* Fund Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px' }}>
@@ -185,7 +213,35 @@ const FundDetail = () => {
             <span>Inception: {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}</span>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <Box
+            component="button"
+            onClick={() => toggleWatchlist({
+              _id: id,
+              fundname: fund.fundname || fund._name,
+              ticker: fund.ticker,
+              categoryname: fund.categoryname || fund.globalcategoryname,
+              securitytype: fund.securitytype,
+            })}
+            sx={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: isWatched(id) ? 'var(--amber-soft)' : 'var(--bg-surface)',
+              border: isWatched(id)
+                ? '1px solid rgba(245,158,11,0.3)'
+                : '1px solid var(--border)',
+              borderRadius: 'var(--radius)', padding: '8px 14px',
+              color: isWatched(id) ? 'var(--amber)' : 'var(--text-3)',
+              fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              transition: 'all var(--transition)',
+              '&:hover': {
+                borderColor: isWatched(id) ? 'var(--amber)' : 'var(--border-hover)',
+                color: isWatched(id) ? 'var(--amber)' : 'var(--text-2)',
+              },
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>{isWatched(id) ? '\u2605' : '\u2606'}</span>
+            {isWatched(id) ? 'Watching' : 'Watch'}
+          </Box>
           <AsOfDateSelector value={asofDate} onChange={handleDateChange} />
           <SignalBadge signal="hold" size="large" />
         </Box>
