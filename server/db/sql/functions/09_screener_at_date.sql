@@ -76,7 +76,8 @@ BEGIN
         LEFT JOIN ms.fund_level_net_assets_ca_openend assets
             ON assets._id = bf._id AND assets.monthenddate = v_asof_date::TEXT
         WHERE (p_category IS NULL OR bf.categoryname = p_category)
-          AND (p_type IS NULL OR bf.securitytype = p_type);
+          AND (p_type IS NULL OR bf.securitytype = p_type)
+        ORDER BY perf.return1yr::NUMERIC DESC NULLS LAST;
     ELSE
         -- Temporal path: point-in-time basic info (securitytype needs translation)
         RETURN QUERY
@@ -116,7 +117,8 @@ BEGIN
                    WHEN 'FO' THEN 'Mutual Fund'
                    WHEN 'FE' THEN 'ETF'
                    ELSE bf.securitytype
-               END = p_type);
+               END = p_type)
+        ORDER BY perf.return1yr::NUMERIC DESC NULLS LAST;
     END IF;
 END;
 $$;

@@ -20,7 +20,8 @@ const queryDashboardStats = async (asofDate) => {
      LEFT JOIN ms.annual_report_fees_ca_openend f
        ON f._id = s._id AND f._timestampto IS NULL
      LEFT JOIN ms.morningstar_rating_ca_openend r
-       ON r._id = s._id AND r._timestampto IS NULL
+       ON r._id = s._id
+       AND r.monthenddate = s.monthenddate
      WHERE s.return1yr IS NOT NULL
        ${dateClause}`,
     params
@@ -51,7 +52,8 @@ const queryTopPerformers = async (asofDate, limit = 10) => {
        r.ratingoverall::NUMERIC
      FROM ms.month_end_trailing_total_returns_ca_openend p
      JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = p._id
-     LEFT JOIN ms.morningstar_rating_ca_openend r ON r._id = p._id AND r._timestampto IS NULL
+     LEFT JOIN ms.morningstar_rating_ca_openend r
+       ON r._id = p._id AND r.monthenddate = p.monthenddate
      WHERE p.return1yr IS NOT NULL
        ${dateClause}
      ORDER BY p.return1yr::NUMERIC DESC NULLS LAST
@@ -107,6 +109,15 @@ const queryLargestFlows = async (asofDate, limit = 10) => {
 };
 
 const queryHighestRated = async (asofDate, limit = 10) => {
+  const dateClause = asofDate
+    ? `AND r.monthenddate = $1::TEXT`
+    : `AND r.monthenddate = (
+        SELECT MAX(monthenddate) FROM ms.morningstar_rating_ca_openend
+        WHERE monthenddate IS NOT NULL
+      )`;
+  const params = asofDate ? [asofDate, limit] : [limit];
+  const limitParam = asofDate ? '$2' : '$1';
+
   const result = await pool.query(
     `SELECT
        r._id,
@@ -127,12 +138,12 @@ const queryHighestRated = async (asofDate, limit = 10) => {
          SELECT MAX(monthenddate) FROM ms.month_end_trailing_total_returns_ca_openend
          WHERE monthenddate IS NOT NULL
        )
-     WHERE r._timestampto IS NULL
-       AND r.ratingoverall IS NOT NULL
+     WHERE r.ratingoverall IS NOT NULL
        AND r.ratingoverall::NUMERIC >= 4
+       ${dateClause}
      ORDER BY r.ratingoverall::NUMERIC DESC, p.return1yr::NUMERIC DESC NULLS LAST
-     LIMIT $1`,
-    [limit]
+     LIMIT ${limitParam}`,
+    params
   );
   return result.rows;
 };
@@ -163,7 +174,8 @@ const queryCategoryOverview = async (category, asofDate) => {
      FROM ms.month_end_trailing_total_returns_ca_openend p
      JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = p._id
      LEFT JOIN ms.annual_report_fees_ca_openend f ON f._id = p._id AND f._timestampto IS NULL
-     LEFT JOIN ms.morningstar_rating_ca_openend r ON r._id = p._id AND r._timestampto IS NULL
+     LEFT JOIN ms.morningstar_rating_ca_openend r
+       ON r._id = p._id AND r.monthenddate = p.monthenddate
      LEFT JOIN ms.fund_level_net_assets_ca_openend a
        ON a._id = p._id
        AND a.netassetsdate = (
