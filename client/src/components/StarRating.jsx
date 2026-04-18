@@ -1,10 +1,26 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 
-const StarRating = ({ rating = 0, size = 'small' }) => {
+const StarRating = ({ rating, size = 'small' }) => {
+  const isLarge = size === 'large';
+
+  if (rating == null || rating === '') {
+    return (
+      <Box
+        component="span"
+        sx={{
+          fontFamily: 'var(--font-body)',
+          fontSize: isLarge ? '16px' : '12px',
+          color: 'var(--text-4)',
+        }}
+      >
+        N/A
+      </Box>
+    );
+  }
+
   const filled = Math.round(Number(rating) || 0);
   const total = 5;
-  const isLarge = size === 'large';
 
   return (
     <Box
@@ -17,10 +33,7 @@ const StarRating = ({ rating = 0, size = 'small' }) => {
       }}
     >
       {Array.from({ length: total }, (_, i) => (
-        <span
-          key={i}
-          style={{ color: i < filled ? 'var(--amber)' : 'var(--text-4)' }}
-        >
+        <span key={i} style={{ color: i < filled ? 'var(--amber)' : 'var(--text-4)' }}>
           &#9733;
         </span>
       ))}
