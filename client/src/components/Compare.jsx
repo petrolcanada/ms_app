@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 const PRO_MAX_FUNDS = 4;
 const FREE_MAX_FUNDS = 2;
 
-const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets'];
+const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets', 'categoryPerformance'];
 
 const Compare = () => {
   const navigate = useNavigate();

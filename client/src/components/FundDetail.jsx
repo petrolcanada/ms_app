@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useFundDetail } from '../hooks/useFundDetail';
@@ -29,8 +29,17 @@ const TABS = [
 const FundDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('performance');
+
+  const goBack = () => {
+    if (location.key !== 'default') {
+      navigate(-1);
+    } else {
+      navigate('/explorer');
+    }
+  };
   const [asofDate, setAsofDate] = useState(searchParams.get('asof') || '');
 
   const handleDateChange = (newDate) => {
@@ -61,7 +70,7 @@ const FundDetail = () => {
   if (fundError) {
     return (
       <Box>
-        <BackLink onClick={() => navigate('/explorer')} />
+        <BackLink onClick={goBack} />
         <Box
           sx={{
             background: 'var(--red-soft)',
@@ -81,7 +90,7 @@ const FundDetail = () => {
   if (!fund) {
     return (
       <Box>
-        <BackLink onClick={() => navigate('/explorer')} />
+        <BackLink onClick={goBack} />
         <Box sx={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>Fund not found</Box>
       </Box>
     );
@@ -95,6 +104,7 @@ const FundDetail = () => {
   const flows = domainData?.flows || {};
   const assets = domainData?.assets || {};
   const basicInfo = domainData?.basicInfo || {};
+  const catPerf = domainData?.categoryPerformance || {};
 
   const fmt = (v, suffix = '') => {
     if (v === null || v === undefined || v === '') return '—';
@@ -150,7 +160,7 @@ const FundDetail = () => {
       case 'performance':
         return (
           <>
-            <PerformanceTab perf={perf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />
+            <PerformanceTab perf={perf} catPerf={catPerf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />
             <Box sx={{ mt: '20px' }}>
               <PerformanceHistoryChart data={perfHistory} isLoading={perfHistoryLoading} />
             </Box>
@@ -189,7 +199,7 @@ const FundDetail = () => {
 
   return (
     <Box>
-      <BackLink onClick={() => navigate('/explorer')} />
+      <BackLink onClick={goBack} />
 
       {/* Fund Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px', flexWrap: 'wrap' }}>
@@ -198,7 +208,7 @@ const FundDetail = () => {
             component="h1"
             sx={{
               fontFamily: 'var(--font-head)',
-              fontSize: '28px',
+              fontSize: { xs: '22px', md: '28px' },
               fontWeight: 600,
               color: 'var(--text-1)',
               letterSpacing: '-0.03em',
@@ -207,7 +217,7 @@ const FundDetail = () => {
           >
             {fund.fundname || fund._name || 'Unknown Fund'}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-3)' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-3)', flexWrap: 'wrap' }}>
             <FundBadge type={fund.securitytype || fund.legalstructure} />
             <Separator />
             <span>{fund.categoryname || fund.globalcategoryname || '—'}</span>
@@ -215,7 +225,7 @@ const FundDetail = () => {
             <span>Inception: {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}</span>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <Box
             component="button"
             aria-label={isWatched(id) ? 'Remove from watchlist' : 'Add to watchlist'}
@@ -252,7 +262,7 @@ const FundDetail = () => {
       </Box>
 
       {/* KPI Row */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', mb: '32px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' }, gap: '16px', mb: '32px' }}>
         <KpiCard
           label="1-Year Return"
           value={fmtPct(perf.return1yr)}
@@ -331,7 +341,7 @@ const FundDetail = () => {
 const BackLink = ({ onClick }) => (
   <Box
     component="button"
-    aria-label="Back to Fund Explorer"
+    aria-label="Go back"
     onClick={onClick}
     sx={{
       display: 'inline-flex',
@@ -348,7 +358,7 @@ const BackLink = ({ onClick }) => (
       '&:hover': { color: 'var(--emerald)' },
     }}
   >
-    &#8592; Back to Explorer
+    &#8592; Back
   </Box>
 );
 
@@ -377,13 +387,13 @@ const Separator = () => <span style={{ color: 'var(--text-4)' }}>&middot;</span>
 
 /* ── Tab panels ─────────────────────────── */
 
-const PerformanceTab = ({ perf, rankings, fmtPct, valColor }) => {
+const PerformanceTab = ({ perf, catPerf, rankings, fmtPct, valColor }) => {
   const horizons = [
-    { label: 'YTD', key: 'returnytd' },
-    { label: '1 Year', key: 'return1yr' },
-    { label: '3 Year', key: 'return3yr' },
-    { label: '5 Year', key: 'return5yr' },
-    { label: '10 Year', key: 'return10yr' },
+    { label: 'YTD', key: 'returnytd', catKey: 'cat_returnytd' },
+    { label: '1 Year', key: 'return1yr', catKey: 'cat_return1yr' },
+    { label: '3 Year', key: 'return3yr', catKey: 'cat_return3yr' },
+    { label: '5 Year', key: 'return5yr', catKey: 'cat_return5yr' },
+    { label: '10 Year', key: 'return10yr', catKey: 'cat_return10yr' },
     { label: 'Inception', key: 'returnsinceinception' },
   ];
 
@@ -391,6 +401,19 @@ const PerformanceTab = ({ perf, rankings, fmtPct, valColor }) => {
     const v = Math.abs(Number(perf[h.key]) || 0);
     return v > max ? v : max;
   }, 1);
+
+  const hasCatData = catPerf && catPerf.categoryname;
+
+  const comparisonHorizons = [
+    { label: 'YTD', fundKey: 'returnytd', catKey: 'cat_returnytd' },
+    { label: '1 Month', fundKey: 'return1mth', catKey: 'cat_return1mth' },
+    { label: '3 Month', fundKey: 'return3mth', catKey: 'cat_return3mth' },
+    { label: '6 Month', fundKey: 'return6mth', catKey: 'cat_return6mth' },
+    { label: '1 Year', fundKey: 'return1yr', catKey: 'cat_return1yr' },
+    { label: '3 Year', fundKey: 'return3yr', catKey: 'cat_return3yr' },
+    { label: '5 Year', fundKey: 'return5yr', catKey: 'cat_return5yr' },
+    { label: '10 Year', fundKey: 'return10yr', catKey: 'cat_return10yr' },
+  ];
 
   return (
     <DomainGrid>
@@ -409,6 +432,42 @@ const PerformanceTab = ({ perf, rankings, fmtPct, valColor }) => {
           })}
         </Box>
       </DomainCard>
+      {hasCatData && (
+        <DomainCard title={`Fund vs Category Average (${catPerf.categoryname})`} fullWidth>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr 1fr',
+              gap: 0,
+              fontSize: '12px',
+            }}
+          >
+            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>Horizon</Box>
+            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Fund</Box>
+            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Cat. Avg</Box>
+            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Diff</Box>
+            {comparisonHorizons.map((h) => {
+              const fundVal = perf[h.fundKey] != null ? Number(perf[h.fundKey]) : null;
+              const catVal = catPerf[h.catKey] != null ? Number(catPerf[h.catKey]) : null;
+              const diff = fundVal != null && catVal != null ? fundVal - catVal : null;
+              return (
+                <React.Fragment key={h.label}>
+                  <Box sx={{ padding: '10px 0', color: 'var(--text-3)', borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>{h.label}</Box>
+                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: valColor(fundVal), borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                    {fmtPct(fundVal)}
+                  </Box>
+                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: 'var(--text-2)', borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                    {fmtPct(catVal)}
+                  </Box>
+                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: valColor(diff), borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                    {fmtPct(diff)}
+                  </Box>
+                </React.Fragment>
+              );
+            })}
+          </Box>
+        </DomainCard>
+      )}
       <DomainCard title="Category Rank (Percentile)">
         <MetricRow label="1 Year" value={rankings.rank1yr != null ? rankings.rank1yr : '—'} />
         <MetricRow label="3 Year" value={rankings.rank3yr != null ? rankings.rank3yr : '—'} />
@@ -539,7 +598,7 @@ const BasicInfoTab = ({ fund, basicInfo }) => {
   return (
     <DomainGrid>
       <DomainCard title="Fund Identification">
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 32px' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '0 32px' }}>
           <MetricRow label="Legal Name" value={info.legalname || info.fundname || '—'} useBodyFont />
           <MetricRow label="Fund Family" value={info.providercompanyname || '—'} useBodyFont />
           <MetricRow label="Morningstar Category" value={info.categoryname || info.globalcategoryname || '—'} useBodyFont />

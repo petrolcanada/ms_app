@@ -10,6 +10,7 @@ const {
   getRiskAtDate,
   getFlowsAtDate,
   getAssetsAtDate,
+  getCategoryPerformanceAtDate,
   getFundDomainsAtDate,
   getAvailableDates,
 } = require('../controllers/domainController');
@@ -18,6 +19,7 @@ const {
   getPerformanceHistory,
   getFlowHistory,
   getAssetsHistory,
+  getCategoryPerformanceHistory,
 } = require('../controllers/historyController');
 const {
   validatePagination,
@@ -31,22 +33,8 @@ const {
 const { optionalAuth } = require('../middleware/auth');
 const { attachLimits } = require('../middleware/planGate');
 
-// GET /api/funds/screener - plan-limited screener
-router.get('/screener', optionalAuth, attachLimits, validateFilters, validateAsofDateQuery, (req, res, next) => {
-  const originalJson = res.json.bind(res);
-  res.json = (data) => {
-    if (data?.data && Array.isArray(data.data) && req.planLimits?.screenerLimit < Infinity) {
-      const limit = req.planLimits.screenerLimit;
-      if (data.data.length > limit) {
-        data.data = data.data.slice(0, limit);
-        data.limited = true;
-        data.planLimit = limit;
-      }
-    }
-    return originalJson(data);
-  };
-  next();
-}, getScreener);
+// GET /api/funds/screener - server-side sorted & paginated, plan-limited
+router.get('/screener', optionalAuth, attachLimits, validateFilters, validateAsofDateQuery, getScreener);
 
 // GET /api/funds - Get all funds with pagination, filters, and optional as-of date
 router.get('/', validatePagination, validateFilters, validateAsofDateQuery, getAllFunds);
@@ -75,6 +63,9 @@ router.post('/domains/flows', validateFundIdsBody, validateAsofDateBody, getFlow
 // POST /api/funds/domains/assets
 router.post('/domains/assets', validateFundIdsBody, validateAsofDateBody, getAssetsAtDate);
 
+// POST /api/funds/domains/category-performance
+router.post('/domains/category-performance', validateFundIdsBody, validateAsofDateBody, getCategoryPerformanceAtDate);
+
 // GET /api/funds/domains/available-dates
 router.get('/domains/available-dates', getAvailableDates);
 
@@ -89,6 +80,9 @@ router.get('/:id/history/flows', validateFundId, getFlowHistory);
 
 // GET /api/funds/:id/history/assets
 router.get('/:id/history/assets', validateFundId, getAssetsHistory);
+
+// GET /api/funds/:id/history/category-performance
+router.get('/:id/history/category-performance', validateFundId, getCategoryPerformanceHistory);
 
 // GET /api/funds/:id - Get single fund by ID (must be last to avoid capturing /domains)
 router.get('/:id', validateFundId, getFundById);

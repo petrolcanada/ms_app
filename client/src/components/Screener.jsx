@@ -35,6 +35,17 @@ const RANK_BY_OPTIONS = [
 
 const PER_PAGE = 25;
 
+const SORT_KEY_TO_API = {
+  return1yr: 'return1yr',
+  return3yr: 'return3yr',
+  return5yr: 'return5yr',
+  return10yr: 'return10yr',
+  mer: 'mer',
+  sharpe: 'sharperatio3yr',
+  rating: 'ratingoverall',
+  aum: 'fundnetassets',
+};
+
 /* ── Utility functions ── */
 
 const getFieldValue = (fund, col) => {
@@ -121,41 +132,23 @@ const Screener = () => {
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
 
-  const { data, totalFunds, limited, planLimit, isLoading, isFetching, isError, error } = useScreener({
+  const { data, totalFunds, totalPages, limited, planLimit, isLoading, isFetching, isError, error } = useScreener({
     category,
     type,
     asofDate,
+    sortBy: SORT_KEY_TO_API[sortKey] || 'return1yr',
+    sortDir: sortDesc ? 'desc' : 'asc',
+    page,
+    limit: PER_PAGE,
   });
-
-  const activeCol = SORTABLE_COLUMNS.find(c => c.key === sortKey);
-
-  const sortedData = useMemo(() => {
-    if (!activeCol) return data;
-    const sorted = [...data];
-    sorted.sort((a, b) => {
-      const av = getFieldValue(a, activeCol);
-      const bv = getFieldValue(b, activeCol);
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      return sortDesc ? bv - av : av - bv;
-    });
-    return sorted;
-  }, [data, activeCol, sortDesc]);
 
   const quintileArrays = useMemo(() => {
     const arrays = {};
     SORTABLE_COLUMNS.forEach(col => {
-      arrays[col.key] = sortedData.map(f => getFieldValue(f, col)).filter(v => v != null);
+      arrays[col.key] = data.map(f => getFieldValue(f, col)).filter(v => v != null);
     });
     return arrays;
-  }, [sortedData]);
-
-  const totalPages = Math.ceil(sortedData.length / PER_PAGE);
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * PER_PAGE;
-    return sortedData.slice(start, start + PER_PAGE);
-  }, [sortedData, page]);
+  }, [data]);
 
   const handleSort = useCallback((key) => {
     const col = SORTABLE_COLUMNS.find(c => c.key === key);
@@ -401,7 +394,7 @@ const Screener = () => {
               </Box>
 
               <Box component="tbody">
-                {paginatedData.length === 0 ? (
+                {data.length === 0 ? (
                   <Box component="tr">
                     <Box
                       component="td"
@@ -412,13 +405,13 @@ const Screener = () => {
                     </Box>
                   </Box>
                 ) : (
-                  paginatedData.map((fund, idx) => {
+                  data.map((fund, idx) => {
                     const globalRank = (page - 1) * PER_PAGE + idx + 1;
-                    const rankPct = sortedData.length > 1
-                      ? (globalRank - 1) / (sortedData.length - 1)
+                    const rankPct = totalFunds > 1
+                      ? (globalRank - 1) / (totalFunds - 1)
                       : 0;
                     const signal = getSignal(rankPct);
-                    const tier = getRankTier(globalRank, sortedData.length);
+                    const tier = getRankTier(globalRank, totalFunds);
 
                     return (
                       <Box
@@ -517,7 +510,7 @@ const Screener = () => {
 
             </Box>
             {/* Pagination */}
-            {sortedData.length > 0 && (
+            {totalFunds > 0 && (
               <Box
                 sx={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -528,11 +521,11 @@ const Screener = () => {
                 <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>
                   Showing{' '}
                   <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
-                    {(page - 1) * PER_PAGE + 1}&ndash;{Math.min(page * PER_PAGE, sortedData.length)}
+                    {(page - 1) * PER_PAGE + 1}&ndash;{Math.min(page * PER_PAGE, totalFunds)}
                   </strong>{' '}
                   of{' '}
                   <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
-                    {sortedData.length}
+                    {totalFunds}
                   </strong>{' '}
                   funds
                 </Box>

@@ -1,4 +1,4 @@
-const { queryPerformanceHistory, queryFlowHistory, queryAssetsHistory } = require('../queries/historyQueries');
+const { queryPerformanceHistory, queryFlowHistory, queryAssetsHistory, queryCategoryPerformanceHistory } = require('../queries/historyQueries');
 
 const fetchPerformanceHistory = async (fundId, startDate, endDate) => {
   const rows = await queryPerformanceHistory(fundId, startDate, endDate);
@@ -15,8 +15,14 @@ const fetchAssetsHistory = async (fundId, startDate, endDate) => {
   return { data: rows, meta: { fundId } };
 };
 
+const fetchCategoryPerformanceHistory = async (fundId, startDate, endDate) => {
+  const rows = await queryCategoryPerformanceHistory(fundId, startDate, endDate);
+  return { data: rows, meta: { fundId } };
+};
+
 module.exports = {
   fetchPerformanceHistory,
   fetchFlowHistory,
   fetchAssetsHistory,
+  fetchCategoryPerformanceHistory,
 };

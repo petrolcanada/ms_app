@@ -178,10 +178,11 @@ const validateDomainsBody = (req, res, next) => {
     'risk',
     'flows',
     'assets',
+    'categoryPerformance',
   ]);
   const invalid = domains.find(domain => !allowed.has(domain));
   if (invalid) {
-    const error = new AppError('domains must include only basicInfo, performance, rankings, fees, ratings, risk, flows, or assets', 400);
+    const error = new AppError('domains must include only basicInfo, performance, rankings, fees, ratings, risk, flows, assets, or categoryPerformance', 400);
     error.details = 'Invalid domains';
     return next(error);
   }

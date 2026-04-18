@@ -3,23 +3,26 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fundService } from '../services/api';
 
 /**
- * Fetches all screener data in a single request via the dedicated
- * /api/funds/screener endpoint (backed by a single SQL JOIN).
+ * Fetches screener data with server-side sorting and pagination.
  *
- * Returns rows shaped with nested domain objects so the Screener
- * component can access values as fund.performance.return1yr, etc.
+ * The server returns rows already sorted by the requested column
+ * and limited to the current page, so the client no longer needs
+ * to sort or truncate locally.
  */
-export const useScreener = ({ category, type, asofDate } = {}) => {
+export const useScreener = ({ category, type, asofDate, sortBy, sortDir, page = 1, limit = 25 } = {}) => {
   const query = useQuery({
-    queryKey: ['screener', { category, type, asofDate }],
+    queryKey: ['screener', { category, type, asofDate, sortBy, sortDir, page, limit }],
     queryFn: async () => {
       const params = {};
       if (category) params.category = category;
       if (type) params.type = type;
       if (asofDate) params.asofDate = asofDate;
+      if (sortBy) params.sortBy = sortBy;
+      if (sortDir) params.sortDir = sortDir;
+      params.page = page;
+      params.limit = limit;
       const response = await fundService.getScreenerData(params);
-      const { data, meta, limited, planLimit } = response.data;
-      return { data, total: meta?.total ?? 0, limited: !!limited, planLimit };
+      return response.data;
     },
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
@@ -46,14 +49,17 @@ export const useScreener = ({ category, type, asofDate } = {}) => {
     }));
   }, [query.data]);
 
+  const meta = query.data?.meta || {};
+
   return {
     data,
-    totalFunds: query.data?.total ?? 0,
+    totalFunds: meta.total ?? 0,
+    totalPages: meta.totalPages ?? 1,
+    page: meta.page ?? page,
     limited: query.data?.limited ?? false,
     planLimit: query.data?.planLimit,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
-    isDomainsLoading: false,
     isError: query.isError,
     error: query.error,
   };

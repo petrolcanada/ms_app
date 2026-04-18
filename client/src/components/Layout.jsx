@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import { useAuth } from '../context/AuthContext';
 import { usePageView } from '../hooks/useAnalytics';
@@ -16,10 +16,36 @@ const navLinkStyle = ({ isActive }) => ({
   background: isActive ? 'var(--bg-surface)' : 'transparent',
 });
 
+const mobileNavLinkStyle = ({ isActive }) => ({
+  fontFamily: "var(--font-body)",
+  fontSize: '14px',
+  fontWeight: 500,
+  color: isActive ? 'var(--text-1)' : 'var(--text-3)',
+  textDecoration: 'none',
+  padding: '12px 20px',
+  display: 'block',
+  transition: 'all 180ms ease',
+  background: isActive ? 'var(--bg-surface)' : 'transparent',
+});
+
+const NAV_LINKS = [
+  { to: '/dashboard', label: 'Dashboard', end: true },
+  { to: '/explorer', label: 'Explorer' },
+  { to: '/screener', label: 'Screener' },
+  { to: '/compare', label: 'Compare' },
+  { to: '/watchlist', label: 'Watchlist' },
+];
+
 const Layout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   usePageView();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -61,7 +87,8 @@ const Layout = () => {
             justifyContent: 'space-between',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '16px', md: '40px' } }}>
+          {/* Left: logo + desktop links */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '12px', md: '40px' }, minWidth: 0 }}>
             <NavLink
               to="/dashboard"
               aria-label="FundLens home"
@@ -75,31 +102,23 @@ const Layout = () => {
                 alignItems: 'center',
                 gap: '8px',
                 letterSpacing: '-0.02em',
+                flexShrink: 0,
               }}
             >
               <span style={{ color: 'var(--emerald)', fontSize: '20px' }}>&#9670;</span>
               FundLens
             </NavLink>
 
-            <Box sx={{ display: 'flex', gap: '4px' }}>
-              <NavLink to="/dashboard" end style={navLinkStyle}>
-                Dashboard
-              </NavLink>
-              <NavLink to="/explorer" style={navLinkStyle}>
-                Explorer
-              </NavLink>
-              <NavLink to="/screener" style={navLinkStyle}>
-                Screener
-              </NavLink>
-              <NavLink to="/compare" style={navLinkStyle}>
-                Compare
-              </NavLink>
-              <NavLink to="/watchlist" style={navLinkStyle}>
-                Watchlist
-              </NavLink>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: '4px' }}>
+              {NAV_LINKS.map((link) => (
+                <NavLink key={link.to} to={link.to} end={link.end || undefined} style={navLinkStyle}>
+                  {link.label}
+                </NavLink>
+              ))}
             </Box>
           </Box>
 
+          {/* Right: actions + hamburger */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: '8px', mr: '8px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-4)' }}>Press</span>
@@ -168,6 +187,7 @@ const Layout = () => {
                   component="button"
                   onClick={handleLogout}
                   sx={{
+                    display: { xs: 'none', md: 'block' },
                     fontFamily: 'var(--font-body)',
                     fontSize: '12px',
                     color: 'var(--text-4)',
@@ -184,8 +204,82 @@ const Layout = () => {
                 </Box>
               </>
             )}
+
+            {/* Hamburger – mobile only */}
+            <Box
+              component="button"
+              aria-label="Toggle menu"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: '4px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                flexShrink: 0,
+                '& span': {
+                  display: 'block',
+                  width: '18px',
+                  height: '2px',
+                  background: 'var(--text-2)',
+                  borderRadius: '1px',
+                  transition: 'all 200ms ease',
+                },
+              }}
+            >
+              <span style={mobileMenuOpen ? { transform: 'rotate(45deg) translate(3px, 3px)' } : {}} />
+              <span style={mobileMenuOpen ? { opacity: 0 } : {}} />
+              <span style={mobileMenuOpen ? { transform: 'rotate(-45deg) translate(3px, -3px)' } : {}} />
+            </Box>
           </Box>
         </Box>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <Box
+            sx={{
+              display: { xs: 'block', md: 'none' },
+              borderTop: '1px solid var(--border)',
+              background: 'rgba(4, 6, 12, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              animation: 'fadeIn 150ms ease',
+            }}
+          >
+            {NAV_LINKS.map((link) => (
+              <NavLink key={link.to} to={link.to} end={link.end || undefined} style={mobileNavLinkStyle}>
+                {link.label}
+              </NavLink>
+            ))}
+            {user && (
+              <Box
+                component="button"
+                onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: 'var(--text-4)',
+                  background: 'none',
+                  border: 'none',
+                  borderTop: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  padding: '12px 20px',
+                  transition: 'color 180ms ease',
+                  '&:hover': { color: 'var(--text-2)' },
+                }}
+              >
+                Log out
+              </Box>
+            )}
+          </Box>
+        )}
       </Box>
 
       {/* Main content */}
@@ -194,8 +288,8 @@ const Layout = () => {
         sx={{
           maxWidth: '1400px',
           mx: 'auto',
-          px: '32px',
-          py: '32px',
+          px: { xs: '16px', sm: '24px', md: '32px' },
+          py: { xs: '24px', md: '32px' },
           pb: '64px',
           animation: 'fadeIn 500ms ease',
         }}

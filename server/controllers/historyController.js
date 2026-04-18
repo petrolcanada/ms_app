@@ -1,4 +1,4 @@
-const { fetchPerformanceHistory, fetchFlowHistory, fetchAssetsHistory } = require('../services/historyService');
+const { fetchPerformanceHistory, fetchFlowHistory, fetchAssetsHistory, fetchCategoryPerformanceHistory } = require('../services/historyService');
 
 const getPerformanceHistory = async (req, res, next) => {
   try {
@@ -36,8 +36,21 @@ const getAssetsHistory = async (req, res, next) => {
   }
 };
 
+const getCategoryPerformanceHistory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { startDate, endDate } = req.query;
+    const result = await fetchCategoryPerformanceHistory(id, startDate, endDate);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching category performance history:', err);
+    next(err);
+  }
+};
+
 module.exports = {
   getPerformanceHistory,
   getFlowHistory,
   getAssetsHistory,
+  getCategoryPerformanceHistory,
 };

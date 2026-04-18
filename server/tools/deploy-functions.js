@@ -24,6 +24,7 @@ const FUNCTION_FILES = [
   '07_flows_at_date.sql',
   '08_assets_at_date.sql',
   '09_screener_at_date.sql',
+  '10_category_performance_at_date.sql',
 ];
 
 const onlyIndex = process.argv.indexOf('--only');

@@ -53,3 +53,18 @@ export const useAssetsHistory = (fundId, { startDate, endDate } = {}) => {
     retry: 1,
   });
 };
+
+export const useCategoryPerformanceHistory = (fundId, { startDate, endDate } = {}) => {
+  const start = startDate || threeYearsAgo();
+  const end = endDate || today();
+  return useQuery({
+    queryKey: ['categoryPerformanceHistory', fundId, start, end],
+    queryFn: async () => {
+      const response = await historyService.getCategoryPerformanceHistory(fundId, start, end);
+      return response.data.data;
+    },
+    enabled: !!fundId,
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+  });
+};

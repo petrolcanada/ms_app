@@ -14,14 +14,15 @@ const makeSingleDomainHandler = (domainKey) => async (req, res, next) => {
   }
 };
 
-const getBasicInfoAtDate   = makeSingleDomainHandler('basicInfo');
-const getPerformanceAtDate = makeSingleDomainHandler('performance');
-const getRankingsAtDate    = makeSingleDomainHandler('rankings');
-const getFeesAtDate        = makeSingleDomainHandler('fees');
-const getRatingsAtDate     = makeSingleDomainHandler('ratings');
-const getRiskAtDate        = makeSingleDomainHandler('risk');
-const getFlowsAtDate       = makeSingleDomainHandler('flows');
-const getAssetsAtDate      = makeSingleDomainHandler('assets');
+const getBasicInfoAtDate              = makeSingleDomainHandler('basicInfo');
+const getPerformanceAtDate            = makeSingleDomainHandler('performance');
+const getRankingsAtDate               = makeSingleDomainHandler('rankings');
+const getFeesAtDate                   = makeSingleDomainHandler('fees');
+const getRatingsAtDate                = makeSingleDomainHandler('ratings');
+const getRiskAtDate                   = makeSingleDomainHandler('risk');
+const getFlowsAtDate                  = makeSingleDomainHandler('flows');
+const getAssetsAtDate                 = makeSingleDomainHandler('assets');
+const getCategoryPerformanceAtDate    = makeSingleDomainHandler('categoryPerformance');
 
 /**
  * @route POST /api/funds/domains
@@ -59,6 +60,7 @@ module.exports = {
   getRiskAtDate,
   getFlowsAtDate,
   getAssetsAtDate,
+  getCategoryPerformanceAtDate,
   getFundDomainsAtDate,
   getAvailableDates,
 };

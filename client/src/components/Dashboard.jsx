@@ -110,7 +110,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Top Performers + Highest Rated */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', mb: '24px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '20px', mb: '24px' }}>
         <SectionCard title="Top Performers (1Y Return)">
           {(topPerformers || []).slice(0, 8).map((fund, i) => (
             <FundRow

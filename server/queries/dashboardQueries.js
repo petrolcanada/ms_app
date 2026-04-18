@@ -11,7 +11,7 @@ const queryDashboardStats = async (asofDate) => {
 
   const result = await pool.query(
     `SELECT
-       COUNT(DISTINCT s._id) AS total_funds,
+       (SELECT COUNT(*) FROM ms.mv_fund_share_class_basic_info_ca_openend_latest) AS total_funds,
        ROUND(AVG(s.return1yr::NUMERIC), 2) AS avg_return_1yr,
        ROUND(AVG(f.mer::NUMERIC), 2) AS avg_mer,
        ROUND(AVG(r.ratingoverall::NUMERIC), 1) AS avg_rating,
@@ -112,7 +112,7 @@ const queryHighestRated = async (asofDate, limit = 10) => {
   const dateClause = asofDate
     ? `AND r.monthenddate = $1::TEXT`
     : `AND r.monthenddate = (
-        SELECT MAX(monthenddate) FROM ms.morningstar_rating_ca_openend
+        SELECT MAX(monthenddate) FROM ms.month_end_trailing_total_returns_ca_openend
         WHERE monthenddate IS NOT NULL
       )`;
   const params = asofDate ? [asofDate, limit] : [limit];
@@ -134,10 +134,7 @@ const queryHighestRated = async (asofDate, limit = 10) => {
      JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = r._id
      LEFT JOIN ms.month_end_trailing_total_returns_ca_openend p
        ON p._id = r._id
-       AND p.monthenddate = (
-         SELECT MAX(monthenddate) FROM ms.month_end_trailing_total_returns_ca_openend
-         WHERE monthenddate IS NOT NULL
-       )
+       AND p.monthenddate = r.monthenddate
      WHERE r.ratingoverall IS NOT NULL
        AND r.ratingoverall::NUMERIC >= 4
        ${dateClause}

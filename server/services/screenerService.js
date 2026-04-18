@@ -3,18 +3,18 @@ const { queryScreener } = require('../queries/screenerQueries');
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const cache = new Map();
 
-const cacheKey = ({ category, type, asofDate }) =>
-  `${category || ''}|${type || ''}|${asofDate || ''}`;
+const cacheKey = ({ category, type, asofDate, sortBy, sortDir, limit, offset }) =>
+  `${category || ''}|${type || ''}|${asofDate || ''}|${sortBy || ''}|${sortDir || ''}|${limit}|${offset}`;
 
-const getScreenerData = async ({ category, type, asofDate }) => {
-  const key = cacheKey({ category, type, asofDate });
+const getScreenerData = async ({ category, type, asofDate, sortBy, sortDir, limit, offset }) => {
+  const key = cacheKey({ category, type, asofDate, sortBy, sortDir, limit, offset });
   const cached = cache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return cached.value;
   }
 
-  const rows = await queryScreener({ category, type, asofDate });
-  const value = { data: rows, meta: { total: rows.length } };
+  const { rows, total } = await queryScreener({ category, type, asofDate, sortBy, sortDir, limit, offset });
+  const value = { data: rows, meta: { total } };
 
   cache.set(key, { value, ts: Date.now() });
 

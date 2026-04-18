@@ -81,6 +81,7 @@ const DOMAIN_KEY_TO_PATH = {
   risk: 'risk',
   flows: 'flows',
   assets: 'assets',
+  categoryPerformance: 'category-performance',
 };
 
 export const fundService = {
@@ -127,6 +128,11 @@ export const historyService = {
   },
   getAssetsHistory: (fundId, startDate, endDate) => {
     return api.get(`/api/funds/${fundId}/history/assets`, {
+      params: { startDate, endDate },
+    });
+  },
+  getCategoryPerformanceHistory: (fundId, startDate, endDate) => {
+    return api.get(`/api/funds/${fundId}/history/category-performance`, {
       params: { startDate, endDate },
     });
   },

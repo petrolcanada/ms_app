@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fundService } from '../services/api';
 
-const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets'];
+const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets', 'categoryPerformance'];
 
 /**
  * Fetches multiple domain datasets for a single fund.

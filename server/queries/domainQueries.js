@@ -1,14 +1,15 @@
 const { pool } = require('../config/db');
 
 const DOMAIN_FUNCTIONS = {
-  basicInfo:    'ms.fn_get_basic_info_at_date',
-  performance:  'ms.fn_get_performance_at_date',
-  rankings:     'ms.fn_get_rankings_at_date',
-  fees:         'ms.fn_get_all_fees_at_date',
-  ratings:      'ms.fn_get_ratings_at_date',
-  risk:         'ms.fn_get_all_risk_at_date',
-  flows:        'ms.fn_get_flows_at_date',
-  assets:       'ms.fn_get_assets_at_date',
+  basicInfo:              'ms.fn_get_basic_info_at_date',
+  performance:            'ms.fn_get_performance_at_date',
+  rankings:               'ms.fn_get_rankings_at_date',
+  fees:                   'ms.fn_get_all_fees_at_date',
+  ratings:                'ms.fn_get_ratings_at_date',
+  risk:                   'ms.fn_get_all_risk_at_date',
+  flows:                  'ms.fn_get_flows_at_date',
+  assets:                 'ms.fn_get_assets_at_date',
+  categoryPerformance:    'ms.fn_get_category_performance_for_funds',
 };
 
 const queryLatestMonthEndDate = async () => {

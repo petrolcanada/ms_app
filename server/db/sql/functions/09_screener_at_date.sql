@@ -5,11 +5,9 @@
 --          performance, fees, risk, ratings, and assets tables
 --          returning only the lean column set the screener UI needs.
 --
--- Replaces the N+1 waterfall of separate fund-list pagination
--- followed by batched domain calls (5 functions × N batches).
---
--- When p_asof_date is NULL the latest monthenddate is auto-discovered
--- and the fast materialized view is used for fund identity columns.
+-- All domain tables are joined on the SAME as-of date to ensure
+-- consistency.  When p_asof_date is NULL the latest monthenddate
+-- from the performance table is used for all joins.
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION ms.fn_get_screener_at_date(
@@ -38,7 +36,7 @@ AS $$
 DECLARE
     v_asof_date DATE;
 BEGIN
-    -- Resolve effective month-end date
+    -- Resolve effective month-end date from the performance table
     IF p_asof_date IS NOT NULL THEN
         v_asof_date := p_asof_date;
     ELSE
@@ -76,8 +74,7 @@ BEGIN
         LEFT JOIN ms.fund_level_net_assets_ca_openend assets
             ON assets._id = bf._id AND assets.monthenddate = v_asof_date::TEXT
         WHERE (p_category IS NULL OR bf.categoryname = p_category)
-          AND (p_type IS NULL OR bf.securitytype = p_type)
-        ORDER BY perf.return1yr::NUMERIC DESC NULLS LAST;
+          AND (p_type IS NULL OR bf.securitytype = p_type);
     ELSE
         -- Temporal path: point-in-time basic info (securitytype needs translation)
         RETURN QUERY
@@ -117,8 +114,7 @@ BEGIN
                    WHEN 'FO' THEN 'Mutual Fund'
                    WHEN 'FE' THEN 'ETF'
                    ELSE bf.securitytype
-               END = p_type)
-        ORDER BY perf.return1yr::NUMERIC DESC NULLS LAST;
+               END = p_type);
     END IF;
 END;
 $$;

@@ -24,8 +24,17 @@ const queryAssetsHistory = async (fundId, startDate, endDate) => {
   return result.rows;
 };
 
+const queryCategoryPerformanceHistory = async (fundId, startDate, endDate) => {
+  const result = await pool.query(
+    `SELECT * FROM ms.fn_get_category_performance_history_for_fund($1, $2::DATE, $3::DATE)`,
+    [fundId, startDate, endDate]
+  );
+  return result.rows;
+};
+
 module.exports = {
   queryPerformanceHistory,
   queryFlowHistory,
   queryAssetsHistory,
+  queryCategoryPerformanceHistory,
 };
