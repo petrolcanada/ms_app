@@ -38,7 +38,7 @@ describe('Fund domains integration', () => {
         ORDER BY monthenddate DESC
         LIMIT 1
       `,
-      [fundIds, fundIds.length]
+      [fundIds, fundIds.length],
     );
 
     expect(dateResult.rows.length).toBe(1);
@@ -53,13 +53,13 @@ describe('Fund domains integration', () => {
       });
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('asofDate', asofDate);
-    expect(Array.isArray(response.body.funds)).toBe(true);
-    expect(response.body.funds.length).toBeGreaterThan(0);
+    expect(response.body).toHaveProperty('meta.asofDate', asofDate);
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThan(0);
 
-    const funds = response.body.funds;
-    fundIds.forEach(id => {
-      const fund = funds.find(f => f.basicInfo && f.basicInfo._id === id);
+    const funds = response.body.data;
+    fundIds.forEach((id) => {
+      const fund = funds.find((f) => f.basicInfo && f.basicInfo._id === id);
       expect(fund).toBeDefined();
       expect(fund.basicInfo).toBeDefined();
       expect(fund.performance).toBeDefined();
@@ -67,10 +67,10 @@ describe('Fund domains integration', () => {
       expect(fund.performance.monthenddate).toBe(asofDate);
     });
 
-    const perfResult = await pool.query(
-      'SELECT * FROM ms.fn_get_performance_at_date($1, $2)',
-      [fundIds, asofDate]
-    );
+    const perfResult = await pool.query('SELECT * FROM ms.fn_get_performance_at_date($1, $2)', [
+      fundIds,
+      asofDate,
+    ]);
     expect(perfResult.rows.length).toBeGreaterThanOrEqual(fundIds.length);
   });
 });

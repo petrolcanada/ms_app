@@ -14,6 +14,7 @@ export default [
         __filename: 'readonly',
         process: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
         setTimeout: 'readonly',
         setInterval: 'readonly',
         clearTimeout: 'readonly',
@@ -23,6 +24,7 @@ export default [
         describe: 'readonly',
         it: 'readonly',
         test: 'readonly',
+        jest: 'readonly',
         expect: 'readonly',
         beforeAll: 'readonly',
         afterAll: 'readonly',
@@ -36,6 +38,6 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/', 'coverage/', 'public/'],
+    ignores: ['eslint.config.mjs', 'node_modules/', 'coverage/', 'public/'],
   },
 ];

@@ -19,7 +19,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 api.interceptors.response.use(
@@ -29,12 +29,12 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const { status, data } = error.response;
-      
+
       console.error(`API Error ${status}:`, data);
-      
+
       // Transform error to user-friendly message
       let userMessage = 'An error occurred while fetching data.';
-      
+
       switch (status) {
         case 400:
           userMessage = data.error?.message || 'Invalid request. Please check your input.';
@@ -51,12 +51,12 @@ api.interceptors.response.use(
         default:
           userMessage = data.error?.message || 'An unexpected error occurred.';
       }
-      
+
       // Create a user-friendly error object
       const userError = new Error(userMessage);
       userError.status = status;
       userError.originalError = error;
-      
+
       return Promise.reject(userError);
     } else if (error.request) {
       // Request was made but no response received (network error)
@@ -69,7 +69,7 @@ api.interceptors.response.use(
       console.error('Error:', error.message);
       return Promise.reject(error);
     }
-  }
+  },
 );
 
 const DOMAIN_KEY_TO_PATH = {
@@ -144,6 +144,15 @@ export const dashboardService = {
   },
   getCategoryOverview: (category, params = {}) => {
     return api.get(`/api/dashboard/category/${encodeURIComponent(category)}`, { params });
+  },
+};
+
+export const publicApiService = {
+  getDashboard: () => {
+    return api.get('/api/public/dashboard');
+  },
+  getAvailableDates: () => {
+    return api.get('/api/public/available-dates');
   },
 };
 
