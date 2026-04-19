@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import SEO from './SEO';
@@ -6,35 +6,65 @@ import SEO from './SEO';
 const fadeKeyframes = `
 @keyframes landingFadeUp {
   from { opacity: 0; transform: translateY(32px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(0); }
 }
 `;
 
+const deskModules = [
+  {
+    title: 'Explorer',
+    body: 'Search the full universe quickly, then narrow to the exact mandate, structure, and domicile you need.',
+  },
+  {
+    title: 'Screener',
+    body: 'Sort conviction ideas with tighter ranking, cleaner filters, and a surface that reads like a professional desk.',
+  },
+  {
+    title: 'Compare',
+    body: 'Keep multiple funds in view at once so fees, performance, flows, and risk signals stay easy to parse.',
+  },
+];
+
+const marketTape = [
+  { label: 'US Equity', value: '+7.4%', positive: true },
+  { label: 'Global Equity', value: '+5.9%', positive: true },
+  { label: 'Core Bond', value: '-1.2%', positive: false },
+  { label: 'Dividend', value: '+4.1%', positive: true },
+  { label: 'Low Vol', value: '+2.8%', positive: true },
+  { label: 'Tech Growth', value: '+9.7%', positive: true },
+];
+
+const pricingTiers = [
+  {
+    name: 'Free',
+    price: '$0',
+    description: 'A clean entry point for individual investors.',
+    features: ['Explorer access', 'Basic screening', '2-fund compare', '5 watchlist slots'],
+    cta: 'Start free',
+    to: '/signup',
+    featured: false,
+  },
+  {
+    name: 'Pro',
+    price: '$19',
+    description: 'Full desk workflow for serious research.',
+    features: [
+      'Unlimited screening',
+      'Unlimited watchlist',
+      'Full data domains',
+      'Export and compare',
+    ],
+    cta: 'See Pro',
+    to: '/pricing',
+    featured: true,
+  },
+];
+
 const AnimatedSection = ({ children, sx, ...props }) => {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.style.animationPlayState = 'running';
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.12 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <Box
-      ref={ref}
       sx={{
         animation: 'landingFadeUp 700ms ease both',
-        animationPlayState: 'paused',
         ...sx,
       }}
       {...props}
@@ -44,38 +74,308 @@ const AnimatedSection = ({ children, sx, ...props }) => {
   );
 };
 
-const featureCards = [
-  {
-    icon: '🔍',
-    title: 'Fund Explorer',
-    desc: 'Browse and search across thousands of mutual funds and ETFs with advanced filtering.',
-  },
-  {
-    icon: '📊',
-    title: 'Smart Screener',
-    desc: 'Rank funds by returns, fees, ratings, risk metrics, and more with customizable criteria.',
-  },
-  {
-    icon: '⚖️',
-    title: 'Side-by-Side Compare',
-    desc: 'Compare up to 4 funds across all data domains in a unified view.',
-  },
-  {
-    icon: '📈',
-    title: 'Historical Analysis',
-    desc: 'Track performance, flows, and assets over time with interactive charts.',
-  },
-  {
-    icon: '🗂️',
-    title: '8 Data Domains',
-    desc: 'Deep dive into basic info, performance, rankings, fees, ratings, risk, flows, and assets.',
-  },
-  {
-    icon: '⭐',
-    title: 'Watchlist',
-    desc: 'Save and track your favorite funds with personalized alerts.',
-  },
-];
+const BrandMark = ({ size = 26 }) => (
+  <Box
+    sx={{
+      width: size,
+      height: size,
+      borderRadius: `${Math.round(size * 0.3)}px`,
+      background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+      boxShadow: '0 14px 34px rgba(111, 76, 245, 0.26)',
+      position: 'relative',
+      flexShrink: 0,
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: `${Math.max(5, Math.round(size * 0.26))}px`,
+        borderRadius: `${Math.round(size * 0.18)}px`,
+        border: '1.5px solid rgba(255,255,255,0.84)',
+      },
+    }}
+  />
+);
+
+const PreviewShell = () => (
+  <Box
+    sx={{
+      position: 'relative',
+      background: 'linear-gradient(180deg, #110d1d 0%, #0b0814 100%)',
+      borderRadius: '26px',
+      border: '1px solid rgba(145, 116, 255, 0.24)',
+      boxShadow: '0 34px 90px rgba(7, 6, 13, 0.45)',
+      overflow: 'hidden',
+    }}
+  >
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 18px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(255,255,255,0.02)',
+      }}
+    >
+      <Box sx={{ display: 'flex', gap: '8px' }}>
+        {['#FF627A', '#F4B860', '#17C978'].map((dot) => (
+          <Box
+            key={dot}
+            sx={{
+              width: '9px',
+              height: '9px',
+              borderRadius: '50%',
+              background: dot,
+              opacity: 0.9,
+            }}
+          />
+        ))}
+      </Box>
+      <Box sx={{ display: 'flex', gap: '8px' }}>
+        {['Explorer', 'Screen', 'Compare'].map((tab, index) => (
+          <Box
+            key={tab}
+            sx={{
+              px: '10px',
+              py: '4px',
+              borderRadius: '999px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: index === 0 ? '#fff' : 'rgba(255,255,255,0.55)',
+              background: index === 0 ? 'rgba(111, 76, 245, 0.18)' : 'transparent',
+              border: index === 0 ? '1px solid rgba(145, 116, 255, 0.24)' : '1px solid transparent',
+            }}
+          >
+            {tab}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr) 240px' },
+      }}
+    >
+      <Box
+        sx={{
+          padding: '18px',
+          borderRight: { md: '1px solid rgba(255,255,255,0.06)' },
+          borderBottom: { xs: '1px solid rgba(255,255,255,0.06)', md: 'none' },
+          display: 'grid',
+          gap: '14px',
+        }}
+      >
+        <Box
+          sx={{
+            p: '14px',
+            borderRadius: '18px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
+            Watchlist focus
+          </Box>
+          <Box sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.04em', color: '#fff' }}>
+            128
+          </Box>
+          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>funds tracked</Box>
+        </Box>
+        <Box
+          sx={{
+            p: '14px',
+            borderRadius: '18px',
+            background: 'rgba(111, 76, 245, 0.12)',
+            border: '1px solid rgba(145, 116, 255, 0.16)',
+          }}
+        >
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
+            Best ranked screen
+          </Box>
+          <Box sx={{ fontSize: '13px', fontWeight: 700, color: '#fff', mb: '6px' }}>
+            Canadian dividend funds
+          </Box>
+          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.68)' }}>
+            Median MER 0.61% - Flow momentum rising
+          </Box>
+        </Box>
+        <Box sx={{ display: 'grid', gap: '8px' }}>
+          {['Fee discipline', 'Positive 1Y trend', 'Risk below category'].map((item, index) => (
+            <Box
+              key={item}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: '10px 12px',
+                borderRadius: '14px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}
+            >
+              <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>{item}</Box>
+              <Box
+                sx={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: index === 1 ? 'var(--emerald)' : 'var(--accent-strong)',
+                }}
+              />
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          padding: '18px',
+          borderRight: { md: '1px solid rgba(255,255,255,0.06)' },
+          borderBottom: { xs: '1px solid rgba(255,255,255,0.06)', md: 'none' },
+        }}
+      >
+        <Box
+          sx={{
+            height: '100%',
+            minHeight: '280px',
+            borderRadius: '22px',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+            border: '1px solid rgba(255,255,255,0.06)',
+            position: 'relative',
+            overflow: 'hidden',
+            p: '18px',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '18px' }}>
+            <Box>
+              <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)' }}>Performance</Box>
+              <Box sx={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>
+                Global Equity Blend
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                px: '10px',
+                py: '6px',
+                borderRadius: '999px',
+                background: 'rgba(23, 201, 120, 0.12)',
+                color: 'var(--emerald)',
+                fontSize: '11px',
+                fontWeight: 700,
+              }}
+            >
+              +8.41%
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: '92px 18px 18px',
+              overflow: 'hidden',
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${index * 24}%`,
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                }}
+              />
+            ))}
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  left: `${index * 18}%`,
+                  borderLeft: '1px solid rgba(255,255,255,0.04)',
+                }}
+              />
+            ))}
+            <Box
+              component="svg"
+              viewBox="0 0 600 220"
+              preserveAspectRatio="none"
+              sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            >
+              <defs>
+                <linearGradient id="lineGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+                  <stop offset="0%" stopColor="#6F4CF5" />
+                  <stop offset="100%" stopColor="#A89DFF" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0,172 C48,150 92,138 140,126 C188,114 216,126 264,92 C312,58 348,54 400,76 C452,98 498,110 546,84 C568,74 586,56 600,38"
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ padding: '18px', display: 'grid', gap: '12px' }}>
+        <Box
+          sx={{
+            p: '14px',
+            borderRadius: '18px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '12px' }}>
+            Compare set
+          </Box>
+          {['XIU', 'VFV', 'ZDV', 'XAW'].map((ticker, index) => (
+            <Box
+              key={ticker}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: index === 3 ? 0 : '0 0 10px',
+                mb: index === 3 ? 0 : '10px',
+                borderBottom: index === 3 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <Box>
+                <Box sx={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{ticker}</Box>
+                <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.48)' }}>Ranked view</Box>
+              </Box>
+              <Box sx={{ fontSize: '12px', color: index < 2 ? 'var(--emerald)' : 'var(--text-3)' }}>
+                {index < 2 ? 'Lead' : 'Watch'}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        <Box
+          sx={{
+            p: '14px',
+            borderRadius: '18px',
+            background:
+              'linear-gradient(180deg, rgba(111, 76, 245, 0.18), rgba(111, 76, 245, 0.08))',
+            border: '1px solid rgba(145, 116, 255, 0.18)',
+          }}
+        >
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '8px' }}>Desk note</Box>
+          <Box sx={{ fontSize: '13px', lineHeight: 1.7, color: 'rgba(255,255,255,0.76)' }}>
+            The interface stays quiet until it matters. Strong type, darker panels, and fewer colors
+            make the data read faster.
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+);
 
 const LandingPage = () => {
   return (
@@ -83,18 +383,15 @@ const LandingPage = () => {
       <SEO path="/" />
       <style>{fadeKeyframes}</style>
 
-      <Box sx={{ background: 'var(--bg-void)', minHeight: '100vh', color: 'var(--text-1)' }}>
-        {/* ── Accent line ── */}
+      <Box sx={{ minHeight: '100vh', color: 'var(--text-1)' }}>
         <Box
           sx={{
-            height: '2px',
+            height: '1px',
             background:
-              'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
-            opacity: 0.5,
+              'linear-gradient(90deg, transparent 0%, rgba(111, 76, 245, 0.8) 50%, transparent 100%)',
           }}
         />
 
-        {/* ── Navbar ── */}
         <Box
           component="nav"
           sx={{
@@ -102,99 +399,93 @@ const LandingPage = () => {
             top: 0,
             zIndex: 100,
             background: 'var(--glass-nav)',
-            backdropFilter: 'blur(20px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+            backdropFilter: 'blur(22px) saturate(1.25)',
+            WebkitBackdropFilter: 'blur(22px) saturate(1.25)',
             borderBottom: '1px solid var(--border)',
           }}
         >
           <Box
             sx={{
-              maxWidth: '1200px',
+              maxWidth: '1320px',
               mx: 'auto',
               px: { xs: '16px', sm: '24px', md: '32px' },
-              height: '56px',
+              minHeight: '68px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: '16px',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-              <Link
-                to="/"
-                style={{
-                  fontFamily: 'var(--font-head)',
-                  fontWeight: 700,
-                  fontSize: '18px',
-                  color: 'var(--text-1)',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                <span style={{ color: 'var(--emerald)', fontSize: '20px' }}>&#9670;</span>
-                FundLens
-              </Link>
-
-              <Box
-                sx={{
-                  display: { xs: 'none', sm: 'flex' },
-                  gap: '8px',
-                }}
-              >
+            <Link
+              to="/"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                textDecoration: 'none',
+                color: 'var(--text-1)',
+              }}
+            >
+              <BrandMark />
+              <Box>
                 <Box
-                  component="a"
-                  href="#features"
                   sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: 'var(--text-3)',
-                    textDecoration: 'none',
-                    padding: '6px 14px',
-                    borderRadius: 'var(--radius)',
-                    transition: 'color var(--transition)',
-                    '&:hover': { color: 'var(--text-1)' },
+                    fontFamily: 'var(--font-head)',
+                    fontWeight: 800,
+                    fontSize: '18px',
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1,
                   }}
                 >
-                  Features
+                  FundLens
                 </Box>
-                <Box
-                  component="a"
-                  href="#pricing"
-                  sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: 'var(--text-3)',
-                    textDecoration: 'none',
-                    padding: '6px 14px',
-                    borderRadius: 'var(--radius)',
-                    transition: 'color var(--transition)',
-                    '&:hover': { color: 'var(--text-1)' },
-                  }}
-                >
-                  Pricing
+                <Box sx={{ fontSize: '10px', color: 'var(--text-4)', letterSpacing: '0.08em' }}>
+                  PROFESSIONAL RESEARCH
                 </Box>
               </Box>
+            </Link>
+
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: '6px' }}>
+              {['Workflow', 'Pricing', 'Why it reads better'].map((item) => (
+                <Box
+                  key={item}
+                  component="a"
+                  href={`#${item.toLowerCase().replaceAll(' ', '-')}`}
+                  sx={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--text-3)',
+                    textDecoration: 'none',
+                    px: '14px',
+                    py: '9px',
+                    borderRadius: 'var(--radius-pill)',
+                    transition: 'all var(--transition)',
+                    '&:hover': {
+                      color: 'var(--text-1)',
+                      background: 'var(--accent-soft)',
+                    },
+                  }}
+                >
+                  {item}
+                </Box>
+              ))}
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Box
                 component={Link}
                 to="/login"
                 sx={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: 'var(--text-2)',
                   textDecoration: 'none',
-                  padding: '7px 18px',
-                  borderRadius: 'var(--radius)',
+                  px: '16px',
+                  py: '10px',
+                  borderRadius: 'var(--radius-pill)',
                   border: '1px solid var(--border)',
                   transition: 'all var(--transition)',
-                  '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
+                  '&:hover': { color: 'var(--text-1)', borderColor: 'var(--border-hover)' },
                 }}
               >
                 Log in
@@ -203,560 +494,555 @@ const LandingPage = () => {
                 component={Link}
                 to="/signup"
                 sx={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '13px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: '#fff',
                   textDecoration: 'none',
-                  padding: '7px 20px',
-                  borderRadius: 'var(--radius)',
-                  background: 'var(--emerald)',
-                  transition: 'opacity var(--transition)',
-                  '&:hover': { opacity: 0.88 },
+                  px: '18px',
+                  py: '10px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+                  boxShadow: '0 16px 32px rgba(111, 76, 245, 0.24)',
+                  transition: 'transform var(--transition), box-shadow var(--transition)',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 20px 40px rgba(111, 76, 245, 0.28)',
+                  },
                 }}
               >
-                Get Started
+                Start free
               </Box>
             </Box>
           </Box>
         </Box>
 
-        {/* ── Hero ── */}
         <AnimatedSection
           sx={{
-            maxWidth: '1200px',
+            maxWidth: '1320px',
             mx: 'auto',
             px: { xs: '16px', sm: '24px', md: '32px' },
-            pt: { xs: '64px', md: '100px' },
-            pb: { xs: '48px', md: '72px' },
-            textAlign: 'center',
+            pt: { xs: '56px', md: '88px' },
+            pb: { xs: '44px', md: '64px' },
           }}
         >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mb: '18px',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                px: '14px',
+                py: '8px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--border)',
+                background: 'rgba(255,255,255,0.03)',
+                color: 'var(--text-2)',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+            >
+              <BrandMark size={18} />
+              Kraken-inspired visual refresh
+            </Box>
+          </Box>
+
           <Box
             component="h1"
             sx={{
               fontFamily: 'var(--font-head)',
-              fontSize: { xs: '36px', sm: '48px', md: '56px' },
-              fontWeight: 700,
-              letterSpacing: '-0.04em',
-              lineHeight: 1.1,
-              color: 'var(--text-1)',
+              fontSize: { xs: '38px', sm: '56px', md: '72px' },
+              fontWeight: 800,
+              letterSpacing: '-0.06em',
+              lineHeight: 0.98,
+              textAlign: 'center',
+              maxWidth: '900px',
+              mx: 'auto',
               mb: '20px',
             }}
           >
-            See Through Every Fund
+            Professional fund research with a calmer trading-desk feel.
           </Box>
 
           <Box
             sx={{
-              fontFamily: 'var(--font-body)',
-              fontSize: { xs: '15px', md: '17px' },
+              fontSize: { xs: '15px', md: '18px' },
               color: 'var(--text-3)',
-              maxWidth: '640px',
+              textAlign: 'center',
+              maxWidth: '760px',
               mx: 'auto',
-              lineHeight: 1.7,
-              mb: '36px',
+              lineHeight: 1.75,
+              mb: '30px',
             }}
           >
-            Powerful analytics for mutual funds and ETFs across US and Canadian markets. Screen,
-            compare, and analyze with institutional-grade data.
+            FundLens now leans into cooler neutrals, sharper hierarchy, and darker desk surfaces so
+            the data looks deliberate instead of decorative.
           </Box>
 
-          <Box sx={{ display: 'flex', gap: '14px', justifyContent: 'center', mb: '56px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '12px',
+              mb: '34px',
+            }}
+          >
             <Box
               component={Link}
               to="/signup"
               sx={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '14px',
-                fontWeight: 600,
+                px: '22px',
+                py: '13px',
+                borderRadius: 'var(--radius-pill)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                 color: '#fff',
+                fontSize: '14px',
+                fontWeight: 700,
                 textDecoration: 'none',
-                padding: '11px 28px',
-                borderRadius: 'var(--radius)',
-                background: 'var(--emerald)',
-                transition: 'opacity var(--transition)',
-                '&:hover': { opacity: 0.88 },
+                boxShadow: '0 18px 34px rgba(111, 76, 245, 0.24)',
               }}
             >
-              Start Free
+              Open the desk
             </Box>
             <Box
-              component="a"
-              href="#pricing"
+              component={Link}
+              to="/pricing"
               sx={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'var(--text-2)',
-                textDecoration: 'none',
-                padding: '11px 28px',
-                borderRadius: 'var(--radius)',
+                px: '22px',
+                py: '13px',
+                borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--border)',
-                transition: 'all var(--transition)',
+                color: 'var(--text-2)',
+                fontSize: '14px',
+                fontWeight: 700,
+                textDecoration: 'none',
                 '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
               }}
             >
-              View Pricing
+              See pricing
             </Box>
-          </Box>
-
-          {/* Dashboard preview */}
-          <Box
-            sx={{
-              maxWidth: '820px',
-              mx: 'auto',
-              p: '1px',
-              borderRadius: 'var(--radius-lg)',
-              background:
-                'linear-gradient(135deg, var(--emerald) 0%, var(--blue) 50%, var(--emerald) 100%)',
-              opacity: 0.92,
-            }}
-          >
-            <Box
-              sx={{
-                background: 'var(--bg-base)',
-                borderRadius: '11px',
-                p: { xs: '20px', md: '32px' },
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-                  gap: '16px',
-                }}
-              >
-                {[
-                  { label: 'Funds Covered', value: '12,400+', color: 'var(--emerald)' },
-                  { label: 'Data Domains', value: '8', color: 'var(--blue)' },
-                  { label: 'Real-time Screener', value: '✓', color: 'var(--emerald)' },
-                  { label: 'Side-by-Side Compare', value: '✓', color: 'var(--blue)' },
-                ].map((item) => (
-                  <Box
-                    key={item.label}
-                    sx={{
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius)',
-                      p: '20px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        fontFamily: 'var(--font-head)',
-                        fontSize: '22px',
-                        fontWeight: 700,
-                        color: item.color,
-                        mb: '4px',
-                      }}
-                    >
-                      {item.value}
-                    </Box>
-                    <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>{item.label}</Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        </AnimatedSection>
-
-        {/* ── Features ── */}
-        <AnimatedSection
-          id="features"
-          sx={{
-            maxWidth: '1200px',
-            mx: 'auto',
-            px: { xs: '16px', sm: '24px', md: '32px' },
-            py: { xs: '56px', md: '88px' },
-          }}
-        >
-          <Box
-            component="h2"
-            sx={{
-              fontFamily: 'var(--font-head)',
-              fontSize: { xs: '26px', md: '34px' },
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              textAlign: 'center',
-              color: 'var(--text-1)',
-              mb: '48px',
-            }}
-          >
-            Everything you need to analyze funds
           </Box>
 
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-              gap: '20px',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+              gap: '12px',
+              maxWidth: '900px',
+              mx: 'auto',
+              mb: '34px',
             }}
           >
-            {featureCards.map((f) => (
+            {[
+              { label: 'Funds indexed', value: '12.4K+' },
+              { label: 'Domains in view', value: '8' },
+              { label: 'Workflow latency', value: '<1 min' },
+            ].map((stat) => (
               <Box
-                key={f.title}
+                key={stat.label}
                 sx={{
-                  background: 'var(--bg-surface)',
+                  p: '16px 18px',
+                  borderRadius: '18px',
                   border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  p: '28px',
-                  transition: 'all 250ms ease',
-                  '&:hover': {
-                    borderColor: 'var(--emerald)',
-                    transform: 'translateY(-4px)',
-                  },
+                  background: 'rgba(255,255,255,0.03)',
+                  textAlign: 'left',
                 }}
               >
-                <Box sx={{ fontSize: '28px', mb: '14px' }}>{f.icon}</Box>
                 <Box
                   sx={{
                     fontFamily: 'var(--font-head)',
-                    fontSize: '16px',
-                    fontWeight: 600,
+                    fontSize: '28px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.05em',
                     color: 'var(--text-1)',
-                    mb: '8px',
                   }}
                 >
-                  {f.title}
+                  {stat.value}
                 </Box>
-                <Box sx={{ fontSize: '13px', lineHeight: 1.65, color: 'var(--text-3)' }}>
-                  {f.desc}
+                <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>{stat.label}</Box>
+              </Box>
+            ))}
+          </Box>
+
+          <PreviewShell />
+        </AnimatedSection>
+
+        <AnimatedSection
+          id="workflow"
+          sx={{
+            maxWidth: '1320px',
+            mx: 'auto',
+            px: { xs: '16px', sm: '24px', md: '32px' },
+            py: { xs: '40px', md: '72px' },
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: '34px' }}>
+            <Box
+              sx={{
+                fontFamily: 'var(--font-head)',
+                fontSize: { xs: '30px', md: '46px' },
+                fontWeight: 800,
+                letterSpacing: '-0.05em',
+                mb: '10px',
+              }}
+            >
+              Built to read faster.
+            </Box>
+            <Box sx={{ maxWidth: '640px', mx: 'auto', color: 'var(--text-3)', lineHeight: 1.75 }}>
+              The visual system borrows from Kraken&apos;s restraint: fewer competing accents, more
+              structure, and dark panels where the data deserves the eye.
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+              gap: '18px',
+            }}
+          >
+            {deskModules.map((module, index) => (
+              <Box
+                key={module.title}
+                sx={{
+                  p: '22px',
+                  borderRadius: '24px',
+                  border: '1px solid var(--border)',
+                  background:
+                    index === 1
+                      ? 'linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0.02))'
+                      : 'rgba(255,255,255,0.03)',
+                  boxShadow: 'var(--shadow-panel)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '34px',
+                    height: '34px',
+                    borderRadius: '12px',
+                    background: index === 1 ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                    color: index === 1 ? 'var(--accent-strong)' : 'var(--text-2)',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    mb: '16px',
+                  }}
+                >
+                  0{index + 1}
                 </Box>
+                <Box
+                  sx={{
+                    fontFamily: 'var(--font-head)',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    letterSpacing: '-0.04em',
+                    mb: '10px',
+                  }}
+                >
+                  {module.title}
+                </Box>
+                <Box sx={{ color: 'var(--text-3)', lineHeight: 1.75 }}>{module.body}</Box>
               </Box>
             ))}
           </Box>
         </AnimatedSection>
 
-        {/* ── Pricing ── */}
         <AnimatedSection
-          id="pricing"
+          id="why-it-reads-better"
           sx={{
-            maxWidth: '1200px',
+            maxWidth: '1320px',
             mx: 'auto',
             px: { xs: '16px', sm: '24px', md: '32px' },
-            py: { xs: '56px', md: '88px' },
+            py: { xs: '18px', md: '40px' },
           }}
         >
           <Box
-            component="h2"
             sx={{
-              fontFamily: 'var(--font-head)',
-              fontSize: { xs: '26px', md: '34px' },
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              textAlign: 'center',
-              color: 'var(--text-1)',
-              mb: '12px',
+              p: { xs: '20px', md: '24px' },
+              borderRadius: '24px',
+              border: '1px solid var(--border)',
+              background: 'rgba(255,255,255,0.03)',
+              boxShadow: 'var(--shadow-panel)',
             }}
           >
-            Simple, transparent pricing
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '10px',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: '18px',
+              }}
+            >
+              <Box>
+                <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '6px' }}>Market tape</Box>
+                <Box
+                  sx={{
+                    fontFamily: 'var(--font-head)',
+                    fontSize: { xs: '28px', md: '36px' },
+                    fontWeight: 800,
+                    letterSpacing: '-0.05em',
+                  }}
+                >
+                  A cleaner glance across the board
+                </Box>
+              </Box>
+              <Box
+                component={Link}
+                to="/dashboard"
+                sx={{
+                  px: '16px',
+                  py: '10px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-2)',
+                  textDecoration: 'none',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                }}
+              >
+                View dashboard
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(6, 1fr)' },
+                gap: '10px',
+              }}
+            >
+              {marketTape.map((item) => (
+                <Box
+                  key={item.label}
+                  sx={{
+                    p: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <Box sx={{ fontSize: '11px', color: 'var(--text-4)', mb: '10px' }}>
+                    {item.label}
+                  </Box>
+                  <Box
+                    sx={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: 'var(--text-1)',
+                      mb: '3px',
+                    }}
+                  >
+                    {item.label}
+                  </Box>
+                  <Box
+                    sx={{
+                      fontSize: '12px',
+                      color: item.positive ? 'var(--emerald)' : 'var(--red)',
+                    }}
+                  >
+                    {item.value}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
           </Box>
-          <Box
-            sx={{
-              fontSize: '14px',
-              color: 'var(--text-3)',
-              textAlign: 'center',
-              mb: '48px',
-            }}
-          >
-            Start free, upgrade when you need more.
+        </AnimatedSection>
+
+        <AnimatedSection
+          id="pricing"
+          sx={{
+            maxWidth: '1100px',
+            mx: 'auto',
+            px: { xs: '16px', sm: '24px', md: '32px' },
+            py: { xs: '48px', md: '84px' },
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: '34px' }}>
+            <Box
+              sx={{
+                fontFamily: 'var(--font-head)',
+                fontSize: { xs: '30px', md: '46px' },
+                fontWeight: 800,
+                letterSpacing: '-0.05em',
+                mb: '10px',
+              }}
+            >
+              Straightforward pricing.
+            </Box>
+            <Box sx={{ color: 'var(--text-3)' }}>
+              The redesign is cleaner. The plan structure stays simple.
+            </Box>
           </Box>
 
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-              gap: '24px',
-              maxWidth: '760px',
-              mx: 'auto',
+              gap: '18px',
             }}
           >
-            {/* Free */}
-            <Box
-              sx={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)',
-                p: '32px',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            {pricingTiers.map((tier) => (
               <Box
+                key={tier.name}
                 sx={{
-                  fontFamily: 'var(--font-head)',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  color: 'var(--text-1)',
-                  mb: '4px',
+                  p: '28px',
+                  borderRadius: '26px',
+                  border: tier.featured
+                    ? '1px solid var(--accent-ring)'
+                    : '1px solid var(--border)',
+                  background: tier.featured
+                    ? 'linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0.03))'
+                    : 'rgba(255,255,255,0.03)',
+                  boxShadow: 'var(--shadow-panel)',
                 }}
               >
-                Free
-              </Box>
-              <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '20px' }}>
-                For individual investors getting started.
-              </Box>
-              <Box
-                sx={{
-                  fontFamily: 'var(--font-head)',
-                  fontSize: '36px',
-                  fontWeight: 700,
-                  color: 'var(--text-1)',
-                  mb: '24px',
-                }}
-              >
-                $0
+                <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '8px' }}>
+                  {tier.featured ? 'Recommended desk setup' : 'Entry access'}
+                </Box>
                 <Box
-                  component="span"
-                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
+                  sx={{
+                    fontFamily: 'var(--font-head)',
+                    fontSize: '30px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.05em',
+                    mb: '6px',
+                  }}
                 >
-                  /month
+                  {tier.name}
+                </Box>
+                <Box sx={{ color: 'var(--text-3)', mb: '18px' }}>{tier.description}</Box>
+                <Box
+                  sx={{
+                    fontFamily: 'var(--font-head)',
+                    fontSize: '44px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.06em',
+                    mb: '22px',
+                  }}
+                >
+                  {tier.price}
+                  <Box
+                    component="span"
+                    sx={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-4)' }}
+                  >
+                    /month
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'grid', gap: '10px', mb: '24px' }}>
+                  {tier.features.map((feature) => (
+                    <Box
+                      key={feature}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: 'var(--text-2)',
+                        fontSize: '13px',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: tier.featured ? 'var(--accent-strong)' : 'var(--emerald)',
+                        }}
+                      />
+                      {feature}
+                    </Box>
+                  ))}
+                </Box>
+                <Box
+                  component={Link}
+                  to={tier.to}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    px: '18px',
+                    py: '13px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: tier.featured
+                      ? 'linear-gradient(135deg, var(--accent), var(--accent-strong))'
+                      : 'var(--bg-surface)',
+                    border: tier.featured ? 'none' : '1px solid var(--border)',
+                    color: tier.featured ? '#fff' : 'var(--text-1)',
+                    textDecoration: 'none',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {tier.cta}
                 </Box>
               </Box>
-              <Box
-                sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}
-              >
-                {[
-                  'Limited screener access',
-                  '5 watchlist slots',
-                  'Basic fund detail',
-                  'Compare up to 2 funds',
-                ].map((item) => (
-                  <Box
-                    key={item}
-                    sx={{
-                      fontSize: '13px',
-                      color: 'var(--text-2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                    }}
-                  >
-                    <span style={{ color: 'var(--emerald)' }}>✓</span>
-                    {item}
-                  </Box>
-                ))}
-              </Box>
-              <Box
-                component={Link}
-                to="/signup"
-                sx={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: 'var(--text-1)',
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                  padding: '11px 0',
-                  borderRadius: 'var(--radius)',
-                  border: '1px solid var(--border)',
-                  transition: 'all var(--transition)',
-                  '&:hover': { borderColor: 'var(--border-hover)' },
-                }}
-              >
-                Get Started
-              </Box>
-            </Box>
-
-            {/* Pro */}
-            <Box
-              sx={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--emerald)',
-                borderRadius: 'var(--radius-lg)',
-                p: '32px',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                boxShadow: '0 0 40px rgba(16, 185, 129, 0.08)',
-              }}
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '-12px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  background: 'var(--emerald)',
-                  padding: '3px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Popular
-              </Box>
-              <Box
-                sx={{
-                  fontFamily: 'var(--font-head)',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  color: 'var(--text-1)',
-                  mb: '4px',
-                }}
-              >
-                Pro
-              </Box>
-              <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '20px' }}>
-                For serious investors and analysts.
-              </Box>
-              <Box
-                sx={{
-                  fontFamily: 'var(--font-head)',
-                  fontSize: '36px',
-                  fontWeight: 700,
-                  color: 'var(--text-1)',
-                  mb: '24px',
-                }}
-              >
-                $19
-                <Box
-                  component="span"
-                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
-                >
-                  /month
-                </Box>
-              </Box>
-              <Box
-                sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}
-              >
-                {[
-                  'Unlimited screener access',
-                  'Unlimited watchlist',
-                  'Full data domains',
-                  'Compare 4+ funds',
-                  'CSV export',
-                  'Priority support',
-                ].map((item) => (
-                  <Box
-                    key={item}
-                    sx={{
-                      fontSize: '13px',
-                      color: 'var(--text-2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                    }}
-                  >
-                    <span style={{ color: 'var(--emerald)' }}>✓</span>
-                    {item}
-                  </Box>
-                ))}
-              </Box>
-              <Box
-                component={Link}
-                to="/signup"
-                sx={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                  padding: '11px 0',
-                  borderRadius: 'var(--radius)',
-                  background: 'var(--emerald)',
-                  transition: 'opacity var(--transition)',
-                  '&:hover': { opacity: 0.88 },
-                }}
-              >
-                Upgrade to Pro
-              </Box>
-            </Box>
+            ))}
           </Box>
         </AnimatedSection>
 
-        {/* ── Footer ── */}
         <Box
           component="footer"
           sx={{
             borderTop: '1px solid var(--border)',
-            mt: '40px',
+            mt: '24px',
           }}
         >
           <Box
             sx={{
-              maxWidth: '1200px',
+              maxWidth: '1320px',
               mx: 'auto',
               px: { xs: '16px', sm: '24px', md: '32px' },
-              py: '40px',
+              py: '28px 36px',
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'center', sm: 'flex-start' },
+              flexDirection: { xs: 'column', md: 'row' },
               justifyContent: 'space-between',
-              gap: '24px',
+              gap: '18px',
+              alignItems: { xs: 'flex-start', md: 'center' },
             }}
           >
-            <Box>
-              <Link
-                to="/"
-                style={{
-                  fontFamily: 'var(--font-head)',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  color: 'var(--text-1)',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <span style={{ color: 'var(--emerald)', fontSize: '18px' }}>&#9670;</span>
-                FundLens
-              </Link>
-              <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mt: '8px' }}>
-                Data sourced from Morningstar
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <BrandMark size={22} />
+              <Box>
+                <Box
+                  sx={{ fontFamily: 'var(--font-head)', fontWeight: 800, letterSpacing: '-0.03em' }}
+                >
+                  FundLens
+                </Box>
+                <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
+                  Cooler light mode. Stronger desk hierarchy.
+                </Box>
               </Box>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '18px', fontSize: '13px' }}>
               {[
+                { label: 'Pricing', to: '/pricing' },
                 { label: 'Terms', to: '/terms' },
                 { label: 'Privacy', to: '/privacy' },
-                { label: 'Pricing', href: '#pricing' },
-              ].map((link) =>
-                link.to ? (
-                  <Box
-                    key={link.label}
-                    component={Link}
-                    to={link.to}
-                    sx={{
-                      fontSize: '13px',
-                      color: 'var(--text-3)',
-                      textDecoration: 'none',
-                      transition: 'color var(--transition)',
-                      '&:hover': { color: 'var(--text-1)' },
-                    }}
-                  >
-                    {link.label}
-                  </Box>
-                ) : (
-                  <Box
-                    key={link.label}
-                    component="a"
-                    href={link.href}
-                    sx={{
-                      fontSize: '13px',
-                      color: 'var(--text-3)',
-                      textDecoration: 'none',
-                      transition: 'color var(--transition)',
-                      '&:hover': { color: 'var(--text-1)' },
-                    }}
-                  >
-                    {link.label}
-                  </Box>
-                ),
-              )}
-            </Box>
-
-            <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
-              © 2026 FundLens. All rights reserved.
+              ].map((link) => (
+                <Box
+                  key={link.label}
+                  component={Link}
+                  to={link.to}
+                  sx={{
+                    color: 'var(--text-3)',
+                    textDecoration: 'none',
+                    '&:hover': { color: 'var(--text-1)' },
+                  }}
+                >
+                  {link.label}
+                </Box>
+              ))}
             </Box>
           </Box>
         </Box>

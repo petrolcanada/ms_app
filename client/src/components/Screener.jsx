@@ -1249,7 +1249,7 @@ const StyledSelect = ({ children, mono, ...props }) => (
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 12px center',
       transition: 'border-color var(--transition)',
-      '&:focus': { borderColor: 'var(--emerald)' },
+      '&:focus': { borderColor: 'var(--accent)' },
       '&:hover': { borderColor: 'var(--border-hover)' },
     }}
   >
@@ -1262,10 +1262,10 @@ const ControlButton = ({ children, primary, ...props }) => (
     component="button"
     {...props}
     sx={{
-      background: primary ? 'var(--emerald-soft)' : 'var(--bg-surface)',
-      border: primary ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border)',
+      background: primary ? 'var(--accent-soft)' : 'var(--bg-surface)',
+      border: primary ? '1px solid var(--accent-ring)' : '1px solid var(--border)',
       borderRadius: 'var(--radius)',
-      color: primary ? 'var(--emerald)' : 'var(--text-2)',
+      color: primary ? 'var(--accent-strong)' : 'var(--text-2)',
       fontFamily: 'var(--font-body)',
       fontSize: '12px',
       fontWeight: 500,
@@ -1274,8 +1274,8 @@ const ControlButton = ({ children, primary, ...props }) => (
       transition: 'all var(--transition)',
       '&:hover': {
         borderColor: primary ? undefined : 'var(--border-hover)',
-        background: primary ? 'rgba(16, 185, 129, 0.18)' : 'var(--bg-surface-hover)',
-        color: primary ? 'var(--emerald)' : 'var(--text-1)',
+        background: primary ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+        color: primary ? 'var(--accent-strong)' : 'var(--text-1)',
       },
     }}
   >
@@ -1295,17 +1295,17 @@ const PageBtn = ({ children, active, disabled, onClick, style }) => (
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 'var(--radius)',
-      border: active ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent',
-      background: active ? 'var(--emerald-soft)' : 'transparent',
-      color: active ? 'var(--emerald)' : 'var(--text-3)',
+      border: active ? '1px solid var(--accent-ring)' : '1px solid transparent',
+      background: active ? 'var(--accent-soft)' : 'transparent',
+      color: active ? 'var(--accent-strong)' : 'var(--text-3)',
       fontFamily: 'var(--font-mono)',
       fontSize: '12px',
       cursor: disabled ? 'default' : 'pointer',
       opacity: disabled && !style ? 0.3 : 1,
       transition: 'all var(--transition)',
       '&:hover:not(:disabled)': {
-        background: active ? 'var(--emerald-soft)' : 'var(--bg-surface-hover)',
-        color: active ? 'var(--emerald)' : 'var(--text-1)',
+        background: active ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+        color: active ? 'var(--accent-strong)' : 'var(--text-1)',
       },
       ...style,
     }}

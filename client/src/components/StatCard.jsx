@@ -5,16 +5,19 @@ const StatCard = ({ label, value, change, changeDirection, valueColor }) => {
   return (
     <Box
       sx={{
-        background: 'var(--bg-surface)',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
         border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '20px 24px',
+        borderRadius: '24px',
+        padding: '22px 24px',
         position: 'relative',
         overflow: 'hidden',
-        transition: 'border-color var(--transition), transform var(--transition)',
+        boxShadow: 'var(--shadow-panel)',
+        transition:
+          'border-color var(--transition), transform var(--transition), box-shadow var(--transition)',
         '&:hover': {
           borderColor: 'var(--border-hover)',
-          transform: 'translateY(-1px)',
+          transform: 'translateY(-2px)',
+          boxShadow: 'var(--shadow-strong)',
         },
         '&::before': {
           content: '""',
@@ -22,36 +25,45 @@ const StatCard = ({ label, value, change, changeDirection, valueColor }) => {
           top: 0,
           left: 0,
           right: 0,
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, var(--emerald), transparent)',
-          opacity: 0,
-          transition: 'opacity var(--transition)',
+          height: '2px',
+          background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+          opacity: 0.7,
         },
-        '&:hover::before': {
-          opacity: 0.6,
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: '-40% auto auto 60%',
+          width: '140px',
+          height: '140px',
+          borderRadius: '50%',
+          background: 'rgba(111, 76, 245, 0.12)',
+          filter: 'blur(48px)',
+          pointerEvents: 'none',
         },
       }}
     >
       <Box
         sx={{
           fontSize: '12px',
-          fontWeight: 500,
-          color: 'var(--text-3)',
+          fontWeight: 700,
+          color: 'var(--text-4)',
           textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          mb: '8px',
+          letterSpacing: '0.08em',
+          mb: '12px',
         }}
       >
         {label}
       </Box>
       <Box
         sx={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '28px',
-          fontWeight: 500,
+          fontFamily: 'var(--font-head)',
+          fontSize: { xs: '28px', md: '32px' },
+          fontWeight: 800,
           color: valueColor || 'var(--text-1)',
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.05em',
           lineHeight: 1.1,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {value}
@@ -65,11 +77,13 @@ const StatCard = ({ label, value, change, changeDirection, valueColor }) => {
             gap: '4px',
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',
-            mt: '8px',
-            padding: '2px 8px',
+            mt: '10px',
+            padding: '4px 9px',
             borderRadius: 'var(--radius-pill)',
             color: changeDirection === 'up' ? 'var(--emerald)' : 'var(--red)',
             background: changeDirection === 'up' ? 'var(--emerald-soft)' : 'var(--red-soft)',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {changeDirection === 'up' ? '\u2191' : '\u2193'} {change}

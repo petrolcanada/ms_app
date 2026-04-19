@@ -47,8 +47,17 @@ const FundDetail = () => {
     setSearchParams(newDate ? { asof: newDate } : {}, { replace: true });
   };
 
-  const { data: fundResp, isLoading: fundLoading, isError: fundError, error: fundErr } = useFundDetail(id);
-  const { data: domainData, isLoading: domainLoading, isError: domainError } = useDomains(id, {
+  const {
+    data: fundResp,
+    isLoading: fundLoading,
+    isError: fundError,
+    error: fundErr,
+  } = useFundDetail(id);
+  const {
+    data: domainData,
+    isLoading: domainLoading,
+    isError: domainError,
+  } = useDomains(id, {
     asofDate: asofDate || undefined,
   });
   const { data: perfHistory, isLoading: perfHistoryLoading } = usePerformanceHistory(id);
@@ -61,7 +70,9 @@ const FundDetail = () => {
 
   if (fundLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}
+      >
         <CircularProgress sx={{ color: 'var(--emerald)' }} />
       </Box>
     );
@@ -91,7 +102,9 @@ const FundDetail = () => {
     return (
       <Box>
         <BackLink onClick={goBack} />
-        <Box sx={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>Fund not found</Box>
+        <Box sx={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>
+          Fund not found
+        </Box>
       </Box>
     );
   }
@@ -160,7 +173,13 @@ const FundDetail = () => {
       case 'performance':
         return (
           <>
-            <PerformanceTab perf={perf} catPerf={catPerf} rankings={rankings} fmtPct={fmtPct} valColor={valColor} />
+            <PerformanceTab
+              perf={perf}
+              catPerf={catPerf}
+              rankings={rankings}
+              fmtPct={fmtPct}
+              valColor={valColor}
+            />
             <Box sx={{ mt: '20px' }}>
               <PerformanceHistoryChart data={perfHistory} isLoading={perfHistoryLoading} />
             </Box>
@@ -202,7 +221,16 @@ const FundDetail = () => {
       <BackLink onClick={goBack} />
 
       {/* Fund Header */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: '32px', gap: '24px', flexWrap: 'wrap' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          mb: '32px',
+          gap: '24px',
+          flexWrap: 'wrap',
+        }}
+      >
         <Box>
           <Box
             component="h1"
@@ -217,12 +245,24 @@ const FundDetail = () => {
           >
             {fund.fundname || fund._name || 'Unknown Fund'}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-3)', flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '13px',
+              color: 'var(--text-3)',
+              flexWrap: 'wrap',
+            }}
+          >
             <FundBadge type={fund.securitytype || fund.legalstructure} />
             <Separator />
             <span>{fund.categoryname || fund.globalcategoryname || '—'}</span>
             <Separator />
-            <span>Inception: {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}</span>
+            <span>
+              Inception:{' '}
+              {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}
+            </span>
           </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -230,22 +270,27 @@ const FundDetail = () => {
             component="button"
             aria-label={isWatched(id) ? 'Remove from watchlist' : 'Add to watchlist'}
             aria-pressed={isWatched(id)}
-            onClick={() => toggleWatchlist({
-              _id: id,
-              fundname: fund.fundname || fund._name,
-              ticker: fund.ticker,
-              categoryname: fund.categoryname || fund.globalcategoryname,
-              securitytype: fund.securitytype,
-            })}
+            onClick={() =>
+              toggleWatchlist({
+                _id: id,
+                fundname: fund.fundname || fund._name,
+                ticker: fund.ticker,
+                categoryname: fund.categoryname || fund.globalcategoryname,
+                securitytype: fund.securitytype,
+              })
+            }
             sx={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
               background: isWatched(id) ? 'var(--amber-soft)' : 'var(--bg-surface)',
-              border: isWatched(id)
-                ? '1px solid rgba(245,158,11,0.3)'
-                : '1px solid var(--border)',
-              borderRadius: 'var(--radius)', padding: '8px 14px',
+              border: isWatched(id) ? '1px solid rgba(245,158,11,0.3)' : '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              padding: '8px 14px',
               color: isWatched(id) ? 'var(--amber)' : 'var(--text-3)',
-              fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
               transition: 'all var(--transition)',
               '&:hover': {
                 borderColor: isWatched(id) ? 'var(--amber)' : 'var(--border-hover)',
@@ -262,7 +307,14 @@ const FundDetail = () => {
       </Box>
 
       {/* KPI Row */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' }, gap: '16px', mb: '32px' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' },
+          gap: '16px',
+          mb: '32px',
+        }}
+      >
         <KpiCard
           label="1-Year Return"
           value={fmtPct(perf.return1yr)}
@@ -287,7 +339,11 @@ const FundDetail = () => {
         />
         <KpiCard
           label="Net Assets"
-          value={assets.fundnetassets != null ? `$${(Number(assets.fundnetassets) / 1e6).toFixed(0)}M` : '—'}
+          value={
+            assets.fundnetassets != null
+              ? `$${(Number(assets.fundnetassets) / 1e6).toFixed(0)}M`
+              : '—'
+          }
           delay={320}
         />
       </Box>
@@ -312,15 +368,18 @@ const FundDetail = () => {
               fontFamily: 'var(--font-body)',
               fontSize: '13px',
               fontWeight: 500,
-              color: activeTab === tab.key ? 'var(--emerald)' : 'var(--text-3)',
+              color: activeTab === tab.key ? 'var(--accent-strong)' : 'var(--text-3)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               padding: '10px 18px',
-              borderBottom: activeTab === tab.key ? '2px solid var(--emerald)' : '2px solid transparent',
+              borderBottom:
+                activeTab === tab.key ? '2px solid var(--accent)' : '2px solid transparent',
               mb: '-1px',
               transition: 'all var(--transition)',
-              '&:hover': { color: activeTab === tab.key ? 'var(--emerald)' : 'var(--text-2)' },
+              '&:hover': {
+                color: activeTab === tab.key ? 'var(--accent-strong)' : 'var(--text-2)',
+              },
             }}
           >
             {tab.label}
@@ -442,24 +501,95 @@ const PerformanceTab = ({ perf, catPerf, rankings, fmtPct, valColor }) => {
               fontSize: '12px',
             }}
           >
-            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>Horizon</Box>
-            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Fund</Box>
-            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Cat. Avg</Box>
-            <Box sx={{ padding: '8px 0', fontWeight: 600, color: 'var(--text-3)', textAlign: 'right', borderBottom: '1px solid var(--border)' }}>Diff</Box>
+            <Box
+              sx={{
+                padding: '8px 0',
+                fontWeight: 600,
+                color: 'var(--text-3)',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              Horizon
+            </Box>
+            <Box
+              sx={{
+                padding: '8px 0',
+                fontWeight: 600,
+                color: 'var(--text-3)',
+                textAlign: 'right',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              Fund
+            </Box>
+            <Box
+              sx={{
+                padding: '8px 0',
+                fontWeight: 600,
+                color: 'var(--text-3)',
+                textAlign: 'right',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              Cat. Avg
+            </Box>
+            <Box
+              sx={{
+                padding: '8px 0',
+                fontWeight: 600,
+                color: 'var(--text-3)',
+                textAlign: 'right',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              Diff
+            </Box>
             {comparisonHorizons.map((h) => {
               const fundVal = perf[h.fundKey] != null ? Number(perf[h.fundKey]) : null;
               const catVal = catPerf[h.catKey] != null ? Number(catPerf[h.catKey]) : null;
               const diff = fundVal != null && catVal != null ? fundVal - catVal : null;
               return (
                 <React.Fragment key={h.label}>
-                  <Box sx={{ padding: '10px 0', color: 'var(--text-3)', borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>{h.label}</Box>
-                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: valColor(fundVal), borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                  <Box
+                    sx={{
+                      padding: '10px 0',
+                      color: 'var(--text-3)',
+                      borderBottom: '1px solid rgba(30, 41, 59, 0.3)',
+                    }}
+                  >
+                    {h.label}
+                  </Box>
+                  <Box
+                    sx={{
+                      padding: '10px 0',
+                      fontFamily: 'var(--font-mono)',
+                      textAlign: 'right',
+                      color: valColor(fundVal),
+                      borderBottom: '1px solid rgba(30, 41, 59, 0.3)',
+                    }}
+                  >
                     {fmtPct(fundVal)}
                   </Box>
-                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: 'var(--text-2)', borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                  <Box
+                    sx={{
+                      padding: '10px 0',
+                      fontFamily: 'var(--font-mono)',
+                      textAlign: 'right',
+                      color: 'var(--text-2)',
+                      borderBottom: '1px solid rgba(30, 41, 59, 0.3)',
+                    }}
+                  >
                     {fmtPct(catVal)}
                   </Box>
-                  <Box sx={{ padding: '10px 0', fontFamily: 'var(--font-mono)', textAlign: 'right', color: valColor(diff), borderBottom: '1px solid rgba(30, 41, 59, 0.3)' }}>
+                  <Box
+                    sx={{
+                      padding: '10px 0',
+                      fontFamily: 'var(--font-mono)',
+                      textAlign: 'right',
+                      color: valColor(diff),
+                      borderBottom: '1px solid rgba(30, 41, 59, 0.3)',
+                    }}
+                  >
                     {fmtPct(diff)}
                   </Box>
                 </React.Fragment>
@@ -474,11 +604,31 @@ const PerformanceTab = ({ perf, catPerf, rankings, fmtPct, valColor }) => {
         <MetricRow label="5 Year" value={rankings.rank5yr != null ? rankings.rank5yr : '—'} />
       </DomainCard>
       <DomainCard title="Cumulative Returns">
-        <MetricRow label="2 Year" value={fmtPct(perf.cumulativereturn2yr)} valueColor={valColor(perf.cumulativereturn2yr)} />
-        <MetricRow label="3 Year" value={fmtPct(perf.cumulativereturn3yr)} valueColor={valColor(perf.cumulativereturn3yr)} />
-        <MetricRow label="5 Year" value={fmtPct(perf.cumulativereturn5yr)} valueColor={valColor(perf.cumulativereturn5yr)} />
-        <MetricRow label="10 Year" value={fmtPct(perf.cumulativereturn10yr)} valueColor={valColor(perf.cumulativereturn10yr)} />
-        <MetricRow label="Since Inception" value={fmtPct(perf.cumulativereturnsinceinception)} valueColor={valColor(perf.cumulativereturnsinceinception)} />
+        <MetricRow
+          label="2 Year"
+          value={fmtPct(perf.cumulativereturn2yr)}
+          valueColor={valColor(perf.cumulativereturn2yr)}
+        />
+        <MetricRow
+          label="3 Year"
+          value={fmtPct(perf.cumulativereturn3yr)}
+          valueColor={valColor(perf.cumulativereturn3yr)}
+        />
+        <MetricRow
+          label="5 Year"
+          value={fmtPct(perf.cumulativereturn5yr)}
+          valueColor={valColor(perf.cumulativereturn5yr)}
+        />
+        <MetricRow
+          label="10 Year"
+          value={fmtPct(perf.cumulativereturn10yr)}
+          valueColor={valColor(perf.cumulativereturn10yr)}
+        />
+        <MetricRow
+          label="Since Inception"
+          value={fmtPct(perf.cumulativereturnsinceinception)}
+          valueColor={valColor(perf.cumulativereturnsinceinception)}
+        />
       </DomainCard>
     </DomainGrid>
   );
@@ -492,7 +642,10 @@ const FeesTab = ({ fees, fmtPct }) => (
       <MetricRow label="Gross Expense Ratio" value={fmtPct(fees.grossexpenseratio)} />
       <MetricRow label="Management Fee" value={fmtPct(fees.actualmanagementfee)} />
       <MetricRow label="Trading Expense Ratio (TER)" value={fmtPct(fees.tradingexpenseratio)} />
-      <MetricRow label="Performance Fee" value={fees.performancefee != null ? fmtPct(fees.performancefee) : '—'} />
+      <MetricRow
+        label="Performance Fee"
+        value={fees.performancefee != null ? fmtPct(fees.performancefee) : '—'}
+      />
     </DomainCard>
     <DomainCard title="Other Fees">
       <MetricRow label="Administration Fee" value={fmtPct(fees.administrationfee)} />
@@ -510,16 +663,46 @@ const RatingsTab = ({ ratings }) => (
       <Box sx={{ mb: '12px' }}>
         <StarRating rating={ratings.ratingoverall} size="large" />
       </Box>
-      <MetricRow label="Overall Rating" value={ratings.ratingoverall ? `${ratings.ratingoverall} Stars` : '—'} valueColor="var(--amber)" />
-      <MetricRow label="3-Year Rating" value={ratings.rating3year ? `${ratings.rating3year} Stars` : '—'} valueColor="var(--amber)" />
-      <MetricRow label="5-Year Rating" value={ratings.rating5year ? `${ratings.rating5year} Stars` : '—'} valueColor="var(--amber)" />
-      <MetricRow label="10-Year Rating" value={ratings.rating10year ? `${ratings.rating10year} Stars` : '—'} valueColor="var(--amber)" />
+      <MetricRow
+        label="Overall Rating"
+        value={ratings.ratingoverall ? `${ratings.ratingoverall} Stars` : '—'}
+        valueColor="var(--amber)"
+      />
+      <MetricRow
+        label="3-Year Rating"
+        value={ratings.rating3year ? `${ratings.rating3year} Stars` : '—'}
+        valueColor="var(--amber)"
+      />
+      <MetricRow
+        label="5-Year Rating"
+        value={ratings.rating5year ? `${ratings.rating5year} Stars` : '—'}
+        valueColor="var(--amber)"
+      />
+      <MetricRow
+        label="10-Year Rating"
+        value={ratings.rating10year ? `${ratings.rating10year} Stars` : '—'}
+        valueColor="var(--amber)"
+      />
     </DomainCard>
     <DomainCard title="Risk-Adjusted Performance">
-      <MetricRow label="Return (Overall)" value={ratings.returnoverall != null ? Number(ratings.returnoverall).toFixed(2) : '—'} />
-      <MetricRow label="Risk (Overall)" value={ratings.riskoverall != null ? Number(ratings.riskoverall).toFixed(2) : '—'} />
-      <MetricRow label="Performance Score (3Y)" value={ratings.performancescore3yr != null ? Number(ratings.performancescore3yr).toFixed(2) : '—'} />
-      <MetricRow label="Risk Score (3Y)" value={ratings.riskscore3yr != null ? Number(ratings.riskscore3yr).toFixed(2) : '—'} />
+      <MetricRow
+        label="Return (Overall)"
+        value={ratings.returnoverall != null ? Number(ratings.returnoverall).toFixed(2) : '—'}
+      />
+      <MetricRow
+        label="Risk (Overall)"
+        value={ratings.riskoverall != null ? Number(ratings.riskoverall).toFixed(2) : '—'}
+      />
+      <MetricRow
+        label="Performance Score (3Y)"
+        value={
+          ratings.performancescore3yr != null ? Number(ratings.performancescore3yr).toFixed(2) : '—'
+        }
+      />
+      <MetricRow
+        label="Risk Score (3Y)"
+        value={ratings.riskscore3yr != null ? Number(ratings.riskscore3yr).toFixed(2) : '—'}
+      />
     </DomainCard>
   </DomainGrid>
 );
@@ -528,15 +711,35 @@ const RiskTab = ({ risk, fmtPct, fmtPlain, valColor }) => (
   <DomainGrid>
     <DomainCard title="Risk Metrics (3-Year)">
       <MetricRow label="Standard Deviation" value={fmtPct(risk.stddev3yr)} />
-      <MetricRow label="Sharpe Ratio" value={fmtPlain(risk.sharperatio3yr)} valueColor={valColor(risk.sharperatio3yr)} />
+      <MetricRow
+        label="Sharpe Ratio"
+        value={fmtPlain(risk.sharperatio3yr)}
+        valueColor={valColor(risk.sharperatio3yr)}
+      />
       <MetricRow label="Beta" value={fmtPlain(risk.beta3yr)} />
-      <MetricRow label="Alpha" value={fmtPlain(risk.alpha3yr)} valueColor={valColor(risk.alpha3yr)} />
+      <MetricRow
+        label="Alpha"
+        value={fmtPlain(risk.alpha3yr)}
+        valueColor={valColor(risk.alpha3yr)}
+      />
       <MetricRow label="R-Squared" value={fmtPlain(risk.rsquared3yr)} />
-      <MetricRow label="Information Ratio" value={fmtPlain(risk.informationratio3yr)} valueColor={valColor(risk.informationratio3yr)} />
+      <MetricRow
+        label="Information Ratio"
+        value={fmtPlain(risk.informationratio3yr)}
+        valueColor={valColor(risk.informationratio3yr)}
+      />
     </DomainCard>
     <DomainCard title="Drawdown & Capture">
-      <MetricRow label="Max Drawdown (3Y)" value={fmtPct(risk.maxdrawdown3yr)} valueColor={valColor(risk.maxdrawdown3yr)} />
-      <MetricRow label="Upside Capture" value={fmtPct(risk.captureratioupside3yr)} valueColor="var(--emerald)" />
+      <MetricRow
+        label="Max Drawdown (3Y)"
+        value={fmtPct(risk.maxdrawdown3yr)}
+        valueColor={valColor(risk.maxdrawdown3yr)}
+      />
+      <MetricRow
+        label="Upside Capture"
+        value={fmtPct(risk.captureratioupside3yr)}
+        valueColor="var(--emerald)"
+      />
       <MetricRow label="Downside Capture" value={fmtPct(risk.captureratiodownside3yr)} />
     </DomainCard>
   </DomainGrid>
@@ -557,15 +760,43 @@ const FlowsTab = ({ flows }) => {
   return (
     <DomainGrid>
       <DomainCard title="Fund-Level Net Flows">
-        <MetricRow label="Net Flows (1M)" value={fmtMoney(flows.estfundlevelnetflow1momoend)} valueColor={Number(flows.estfundlevelnetflow1momoend) > 0 ? 'var(--emerald)' : undefined} />
-        <MetricRow label="Net Flows (3M)" value={fmtMoney(flows.estfundlevelnetflow3momoend)} valueColor={Number(flows.estfundlevelnetflow3momoend) > 0 ? 'var(--emerald)' : undefined} />
-        <MetricRow label="Net Flows (1Y)" value={fmtMoney(flows.estfundlevelnetflow1yrmoend)} valueColor={Number(flows.estfundlevelnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined} />
-        <MetricRow label="Net Flows (YTD)" value={fmtMoney(flows.estfundlevelnetflowytdmoend)} valueColor={Number(flows.estfundlevelnetflowytdmoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow
+          label="Net Flows (1M)"
+          value={fmtMoney(flows.estfundlevelnetflow1momoend)}
+          valueColor={Number(flows.estfundlevelnetflow1momoend) > 0 ? 'var(--emerald)' : undefined}
+        />
+        <MetricRow
+          label="Net Flows (3M)"
+          value={fmtMoney(flows.estfundlevelnetflow3momoend)}
+          valueColor={Number(flows.estfundlevelnetflow3momoend) > 0 ? 'var(--emerald)' : undefined}
+        />
+        <MetricRow
+          label="Net Flows (1Y)"
+          value={fmtMoney(flows.estfundlevelnetflow1yrmoend)}
+          valueColor={Number(flows.estfundlevelnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined}
+        />
+        <MetricRow
+          label="Net Flows (YTD)"
+          value={fmtMoney(flows.estfundlevelnetflowytdmoend)}
+          valueColor={Number(flows.estfundlevelnetflowytdmoend) > 0 ? 'var(--emerald)' : undefined}
+        />
       </DomainCard>
       <DomainCard title="Share Class Net Flows">
-        <MetricRow label="Net Flows (1M)" value={fmtMoney(flows.estshareclassnetflow1momoend)} valueColor={Number(flows.estshareclassnetflow1momoend) > 0 ? 'var(--emerald)' : undefined} />
-        <MetricRow label="Net Flows (3M)" value={fmtMoney(flows.estshareclassnetflow3momoend)} valueColor={Number(flows.estshareclassnetflow3momoend) > 0 ? 'var(--emerald)' : undefined} />
-        <MetricRow label="Net Flows (1Y)" value={fmtMoney(flows.estshareclassnetflow1yrmoend)} valueColor={Number(flows.estshareclassnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined} />
+        <MetricRow
+          label="Net Flows (1M)"
+          value={fmtMoney(flows.estshareclassnetflow1momoend)}
+          valueColor={Number(flows.estshareclassnetflow1momoend) > 0 ? 'var(--emerald)' : undefined}
+        />
+        <MetricRow
+          label="Net Flows (3M)"
+          value={fmtMoney(flows.estshareclassnetflow3momoend)}
+          valueColor={Number(flows.estshareclassnetflow3momoend) > 0 ? 'var(--emerald)' : undefined}
+        />
+        <MetricRow
+          label="Net Flows (1Y)"
+          value={fmtMoney(flows.estshareclassnetflow1yrmoend)}
+          valueColor={Number(flows.estshareclassnetflow1yrmoend) > 0 ? 'var(--emerald)' : undefined}
+        />
       </DomainCard>
     </DomainGrid>
   );
@@ -585,7 +816,10 @@ const AssetsTab = ({ assets }) => {
     <DomainGrid>
       <DomainCard title="Asset Data">
         <MetricRow label="Fund Net Assets" value={fmtAssets(assets.fundnetassets)} />
-        <MetricRow label="Normalized Net Assets" value={fmtAssets(assets.normalizedfundnetassets)} />
+        <MetricRow
+          label="Normalized Net Assets"
+          value={fmtAssets(assets.normalizedfundnetassets)}
+        />
         <MetricRow label="Surveyed Net Assets" value={fmtAssets(assets.surveyedfundnetassets)} />
         <MetricRow label="As-Of Date" value={assets.netassetsdate || '—'} />
       </DomainCard>
@@ -598,12 +832,31 @@ const BasicInfoTab = ({ fund, basicInfo }) => {
   return (
     <DomainGrid>
       <DomainCard title="Fund Identification">
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '0 32px' }}>
-          <MetricRow label="Legal Name" value={info.legalname || info.fundname || '—'} useBodyFont />
+        <Box
+          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '0 32px' }}
+        >
+          <MetricRow
+            label="Legal Name"
+            value={info.legalname || info.fundname || '—'}
+            useBodyFont
+          />
           <MetricRow label="Fund Family" value={info.providercompanyname || '—'} useBodyFont />
-          <MetricRow label="Morningstar Category" value={info.categoryname || info.globalcategoryname || '—'} useBodyFont />
-          <MetricRow label="Fund Type" value={info.securitytype || info.legalstructure || '—'} useBodyFont />
-          <MetricRow label="Inception Date" value={info.inceptiondate ? new Date(info.inceptiondate).toLocaleDateString('en-CA') : '—'} />
+          <MetricRow
+            label="Morningstar Category"
+            value={info.categoryname || info.globalcategoryname || '—'}
+            useBodyFont
+          />
+          <MetricRow
+            label="Fund Type"
+            value={info.securitytype || info.legalstructure || '—'}
+            useBodyFont
+          />
+          <MetricRow
+            label="Inception Date"
+            value={
+              info.inceptiondate ? new Date(info.inceptiondate).toLocaleDateString('en-CA') : '—'
+            }
+          />
           <MetricRow label="Currency" value={info.currency || '—'} />
           <MetricRow label="Domicile" value={info.domicile || '—'} useBodyFont />
           <MetricRow label="Broad Asset Class" value={info.broadassetclass || '—'} useBodyFont />

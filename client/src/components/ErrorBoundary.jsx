@@ -53,7 +53,10 @@ class ErrorBoundary extends React.Component {
             <Button
               variant="contained"
               onClick={this.handleReset}
-              sx={{ bgcolor: 'var(--emerald)', '&:hover': { bgcolor: 'var(--emerald)', opacity: 0.9 } }}
+              sx={{
+                bgcolor: 'var(--accent)',
+                '&:hover': { bgcolor: 'var(--accent)', opacity: 0.9 },
+              }}
             >
               Try Again
             </Button>

@@ -59,8 +59,8 @@ const AsOfDateSelector = ({ value, onChange, compact = false }) => {
             color: 'var(--text-1)',
           },
           '&:focus': {
-            borderColor: 'var(--emerald)',
-            boxShadow: '0 0 0 2px var(--emerald-soft)',
+            borderColor: 'var(--accent)',
+            boxShadow: '0 0 0 2px var(--accent-soft)',
           },
         }}
       >

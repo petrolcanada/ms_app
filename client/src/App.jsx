@@ -28,8 +28,8 @@ import NotFound from './components/NotFound';
 
 const THEME_STORAGE_KEY = 'fundlens_theme_mode';
 const THEME_COLORS = {
-  dark: '#04060C',
-  light: '#F5F1E8',
+  dark: '#090711',
+  light: '#F4F6FB',
 };
 
 const resolveInitialThemeMode = () => {

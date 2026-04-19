@@ -3,73 +3,73 @@ import { createTheme } from '@mui/material/styles';
 const palettes = {
   dark: {
     primary: {
-      main: '#10B981',
-      light: '#34D399',
-      dark: '#059669',
+      main: '#6F4CF5',
+      light: '#9174FF',
+      dark: '#5639D3',
     },
     secondary: {
-      main: '#3B82F6',
-      light: '#60A5FA',
-      dark: '#2563EB',
+      main: '#8C7BFF',
+      light: '#A89DFF',
+      dark: '#6658D6',
     },
     error: {
-      main: '#EF4444',
+      main: '#FF627A',
     },
     warning: {
-      main: '#F59E0B',
+      main: '#F4B860',
     },
     info: {
-      main: '#3B82F6',
+      main: '#8C7BFF',
     },
     success: {
-      main: '#10B981',
+      main: '#17C978',
     },
     background: {
-      default: '#04060C',
-      paper: '#0E1521',
+      default: '#090711',
+      paper: '#14111F',
     },
     text: {
-      primary: '#E2E8F0',
-      secondary: '#94A3B8',
-      disabled: '#475569',
+      primary: '#F7F6FF',
+      secondary: '#BBB5D6',
+      disabled: '#726B92',
     },
-    divider: '#1E293B',
-    scrollbar: '#1E293B #04060C',
+    divider: '#26203A',
+    scrollbar: '#2A2441 #090711',
   },
   light: {
     primary: {
-      main: '#0F9D74',
-      light: '#34D399',
-      dark: '#0A7A5A',
+      main: '#6A44FF',
+      light: '#8568FF',
+      dark: '#4D31D8',
     },
     secondary: {
-      main: '#2563EB',
-      light: '#60A5FA',
-      dark: '#1D4ED8',
+      main: '#5448D8',
+      light: '#7A71E7',
+      dark: '#4238B7',
     },
     error: {
-      main: '#DC2626',
+      main: '#E04863',
     },
     warning: {
-      main: '#D97706',
+      main: '#C98A32',
     },
     info: {
-      main: '#2563EB',
+      main: '#5448D8',
     },
     success: {
-      main: '#0F9D74',
+      main: '#149E62',
     },
     background: {
-      default: '#F5F1E8',
+      default: '#F4F6FB',
       paper: '#FFFFFF',
     },
     text: {
-      primary: '#162033',
-      secondary: '#4A5B73',
-      disabled: '#8A96A8',
+      primary: '#101223',
+      secondary: '#4D5473',
+      disabled: '#9096B1',
     },
-    divider: '#D7DEEA',
-    scrollbar: '#C7D2E3 #F5F1E8',
+    divider: '#DDE3F0',
+    scrollbar: '#C8D0E4 #F4F6FB',
   },
 };
 
@@ -90,19 +90,24 @@ const createAppTheme = (mode = 'dark') => {
       divider: palette.divider,
     },
     typography: {
-      fontFamily: "'Be Vietnam Pro', sans-serif",
-      h1: { fontFamily: "'Sora', sans-serif", fontWeight: 600, letterSpacing: '-0.03em' },
-      h2: { fontFamily: "'Sora', sans-serif", fontWeight: 600, letterSpacing: '-0.03em' },
-      h3: { fontFamily: "'Sora', sans-serif", fontWeight: 600, letterSpacing: '-0.02em' },
-      h4: { fontFamily: "'Sora', sans-serif", fontWeight: 600, letterSpacing: '-0.02em' },
-      h5: { fontFamily: "'Sora', sans-serif", fontWeight: 600, letterSpacing: '-0.01em' },
-      h6: { fontFamily: "'Sora', sans-serif", fontWeight: 600 },
-      body1: { fontSize: '0.875rem' },
-      body2: { fontSize: '0.8125rem' },
-      caption: { fontSize: '0.6875rem', color: palette.text.disabled },
+      fontFamily: "'IBM Plex Sans', sans-serif",
+      h1: { fontFamily: "'Manrope', sans-serif", fontWeight: 800, letterSpacing: '-0.05em' },
+      h2: { fontFamily: "'Manrope', sans-serif", fontWeight: 800, letterSpacing: '-0.05em' },
+      h3: { fontFamily: "'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.04em' },
+      h4: { fontFamily: "'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.03em' },
+      h5: { fontFamily: "'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.02em' },
+      h6: { fontFamily: "'Manrope', sans-serif", fontWeight: 700, letterSpacing: '-0.02em' },
+      body1: { fontSize: '0.9375rem' },
+      body2: { fontSize: '0.875rem' },
+      caption: { fontSize: '0.75rem', color: palette.text.disabled },
+      button: {
+        fontFamily: "'IBM Plex Sans', sans-serif",
+        fontWeight: 700,
+        letterSpacing: '-0.01em',
+      },
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 14,
     },
     components: {
       MuiCssBaseline: {
@@ -117,8 +122,9 @@ const createAppTheme = (mode = 'dark') => {
         styleOverrides: {
           root: {
             textTransform: 'none',
-            fontWeight: 500,
-            borderRadius: 8,
+            fontWeight: 700,
+            borderRadius: 12,
+            paddingInline: 16,
           },
         },
       },
@@ -127,6 +133,10 @@ const createAppTheme = (mode = 'dark') => {
           root: {
             backgroundImage: 'none',
             border: `1px solid ${palette.divider}`,
+            boxShadow:
+              mode === 'dark'
+                ? '0 18px 48px rgba(4, 3, 10, 0.48)'
+                : '0 18px 48px rgba(28, 33, 56, 0.08)',
           },
         },
       },

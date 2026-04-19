@@ -12,7 +12,7 @@ const UpgradePrompt = ({ feature, limit, compact = false }) => {
           justifyContent: 'space-between',
           gap: '16px',
           background: 'var(--amber-soft)',
-          border: '1px solid rgba(245, 158, 11, 0.25)',
+          border: '1px solid rgba(244, 184, 96, 0.24)',
           borderRadius: 'var(--radius)',
           padding: '10px 16px',
         }}
@@ -28,15 +28,14 @@ const UpgradePrompt = ({ feature, limit, compact = false }) => {
           sx={{
             fontFamily: 'var(--font-body)',
             fontSize: '12px',
-            fontWeight: 600,
+            fontWeight: 700,
             color: '#fff',
             textDecoration: 'none',
-            background: 'var(--amber)',
-            padding: '5px 14px',
-            borderRadius: 'var(--radius)',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-pill)',
             whiteSpace: 'nowrap',
-            transition: 'opacity var(--transition)',
-            '&:hover': { opacity: 0.88 },
+            boxShadow: '0 14px 28px rgba(111, 76, 245, 0.22)',
           }}
         >
           Upgrade
@@ -50,25 +49,44 @@ const UpgradePrompt = ({ feature, limit, compact = false }) => {
       sx={{
         p: '1px',
         borderRadius: 'var(--radius-lg)',
-        background: 'linear-gradient(135deg, var(--emerald), var(--blue))',
+        background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+        boxShadow: '0 22px 46px rgba(111, 76, 245, 0.2)',
       }}
     >
       <Box
         sx={{
           background: 'var(--bg-surface)',
-          borderRadius: '11px',
+          borderRadius: '19px',
           p: { xs: '24px', sm: '32px' },
           textAlign: 'center',
         }}
       >
-        <Box sx={{ fontSize: '32px', mb: '14px' }}>🔓</Box>
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '52px',
+            height: '52px',
+            borderRadius: '16px',
+            background: 'var(--accent-soft)',
+            color: 'var(--accent-strong)',
+            fontSize: '15px',
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            mb: '14px',
+          }}
+        >
+          PRO
+        </Box>
 
         <Box
           component="h3"
           sx={{
             fontFamily: 'var(--font-head)',
-            fontSize: '20px',
-            fontWeight: 600,
+            fontSize: '22px',
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
             color: 'var(--text-1)',
             mb: '10px',
           }}
@@ -76,7 +94,16 @@ const UpgradePrompt = ({ feature, limit, compact = false }) => {
           Unlock {feature}
         </Box>
 
-        <Box sx={{ fontSize: '14px', color: 'var(--text-3)', lineHeight: 1.6, maxWidth: '400px', mx: 'auto', mb: '24px' }}>
+        <Box
+          sx={{
+            fontSize: '14px',
+            color: 'var(--text-3)',
+            lineHeight: 1.7,
+            maxWidth: '420px',
+            mx: 'auto',
+            mb: '24px',
+          }}
+        >
           {limit != null
             ? `You've used ${limit} of your free allowance. Upgrade to Pro to unlock unlimited ${feature} and more.`
             : `This feature is available on the Pro plan. Upgrade to unlock full access to ${feature} and more.`}
@@ -88,15 +115,14 @@ const UpgradePrompt = ({ feature, limit, compact = false }) => {
           sx={{
             fontFamily: 'var(--font-body)',
             fontSize: '14px',
-            fontWeight: 600,
+            fontWeight: 700,
             color: '#fff',
             textDecoration: 'none',
             display: 'inline-block',
-            padding: '11px 32px',
-            borderRadius: 'var(--radius)',
-            background: 'var(--emerald)',
-            transition: 'opacity var(--transition)',
-            '&:hover': { opacity: 0.88 },
+            padding: '12px 32px',
+            borderRadius: 'var(--radius-pill)',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+            boxShadow: '0 18px 34px rgba(111, 76, 245, 0.22)',
           }}
         >
           Upgrade to Pro

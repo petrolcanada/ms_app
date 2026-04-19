@@ -17,7 +17,7 @@ const inputSx = {
   transition: 'border-color var(--transition)',
   boxSizing: 'border-box',
   '&::placeholder': { color: 'var(--text-4)' },
-  '&:focus': { borderColor: 'var(--emerald)' },
+  '&:focus': { borderColor: 'var(--accent)' },
 };
 
 const cardSx = {
@@ -33,7 +33,7 @@ const btnPrimarySx = {
   fontSize: '13px',
   fontWeight: 600,
   color: '#fff',
-  background: 'var(--emerald)',
+  background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
   border: 'none',
   borderRadius: 'var(--radius)',
   padding: '10px 24px',
@@ -167,25 +167,71 @@ const Settings = () => {
 
       {/* Profile */}
       <Box sx={cardSx}>
-        <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '16px', fontWeight: 600, color: 'var(--text-1)', mb: '20px' }}>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '16px',
+            fontWeight: 600,
+            color: 'var(--text-1)',
+            mb: '20px',
+          }}
+        >
           Profile
         </Box>
-        <Box component="form" onSubmit={handleProfileSave} sx={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}>
+        <Box
+          component="form"
+          onSubmit={handleProfileSave}
+          sx={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}
+        >
           <Box>
-            <Box component="label" sx={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', mb: '6px' }}>
+            <Box
+              component="label"
+              sx={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--text-2)',
+                mb: '6px',
+              }}
+            >
               Name
             </Box>
-            <Box component="input" type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} sx={inputSx} />
+            <Box
+              component="input"
+              type="text"
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+              sx={inputSx}
+            />
           </Box>
           <Box>
-            <Box component="label" sx={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', mb: '6px' }}>
+            <Box
+              component="label"
+              sx={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--text-2)',
+                mb: '6px',
+              }}
+            >
               Email
             </Box>
-            <Box component="input" type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} sx={inputSx} />
+            <Box
+              component="input"
+              type="email"
+              value={profileEmail}
+              onChange={(e) => setProfileEmail(e.target.value)}
+              sx={inputSx}
+            />
           </Box>
           <Box>
             <Box component="button" type="submit" disabled={profileLoading} sx={btnPrimarySx}>
-              {profileLoading ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : 'Save Changes'}
+              {profileLoading ? (
+                <CircularProgress size={14} sx={{ color: '#fff' }} />
+              ) : (
+                'Save Changes'
+              )}
             </Box>
           </Box>
           <FeedbackMessage type={profileMsg.type} message={profileMsg.text} />
@@ -194,7 +240,15 @@ const Settings = () => {
 
       {/* Subscription */}
       <Box sx={cardSx}>
-        <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '16px', fontWeight: 600, color: 'var(--text-1)', mb: '16px' }}>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '16px',
+            fontWeight: 600,
+            color: 'var(--text-1)',
+            mb: '16px',
+          }}
+        >
           Subscription
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '16px' }}>
@@ -204,9 +258,9 @@ const Settings = () => {
               fontFamily: 'var(--font-body)',
               fontSize: '12px',
               fontWeight: 600,
-              color: isPro ? 'var(--emerald)' : 'var(--text-2)',
-              background: isPro ? 'var(--emerald-soft)' : 'var(--bg-elevated)',
-              border: `1px solid ${isPro ? 'rgba(16, 185, 129, 0.25)' : 'var(--border)'}`,
+              color: isPro ? 'var(--accent-strong)' : 'var(--text-2)',
+              background: isPro ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+              border: `1px solid ${isPro ? 'var(--accent-ring)' : 'var(--border)'}`,
               padding: '4px 12px',
               borderRadius: 'var(--radius-pill)',
               textTransform: 'uppercase',
@@ -219,7 +273,8 @@ const Settings = () => {
 
         {!isPro && (
           <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '16px', lineHeight: 1.6 }}>
-            Free plan includes limited screener, 5 watchlist slots, basic fund detail, and 2 fund compare.
+            Free plan includes limited screener, 5 watchlist slots, basic fund detail, and 2 fund
+            compare.
           </Box>
         )}
 
@@ -230,7 +285,9 @@ const Settings = () => {
               try {
                 const res = await checkoutService.createPortal();
                 window.location.href = res.data.url;
-              } catch { /* portal unavailable */ }
+              } catch {
+                /* portal unavailable */
+              }
             }}
             sx={btnOutlineSx}
           >
@@ -254,31 +311,95 @@ const Settings = () => {
 
       {/* Security */}
       <Box sx={cardSx}>
-        <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '16px', fontWeight: 600, color: 'var(--text-1)', mb: '20px' }}>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '16px',
+            fontWeight: 600,
+            color: 'var(--text-1)',
+            mb: '20px',
+          }}
+        >
           Security
         </Box>
-        <Box component="form" onSubmit={handlePasswordUpdate} sx={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}>
+        <Box
+          component="form"
+          onSubmit={handlePasswordUpdate}
+          sx={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '420px' }}
+        >
           <Box>
-            <Box component="label" sx={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', mb: '6px' }}>
+            <Box
+              component="label"
+              sx={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--text-2)',
+                mb: '6px',
+              }}
+            >
               Current Password
             </Box>
-            <Box component="input" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} required sx={inputSx} />
+            <Box
+              component="input"
+              type="password"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              required
+              sx={inputSx}
+            />
           </Box>
           <Box>
-            <Box component="label" sx={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', mb: '6px' }}>
+            <Box
+              component="label"
+              sx={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--text-2)',
+                mb: '6px',
+              }}
+            >
               New Password
             </Box>
-            <Box component="input" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required sx={inputSx} />
+            <Box
+              component="input"
+              type="password"
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              required
+              sx={inputSx}
+            />
           </Box>
           <Box>
-            <Box component="label" sx={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', mb: '6px' }}>
+            <Box
+              component="label"
+              sx={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--text-2)',
+                mb: '6px',
+              }}
+            >
               Confirm New Password
             </Box>
-            <Box component="input" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required sx={inputSx} />
+            <Box
+              component="input"
+              type="password"
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              required
+              sx={inputSx}
+            />
           </Box>
           <Box>
             <Box component="button" type="submit" disabled={pwLoading} sx={btnPrimarySx}>
-              {pwLoading ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : 'Update Password'}
+              {pwLoading ? (
+                <CircularProgress size={14} sx={{ color: '#fff' }} />
+              ) : (
+                'Update Password'
+              )}
             </Box>
           </Box>
           <FeedbackMessage type={pwMsg.type} message={pwMsg.text} />
@@ -287,7 +408,15 @@ const Settings = () => {
 
       {/* Danger zone */}
       <Box sx={{ ...cardSx, borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-        <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '16px', fontWeight: 600, color: 'var(--red)', mb: '12px' }}>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '16px',
+            fontWeight: 600,
+            color: 'var(--red)',
+            mb: '12px',
+          }}
+        >
           Danger Zone
         </Box>
         <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '16px' }}>
@@ -319,13 +448,13 @@ const Settings = () => {
                 background: 'var(--red)',
               }}
             >
-              {deleteLoading ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : 'Yes, delete'}
+              {deleteLoading ? (
+                <CircularProgress size={14} sx={{ color: '#fff' }} />
+              ) : (
+                'Yes, delete'
+              )}
             </Box>
-            <Box
-              component="button"
-              onClick={() => setDeleteConfirm(false)}
-              sx={btnOutlineSx}
-            >
+            <Box component="button" onClick={() => setDeleteConfirm(false)} sx={btnOutlineSx}>
               Cancel
             </Box>
           </Box>

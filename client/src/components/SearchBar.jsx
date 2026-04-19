@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 
-const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500, disabled = false, instant = false, id = 'fund-search' }) => {
+const SearchBar = ({
+  onSearch,
+  placeholder = 'Search funds...',
+  debounceMs = 500,
+  disabled = false,
+  instant = false,
+  id = 'fund-search',
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const onSearchRef = useRef(onSearch);
   const inputRef = useRef(null);
@@ -20,7 +27,10 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+      if (
+        e.key === '/' &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)
+      ) {
         e.preventDefault();
         inputRef.current?.focus();
       }
@@ -69,7 +79,7 @@ const SearchBar = ({ onSearch, placeholder = 'Search funds...', debounceMs = 500
           outline: 'none',
           transition: 'border-color var(--transition)',
           '&::placeholder': { color: 'var(--text-4)' },
-          '&:focus': { borderColor: 'var(--emerald)' },
+          '&:focus': { borderColor: 'var(--accent)' },
         }}
       />
     </Box>

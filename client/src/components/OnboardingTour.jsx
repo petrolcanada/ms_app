@@ -7,40 +7,38 @@ const ONBOARDING_KEY = 'fundlens_onboarding_done';
 const steps = [
   {
     title: 'Welcome to FundLens',
-    description: 'Your new fund analytics platform. Let us show you around.',
-    icon: '◆',
+    description: 'Your redesigned fund analytics platform. Let us show you around.',
+    badge: '01',
   },
   {
     title: 'Dashboard',
-    description:
-      'Get a snapshot of the market — top performers, highest rated, and the biggest fund flows.',
-    icon: '📊',
+    description: 'Read top performers, ratings, and fund flows from a cleaner market overview.',
+    badge: '02',
     link: '/dashboard',
   },
   {
     title: 'Fund Explorer',
     description:
-      'Browse thousands of mutual funds and ETFs with full-text search and category filters.',
-    icon: '🔍',
+      'Browse thousands of mutual funds and ETFs with clearer search and category views.',
+    badge: '03',
     link: '/explorer',
   },
   {
     title: 'Smart Screener',
-    description: 'Rank funds by returns, fees, Sharpe ratio, and more with a color-coded heatmap.',
-    icon: '📈',
+    description: 'Rank funds by returns, fees, Sharpe ratio, and more with stronger hierarchy.',
+    badge: '04',
     link: '/screener',
   },
   {
-    title: 'Compare & Watchlist',
-    description: 'Compare funds side by side and save your favorites to your personal watchlist.',
-    icon: '⭐',
+    title: 'Compare and Watchlist',
+    description: 'Compare funds side by side and save the names you want to monitor.',
+    badge: '05',
     link: '/compare',
   },
   {
-    title: "You're all set!",
-    description:
-      'Explore at your own pace. You can always access settings from the top-right menu.',
-    icon: '🚀',
+    title: "You're all set",
+    description: 'Explore at your own pace. You can always reach settings from the top-right menu.',
+    badge: '06',
   },
 ];
 
@@ -54,6 +52,7 @@ const OnboardingTour = () => {
       const timer = setTimeout(() => setShow(true), 600);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   const dismiss = () => {
@@ -92,33 +91,51 @@ const OnboardingTour = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--overlay-scrim)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(10px)',
         animation: 'fadeIn 300ms ease',
       }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) dismiss();
+      onClick={(event) => {
+        if (event.target === event.currentTarget) dismiss();
       }}
     >
       <Box
         sx={{
           width: '100%',
           maxWidth: '460px',
-          background: 'var(--bg-surface)',
+          background: 'rgba(255,255,255,0.04)',
           border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
+          borderRadius: '26px',
           p: { xs: '28px', sm: '36px' },
           textAlign: 'center',
+          boxShadow: 'var(--shadow-panel)',
           animation: 'slideUp 400ms ease',
         }}
       >
-        <Box sx={{ fontSize: '40px', mb: '16px' }}>{current.icon}</Box>
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '56px',
+            height: '56px',
+            borderRadius: '18px',
+            background: 'var(--accent-soft)',
+            color: 'var(--accent-strong)',
+            fontSize: '18px',
+            fontWeight: 800,
+            mb: '16px',
+          }}
+        >
+          {current.badge}
+        </Box>
 
         <Box
           component="h2"
           sx={{
             fontFamily: 'var(--font-head)',
-            fontSize: '22px',
-            fontWeight: 600,
+            fontSize: '24px',
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
             color: 'var(--text-1)',
             mb: '10px',
           }}
@@ -130,7 +147,7 @@ const OnboardingTour = () => {
           sx={{
             fontSize: '14px',
             color: 'var(--text-3)',
-            lineHeight: 1.65,
+            lineHeight: 1.7,
             mb: '28px',
             maxWidth: '360px',
             mx: 'auto',
@@ -139,16 +156,15 @@ const OnboardingTour = () => {
           {current.description}
         </Box>
 
-        {/* Progress dots */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: '6px', mb: '24px' }}>
-          {steps.map((_, i) => (
+          {steps.map((_, index) => (
             <Box
-              key={i}
+              key={index}
               sx={{
-                width: i === step ? '20px' : '6px',
+                width: index === step ? '20px' : '6px',
                 height: '6px',
                 borderRadius: '3px',
-                background: i === step ? 'var(--emerald)' : 'var(--border)',
+                background: index === step ? 'var(--accent)' : 'var(--border)',
                 transition: 'all 300ms ease',
               }}
             />
@@ -162,14 +178,13 @@ const OnboardingTour = () => {
             sx={{
               fontFamily: 'var(--font-body)',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               color: 'var(--text-3)',
               background: 'none',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius)',
               padding: '9px 20px',
               cursor: 'pointer',
-              transition: 'all var(--transition)',
               '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
             }}
           >
@@ -181,15 +196,14 @@ const OnboardingTour = () => {
             sx={{
               fontFamily: 'var(--font-body)',
               fontSize: '13px',
-              fontWeight: 600,
+              fontWeight: 700,
               color: '#fff',
-              background: 'var(--emerald)',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
               border: 'none',
               borderRadius: 'var(--radius)',
               padding: '9px 24px',
               cursor: 'pointer',
-              transition: 'opacity var(--transition)',
-              '&:hover': { opacity: 0.88 },
+              boxShadow: '0 18px 34px rgba(111, 76, 245, 0.22)',
             }}
           >
             {isLast ? 'Get Started' : current.link ? 'Show Me' : 'Next'}

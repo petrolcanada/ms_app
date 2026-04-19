@@ -1,76 +1,87 @@
 :root,
 [data-theme='dark'] {
-  --bg-void: #04060c;
-  --bg-base: #080d16;
-  --bg-surface: #0e1521;
-  --bg-surface-hover: #141d2c;
-  --bg-elevated: #1a2438;
-  --border: #1e293b;
-  --border-hover: #2d3f5c;
-  --text-1: #e2e8f0;
-  --text-2: #94a3b8;
-  --text-3: #64748b;
-  --text-4: #475569;
-  --emerald: #10b981;
-  --emerald-soft: rgba(16, 185, 129, 0.1);
-  --red: #ef4444;
-  --red-soft: rgba(239, 68, 68, 0.1);
-  --blue: #3b82f6;
-  --blue-soft: rgba(59, 130, 246, 0.1);
-  --amber: #f59e0b;
-  --amber-soft: rgba(245, 158, 11, 0.1);
-  --glass-nav: rgba(4, 6, 12, 0.82);
-  --glass-nav-strong: rgba(4, 6, 12, 0.95);
-  --overlay-scrim: rgba(4, 6, 12, 0.85);
-  --overlay-soft: rgba(4, 6, 12, 0.5);
-  --row-border: rgba(30, 41, 59, 0.5);
-  --bar-track: rgba(30, 41, 59, 0.8);
-  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.45);
-  --backdrop-dot: rgba(30, 41, 59, 0.4);
-  --wash-a: rgba(16, 185, 129, 0.1);
-  --wash-b: rgba(59, 130, 246, 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 20px;
+  --bg-void: #090711;
+  --bg-base: #0f0b19;
+  --bg-surface: #151120;
+  --bg-surface-hover: #1d1730;
+  --bg-elevated: #231c38;
+  --border: #26203a;
+  --border-hover: #3a2f5f;
+  --text-1: #f7f6ff;
+  --text-2: #bcb5d8;
+  --text-3: #948db3;
+  --text-4: #726b92;
+  --accent: #6f4cf5;
+  --accent-strong: #9174ff;
+  --accent-soft: rgba(111, 76, 245, 0.14);
+  --accent-ring: rgba(111, 76, 245, 0.24);
+  --emerald: #17c978;
+  --emerald-soft: rgba(23, 201, 120, 0.14);
+  --red: #ff627a;
+  --red-soft: rgba(255, 98, 122, 0.14);
+  --blue: #8c7bff;
+  --blue-soft: rgba(140, 123, 255, 0.14);
+  --amber: #f4b860;
+  --amber-soft: rgba(244, 184, 96, 0.14);
+  --glass-nav: rgba(9, 7, 17, 0.8);
+  --glass-nav-strong: rgba(9, 7, 17, 0.94);
+  --overlay-scrim: rgba(9, 7, 17, 0.86);
+  --overlay-soft: rgba(9, 7, 17, 0.56);
+  --row-border: rgba(148, 141, 179, 0.18);
+  --bar-track: rgba(148, 141, 179, 0.18);
+  --shadow-soft: 0 18px 44px rgba(4, 3, 10, 0.38);
+  --shadow-strong: 0 28px 72px rgba(4, 3, 10, 0.52);
+  --shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 28px 72px rgba(4, 3, 10, 0.48);
+  --wash-a: rgba(111, 76, 245, 0.24);
+  --wash-b: rgba(140, 123, 255, 0.12);
+  --wash-c: rgba(23, 201, 120, 0.08);
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
   --transition: 180ms ease;
-  --font-head: 'Sora', sans-serif;
-  --font-body: 'Be Vietnam Pro', sans-serif;
-  --font-mono: 'Fira Code', monospace;
+  --font-head: 'Manrope', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
   color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --bg-void: #f5f1e8;
-  --bg-base: #fbf8f2;
+  --bg-void: #f4f6fb;
+  --bg-base: #f8faff;
   --bg-surface: #ffffff;
-  --bg-surface-hover: #f2eee6;
-  --bg-elevated: #ece6da;
-  --border: #d7deea;
-  --border-hover: #b7c4d9;
-  --text-1: #162033;
-  --text-2: #4a5b73;
-  --text-3: #708198;
-  --text-4: #8a96a8;
-  --emerald: #0f9d74;
-  --emerald-soft: rgba(15, 157, 116, 0.1);
-  --red: #dc2626;
-  --red-soft: rgba(220, 38, 38, 0.1);
-  --blue: #2563eb;
-  --blue-soft: rgba(37, 99, 235, 0.1);
-  --amber: #d97706;
-  --amber-soft: rgba(217, 119, 6, 0.1);
-  --glass-nav: rgba(245, 241, 232, 0.82);
-  --glass-nav-strong: rgba(251, 248, 242, 0.96);
-  --overlay-scrim: rgba(22, 32, 51, 0.32);
-  --overlay-soft: rgba(245, 241, 232, 0.58);
-  --row-border: rgba(122, 141, 166, 0.24);
-  --bar-track: rgba(148, 163, 184, 0.32);
-  --shadow-soft: 0 16px 40px rgba(21, 36, 58, 0.1);
-  --shadow-strong: 0 24px 60px rgba(21, 36, 58, 0.16);
-  --backdrop-dot: rgba(148, 163, 184, 0.22);
-  --wash-a: rgba(15, 157, 116, 0.08);
-  --wash-b: rgba(37, 99, 235, 0.07);
+  --bg-surface-hover: #f2f5fb;
+  --bg-elevated: #edf1fb;
+  --border: #dde3f0;
+  --border-hover: #c3cbe0;
+  --text-1: #101223;
+  --text-2: #4d5473;
+  --text-3: #6d7596;
+  --text-4: #9096b1;
+  --accent: #6a44ff;
+  --accent-strong: #8568ff;
+  --accent-soft: rgba(106, 68, 255, 0.1);
+  --accent-ring: rgba(106, 68, 255, 0.16);
+  --emerald: #149e62;
+  --emerald-soft: rgba(20, 158, 98, 0.12);
+  --red: #e04863;
+  --red-soft: rgba(224, 72, 99, 0.12);
+  --blue: #5448d8;
+  --blue-soft: rgba(84, 72, 216, 0.12);
+  --amber: #c98a32;
+  --amber-soft: rgba(201, 138, 50, 0.12);
+  --glass-nav: rgba(248, 250, 255, 0.86);
+  --glass-nav-strong: rgba(252, 253, 255, 0.96);
+  --overlay-scrim: rgba(16, 18, 35, 0.36);
+  --overlay-soft: rgba(248, 250, 255, 0.64);
+  --row-border: rgba(109, 117, 150, 0.18);
+  --bar-track: rgba(109, 117, 150, 0.16);
+  --shadow-soft: 0 18px 40px rgba(27, 34, 61, 0.08);
+  --shadow-strong: 0 28px 72px rgba(27, 34, 61, 0.12);
+  --shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.55), 0 22px 60px rgba(27, 34, 61, 0.1);
+  --wash-a: rgba(106, 68, 255, 0.12);
+  --wash-b: rgba(84, 72, 216, 0.08);
+  --wash-c: rgba(255, 255, 255, 0.74);
   color-scheme: light;
 }
 
@@ -88,7 +99,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-void);
+  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-void) 100%);
   color: var(--text-1);
   line-height: 1.5;
   min-height: 100vh;
@@ -103,8 +114,10 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, var(--backdrop-dot) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
+  background:
+    radial-gradient(circle at 12% 0%, var(--wash-a), transparent 34%),
+    radial-gradient(circle at 88% 8%, var(--wash-b), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%);
   pointer-events: none;
   z-index: 0;
 }
@@ -114,8 +127,8 @@ body::after {
   position: fixed;
   inset: -10% -20%;
   background:
-    radial-gradient(circle at 10% 10%, var(--wash-a), transparent 32%),
-    radial-gradient(circle at 90% 0%, var(--wash-b), transparent 30%);
+    radial-gradient(circle at 50% 16%, var(--wash-c), transparent 38%),
+    radial-gradient(circle at 50% 100%, var(--wash-a), transparent 28%);
   pointer-events: none;
   z-index: 0;
 }
@@ -137,7 +150,7 @@ button {
 }
 
 ::selection {
-  background: rgba(37, 99, 235, 0.18);
+  background: var(--accent-ring);
 }
 
 @keyframes fadeIn {

@@ -9,27 +9,27 @@ const tiers = [
   {
     name: 'Free',
     price: '$0',
-    description: 'For individual investors getting started.',
+    description: 'For investors who want a clearer entry point into the research workflow.',
     features: [
-      'Limited screener (25 results)',
+      'Explorer access',
+      'Basic screening',
+      '2-fund compare',
       '5 watchlist slots',
-      'Basic fund detail',
-      'Compare up to 2 funds',
       'Dashboard overview',
     ],
-    cta: 'Get Started',
+    cta: 'Create account',
     ctaLink: '/signup',
     highlighted: false,
   },
   {
     name: 'Pro',
     price: '$19',
-    description: 'For serious investors and analysts.',
+    description: 'For analysts who want the full desk without visual clutter.',
     features: [
-      'Unlimited screener access',
+      'Unlimited screener',
       'Unlimited watchlist',
       'Full 8 data domains',
-      'Compare 4+ funds',
+      '4+ fund compare',
       'CSV export',
       'Historical analysis',
       'Priority support',
@@ -39,6 +39,27 @@ const tiers = [
     highlighted: true,
   },
 ];
+
+const BrandMark = ({ size = 24 }) => (
+  <Box
+    sx={{
+      width: size,
+      height: size,
+      borderRadius: `${Math.round(size * 0.3)}px`,
+      background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+      boxShadow: '0 14px 34px rgba(111, 76, 245, 0.24)',
+      position: 'relative',
+      flexShrink: 0,
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: `${Math.max(5, Math.round(size * 0.26))}px`,
+        borderRadius: `${Math.round(size * 0.18)}px`,
+        border: '1.5px solid rgba(255,255,255,0.84)',
+      },
+    }}
+  />
+);
 
 const Pricing = () => {
   const { user } = useAuth();
@@ -50,37 +71,37 @@ const Pricing = () => {
       navigate('/signup');
       return;
     }
+
     setCheckoutError('');
     try {
-      const res = await checkoutService.createSession();
-      window.location.href = res.data.url;
-    } catch (err) {
-      const msg = err?.response?.data?.error?.message || err.message || '';
-      if (msg.includes('not configured')) {
-        setCheckoutError('Payments are not yet configured. Please contact support.');
+      const response = await checkoutService.createSession();
+      window.location.href = response.data.url;
+    } catch (error) {
+      const message = error?.response?.data?.error?.message || error.message || '';
+      if (message.includes('not configured')) {
+        setCheckoutError('Payments are not configured yet. Contact support to enable checkout.');
       } else {
-        setCheckoutError('Something went wrong. Please try again.');
+        setCheckoutError('Something went wrong while opening checkout. Please try again.');
       }
     }
   };
 
   return (
-    <Box sx={{ background: 'var(--bg-void)', minHeight: '100vh', color: 'var(--text-1)' }}>
+    <Box sx={{ minHeight: '100vh', color: 'var(--text-1)' }}>
       <SEO
         title="Pricing"
-        description="Simple, transparent pricing for FundLens. Start free, upgrade to Pro for unlimited access."
+        description="Simple, transparent pricing for FundLens. Start free, upgrade when you need the full research desk."
         path="/pricing"
       />
+
       <Box
         sx={{
-          height: '2px',
+          height: '1px',
           background:
-            'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
-          opacity: 0.5,
+            'linear-gradient(90deg, transparent 0%, rgba(111, 76, 245, 0.8) 50%, transparent 100%)',
         }}
       />
 
-      {/* Navbar */}
       <Box
         component="nav"
         sx={{
@@ -88,56 +109,66 @@ const Pricing = () => {
           top: 0,
           zIndex: 100,
           background: 'var(--glass-nav)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          backdropFilter: 'blur(22px) saturate(1.25)',
+          WebkitBackdropFilter: 'blur(22px) saturate(1.25)',
           borderBottom: '1px solid var(--border)',
         }}
       >
         <Box
           sx={{
-            maxWidth: '1200px',
+            maxWidth: '1240px',
             mx: 'auto',
             px: { xs: '16px', sm: '24px', md: '32px' },
-            height: '56px',
+            minHeight: '68px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '16px',
           }}
         >
           <Link
             to="/"
             style={{
-              fontFamily: 'var(--font-head)',
-              fontWeight: 700,
-              fontSize: '18px',
-              color: 'var(--text-1)',
-              textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              letterSpacing: '-0.02em',
+              gap: '10px',
+              textDecoration: 'none',
+              color: 'var(--text-1)',
             }}
           >
-            <span style={{ color: 'var(--emerald)', fontSize: '20px' }}>&#9670;</span>
-            FundLens
+            <BrandMark />
+            <Box>
+              <Box
+                sx={{
+                  fontFamily: 'var(--font-head)',
+                  fontWeight: 800,
+                  fontSize: '18px',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1,
+                }}
+              >
+                FundLens
+              </Box>
+              <Box sx={{ fontSize: '10px', color: 'var(--text-4)', letterSpacing: '0.08em' }}>
+                RESEARCH DESK
+              </Box>
+            </Box>
           </Link>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {user ? (
               <Box
                 component={Link}
                 to="/dashboard"
                 sx={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  px: '16px',
+                  py: '10px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border)',
                   color: 'var(--text-2)',
                   textDecoration: 'none',
-                  padding: '7px 18px',
-                  borderRadius: 'var(--radius)',
-                  border: '1px solid var(--border)',
-                  transition: 'all var(--transition)',
-                  '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
+                  fontSize: '13px',
+                  fontWeight: 700,
                 }}
               >
                 Dashboard
@@ -148,16 +179,14 @@ const Pricing = () => {
                   component={Link}
                   to="/login"
                   sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    fontWeight: 500,
+                    px: '16px',
+                    py: '10px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid var(--border)',
                     color: 'var(--text-2)',
                     textDecoration: 'none',
-                    padding: '7px 18px',
-                    borderRadius: 'var(--radius)',
-                    border: '1px solid var(--border)',
-                    transition: 'all var(--transition)',
-                    '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
+                    fontSize: '13px',
+                    fontWeight: 700,
                   }}
                 >
                   Log in
@@ -166,19 +195,18 @@ const Pricing = () => {
                   component={Link}
                   to="/signup"
                   sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    fontWeight: 600,
+                    px: '18px',
+                    py: '10px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                     color: '#fff',
                     textDecoration: 'none',
-                    padding: '7px 20px',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--emerald)',
-                    transition: 'opacity var(--transition)',
-                    '&:hover': { opacity: 0.88 },
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    boxShadow: '0 16px 32px rgba(111, 76, 245, 0.24)',
                   }}
                 >
-                  Get Started
+                  Start free
                 </Box>
               </>
             )}
@@ -186,52 +214,70 @@ const Pricing = () => {
         </Box>
       </Box>
 
-      {/* Content */}
       <Box
         sx={{
-          maxWidth: '900px',
+          maxWidth: '1100px',
           mx: 'auto',
           px: { xs: '16px', sm: '24px', md: '32px' },
-          pt: { xs: '48px', md: '80px' },
-          pb: '80px',
+          pt: { xs: '52px', md: '86px' },
+          pb: '88px',
         }}
       >
-        <Box
-          component="h1"
-          sx={{
-            fontFamily: 'var(--font-head)',
-            fontSize: { xs: '30px', md: '42px' },
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            textAlign: 'center',
-            color: 'var(--text-1)',
-            mb: '12px',
-          }}
-        >
-          Simple, transparent pricing
-        </Box>
-        <Box
-          sx={{
-            fontSize: '15px',
-            color: 'var(--text-3)',
-            textAlign: 'center',
-            mb: { xs: '40px', md: '56px' },
-          }}
-        >
-          Start free. Upgrade when you need more power.
+        <Box sx={{ textAlign: 'center', mb: '34px' }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              px: '14px',
+              py: '8px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--border)',
+              background: 'rgba(255,255,255,0.03)',
+              color: 'var(--text-2)',
+              fontSize: '12px',
+              fontWeight: 600,
+              mb: '18px',
+            }}
+          >
+            <BrandMark size={18} />
+            Professional pricing
+          </Box>
+
+          <Box
+            component="h1"
+            sx={{
+              fontFamily: 'var(--font-head)',
+              fontSize: { xs: '36px', md: '58px' },
+              fontWeight: 800,
+              letterSpacing: '-0.06em',
+              lineHeight: 0.98,
+              maxWidth: '760px',
+              mx: 'auto',
+              mb: '16px',
+            }}
+          >
+            One clean interface. Two simple plans.
+          </Box>
+
+          <Box sx={{ fontSize: '16px', color: 'var(--text-3)', maxWidth: '640px', mx: 'auto' }}>
+            The visual refresh does not complicate the business model. Start with the essentials,
+            then unlock the full research desk when you need more depth.
+          </Box>
         </Box>
 
         {checkoutError && (
           <Box
             sx={{
               background: 'var(--red-soft)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              borderRadius: 'var(--radius)',
-              padding: '14px 20px',
+              border: '1px solid rgba(224, 72, 99, 0.24)',
+              borderRadius: '18px',
+              px: '18px',
+              py: '14px',
               fontSize: '13px',
               color: 'var(--red)',
               textAlign: 'center',
-              mb: '24px',
+              mb: '22px',
             }}
           >
             {checkoutError}
@@ -242,93 +288,83 @@ const Pricing = () => {
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-            gap: '24px',
+            gap: '18px',
           }}
         >
           {tiers.map((tier) => (
             <Box
               key={tier.name}
               sx={{
-                background: 'var(--bg-surface)',
-                border: tier.highlighted ? '1px solid var(--emerald)' : '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)',
-                p: { xs: '28px', sm: '36px' },
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                boxShadow: tier.highlighted ? '0 0 48px rgba(16, 185, 129, 0.08)' : 'none',
+                p: { xs: '26px', sm: '30px' },
+                borderRadius: '26px',
+                border: tier.highlighted
+                  ? '1px solid var(--accent-ring)'
+                  : '1px solid var(--border)',
+                background: tier.highlighted
+                  ? 'linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0.03))'
+                  : 'rgba(255,255,255,0.03)',
+                boxShadow: 'var(--shadow-panel)',
               }}
             >
-              {tier.highlighted && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: '-12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: '#fff',
-                    background: 'var(--emerald)',
-                    padding: '3px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Most Popular
-                </Box>
-              )}
+              <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '8px' }}>
+                {tier.highlighted ? 'Recommended for active research' : 'Starter plan'}
+              </Box>
 
               <Box
                 sx={{
                   fontFamily: 'var(--font-head)',
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: 'var(--text-1)',
-                  mb: '4px',
+                  fontSize: '32px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.05em',
+                  mb: '6px',
                 }}
               >
                 {tier.name}
               </Box>
-              <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '24px' }}>
+
+              <Box sx={{ color: 'var(--text-3)', mb: '18px', minHeight: { md: '42px' } }}>
                 {tier.description}
               </Box>
+
               <Box
                 sx={{
                   fontFamily: 'var(--font-head)',
-                  fontSize: '42px',
-                  fontWeight: 700,
-                  color: 'var(--text-1)',
-                  mb: '28px',
+                  fontSize: '48px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.06em',
+                  mb: '22px',
                 }}
               >
                 {tier.price}
                 <Box
                   component="span"
-                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
+                  sx={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-4)' }}
                 >
                   /month
                 </Box>
               </Box>
 
-              <Box
-                sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mb: '32px', flex: 1 }}
-              >
-                {tier.features.map((f) => (
+              <Box sx={{ display: 'grid', gap: '11px', mb: '26px' }}>
+                {tier.features.map((feature) => (
                   <Box
-                    key={f}
+                    key={feature}
                     sx={{
-                      fontSize: '13px',
-                      color: 'var(--text-2)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
+                      color: 'var(--text-2)',
+                      fontSize: '13px',
                     }}
                   >
-                    <span style={{ color: 'var(--emerald)', fontWeight: 600 }}>&#10003;</span>
-                    {f}
+                    <Box
+                      sx={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: tier.highlighted ? 'var(--accent-strong)' : 'var(--emerald)',
+                      }}
+                    />
+                    {feature}
                   </Box>
                 ))}
               </Box>
@@ -338,20 +374,19 @@ const Pricing = () => {
                   component={Link}
                   to={tier.ctaLink}
                   sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: tier.highlighted ? '#fff' : 'var(--text-1)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    px: '18px',
+                    py: '13px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-surface)',
+                    color: 'var(--text-1)',
                     textDecoration: 'none',
-                    textAlign: 'center',
-                    padding: '12px 0',
-                    borderRadius: 'var(--radius)',
-                    background: tier.highlighted ? 'var(--emerald)' : 'transparent',
-                    border: tier.highlighted ? 'none' : '1px solid var(--border)',
-                    transition: 'all var(--transition)',
-                    '&:hover': tier.highlighted
-                      ? { opacity: 0.88 }
-                      : { borderColor: 'var(--border-hover)' },
+                    fontSize: '14px',
+                    fontWeight: 700,
                   }}
                 >
                   {tier.cta}
@@ -361,78 +396,78 @@ const Pricing = () => {
                   component="button"
                   onClick={handleUpgrade}
                   sx={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#fff',
-                    textAlign: 'center',
-                    padding: '12px 0',
-                    borderRadius: 'var(--radius)',
-                    background: 'var(--emerald)',
+                    width: '100%',
+                    px: '18px',
+                    py: '13px',
+                    borderRadius: 'var(--radius-pill)',
                     border: 'none',
+                    background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    transition: 'opacity var(--transition)',
-                    '&:hover': { opacity: 0.88 },
+                    boxShadow: '0 18px 34px rgba(111, 76, 245, 0.24)',
                   }}
                 >
-                  {user?.plan === 'pro' ? 'Current Plan' : tier.cta}
+                  {user?.plan === 'pro' ? 'Current plan' : tier.cta}
                 </Box>
               )}
             </Box>
           ))}
         </Box>
 
-        {/* FAQ / details */}
-        <Box sx={{ mt: '64px', textAlign: 'center' }}>
-          <Box sx={{ fontSize: '13px', color: 'var(--text-4)', mb: '16px' }}>
-            All plans include access to US and Canadian fund data sourced from Morningstar.
+        <Box
+          sx={{
+            mt: '30px',
+            p: '18px 20px',
+            borderRadius: '22px',
+            border: '1px solid var(--border)',
+            background: 'rgba(255,255,255,0.03)',
+            display: 'grid',
+            gap: '6px',
+            textAlign: 'center',
+          }}
+        >
+          <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
+            All plans include US and Canadian fund data sourced from Morningstar.
           </Box>
           <Box sx={{ fontSize: '13px', color: 'var(--text-4)' }}>
-            Questions? Contact us at{' '}
-            <Box component="span" sx={{ color: 'var(--text-3)' }}>
+            Questions about access or billing?{' '}
+            <Box component="span" sx={{ color: 'var(--accent-strong)' }}>
               support@fundlens.app
             </Box>
           </Box>
         </Box>
       </Box>
 
-      {/* Footer */}
-      <Box component="footer" sx={{ borderTop: '1px solid var(--border)', py: '28px' }}>
+      <Box component="footer" sx={{ borderTop: '1px solid var(--border)', py: '24px' }}>
         <Box
           sx={{
-            maxWidth: '1200px',
+            maxWidth: '1240px',
             mx: 'auto',
             px: { xs: '16px', sm: '24px', md: '32px' },
             display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: '14px',
           }}
         >
           <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
-            &copy; 2026 FundLens. All rights reserved.
+            Copyright 2026 FundLens. All rights reserved.
           </Box>
-          <Box sx={{ display: 'flex', gap: '20px' }}>
+          <Box sx={{ display: 'flex', gap: '18px' }}>
             <Box
               component={Link}
               to="/terms"
-              sx={{
-                fontSize: '12px',
-                color: 'var(--text-4)',
-                textDecoration: 'none',
-                '&:hover': { color: 'var(--text-2)' },
-              }}
+              sx={{ fontSize: '12px', color: 'var(--text-4)', textDecoration: 'none' }}
             >
               Terms
             </Box>
             <Box
               component={Link}
               to="/privacy"
-              sx={{
-                fontSize: '12px',
-                color: 'var(--text-4)',
-                textDecoration: 'none',
-                '&:hover': { color: 'var(--text-2)' },
-              }}
+              sx={{ fontSize: '12px', color: 'var(--text-4)', textDecoration: 'none' }}
             >
               Privacy
             </Box>

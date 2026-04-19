@@ -23,7 +23,7 @@ const NotFound = () => (
         fontFamily: 'var(--font-head)',
         fontSize: { xs: '100px', md: '140px' },
         fontWeight: 800,
-        color: 'var(--emerald)',
+        color: 'var(--accent)',
         opacity: 0.18,
         lineHeight: 1,
         letterSpacing: '-0.04em',
@@ -47,7 +47,15 @@ const NotFound = () => (
       Page not found
     </Box>
 
-    <Box sx={{ fontSize: '14px', color: 'var(--text-3)', maxWidth: '400px', lineHeight: 1.6, mb: '32px' }}>
+    <Box
+      sx={{
+        fontSize: '14px',
+        color: 'var(--text-3)',
+        maxWidth: '400px',
+        lineHeight: 1.6,
+        mb: '32px',
+      }}
+    >
       The page you&apos;re looking for doesn&apos;t exist or has been moved.
     </Box>
 
@@ -62,7 +70,7 @@ const NotFound = () => (
         textDecoration: 'none',
         padding: '11px 28px',
         borderRadius: 'var(--radius)',
-        background: 'var(--emerald)',
+        background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
         transition: 'opacity var(--transition)',
         '&:hover': { opacity: 0.88 },
       }}
