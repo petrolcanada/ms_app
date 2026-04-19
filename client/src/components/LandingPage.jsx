@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import SEO from './SEO';
+import usePublicDashboard from '../hooks/usePublicDashboard';
+import usePublicAvailableDates from '../hooks/usePublicAvailableDates';
 
 const fadeKeyframes = `
 @keyframes landingFadeUp {
@@ -25,14 +27,7 @@ const deskModules = [
   },
 ];
 
-const marketTape = [
-  { label: 'US Equity', value: '+7.4%', positive: true },
-  { label: 'Global Equity', value: '+5.9%', positive: true },
-  { label: 'Core Bond', value: '-1.2%', positive: false },
-  { label: 'Dividend', value: '+4.1%', positive: true },
-  { label: 'Low Vol', value: '+2.8%', positive: true },
-  { label: 'Tech Growth', value: '+9.7%', positive: true },
-];
+const RESEARCH_DOMAIN_COUNT = 8;
 
 const pricingTiers = [
   {
@@ -95,7 +90,34 @@ const BrandMark = ({ size = 26 }) => (
   />
 );
 
-const PreviewShell = () => (
+const formatDateLabel = (iso) => {
+  if (!iso) return '--';
+  const date = new Date(`${iso}T00:00:00`);
+  return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatReturn = (value) => {
+  if (value == null) return '--';
+  const number = Number(value);
+  return `${number >= 0 ? '+' : ''}${number.toFixed(2)}%`;
+};
+
+const formatNumber = (value) => {
+  if (value == null) return '--';
+  return Number(value).toLocaleString();
+};
+
+const formatRating = (value) => {
+  if (value == null) return '--';
+  return Number(value).toFixed(1);
+};
+
+const formatMer = (value) => {
+  if (value == null) return '--';
+  return `${Number(value).toFixed(2)}%`;
+};
+
+const PreviewShell = ({ stats, asOfDate }) => (
   <Box
     sx={{
       position: 'relative',
@@ -175,12 +197,12 @@ const PreviewShell = () => (
           }}
         >
           <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
-            Watchlist focus
+            Funds covered
           </Box>
           <Box sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.04em', color: '#fff' }}>
-            128
+            {formatNumber(stats?.total_funds)}
           </Box>
-          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>funds tracked</Box>
+          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>live on the dashboard</Box>
         </Box>
         <Box
           sx={{
@@ -191,19 +213,23 @@ const PreviewShell = () => (
           }}
         >
           <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
-            Best ranked screen
+            Research coverage
           </Box>
           <Box sx={{ fontSize: '13px', fontWeight: 700, color: '#fff', mb: '6px' }}>
-            Canadian dividend funds
+            {RESEARCH_DOMAIN_COUNT} live data domains
           </Box>
           <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.68)' }}>
-            Median MER 0.61% - Flow momentum rising
+            Dashboard as of {asOfDate}
           </Box>
         </Box>
         <Box sx={{ display: 'grid', gap: '8px' }}>
-          {['Fee discipline', 'Positive 1Y trend', 'Risk below category'].map((item, index) => (
+          {[
+            { label: 'Average rating', value: formatRating(stats?.avg_rating) },
+            { label: 'Average MER', value: formatMer(stats?.avg_mer) },
+            { label: 'Average 1Y return', value: formatReturn(stats?.avg_return_1yr) },
+          ].map((item, index) => (
             <Box
-              key={item}
+              key={item.label}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -214,15 +240,21 @@ const PreviewShell = () => (
                 border: '1px solid rgba(255,255,255,0.05)',
               }}
             >
-              <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>{item}</Box>
+              <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>{item.label}</Box>
               <Box
                 sx={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: index === 1 ? 'var(--emerald)' : 'var(--accent-strong)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color:
+                    index === 2 && Number(stats?.avg_return_1yr) < 0
+                      ? 'var(--red)'
+                      : index === 2
+                        ? 'var(--emerald)'
+                        : '#fff',
                 }}
-              />
+              >
+                {item.value}
+              </Box>
             </Box>
           ))}
         </Box>
@@ -249,10 +281,10 @@ const PreviewShell = () => (
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '18px' }}>
             <Box>
-              <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)' }}>Performance</Box>
-              <Box sx={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>
-                Global Equity Blend
+              <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)' }}>
+                Dashboard average
               </Box>
+              <Box sx={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>1-year return</Box>
             </Box>
             <Box
               sx={{
@@ -265,7 +297,7 @@ const PreviewShell = () => (
                 fontWeight: 700,
               }}
             >
-              +8.41%
+              {formatReturn(stats?.avg_return_1yr)}
             </Box>
           </Box>
           <Box
@@ -333,11 +365,16 @@ const PreviewShell = () => (
           }}
         >
           <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '12px' }}>
-            Compare set
+            Dashboard snapshot
           </Box>
-          {['XIU', 'VFV', 'ZDV', 'XAW'].map((ticker, index) => (
+          {[
+            { label: 'Total funds', value: formatNumber(stats?.total_funds) },
+            { label: 'Average rating', value: formatRating(stats?.avg_rating) },
+            { label: 'Average MER', value: formatMer(stats?.avg_mer) },
+            { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
+          ].map((item, index) => (
             <Box
-              key={ticker}
+              key={item.label}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -348,11 +385,19 @@ const PreviewShell = () => (
               }}
             >
               <Box>
-                <Box sx={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{ticker}</Box>
-                <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.48)' }}>Ranked view</Box>
+                <Box sx={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{item.label}</Box>
+                <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.48)' }}>
+                  Live dashboard stat
+                </Box>
               </Box>
-              <Box sx={{ fontSize: '12px', color: index < 2 ? 'var(--emerald)' : 'var(--text-3)' }}>
-                {index < 2 ? 'Lead' : 'Watch'}
+              <Box
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: item.label === 'Average MER' ? 'var(--text-3)' : 'var(--emerald)',
+                }}
+              >
+                {item.value}
               </Box>
             </Box>
           ))}
@@ -378,6 +423,29 @@ const PreviewShell = () => (
 );
 
 const LandingPage = () => {
+  const { data: datesResponse } = usePublicAvailableDates();
+  const latestDate = datesResponse?.data?.[0];
+  const { data: dashboardResponse } = usePublicDashboard();
+  const stats = dashboardResponse?.data?.stats;
+  const asOfDate = formatDateLabel(stats?.latest_date || latestDate);
+  const overviewMetrics = [
+    { label: 'Funds covered', value: formatNumber(stats?.total_funds) },
+    { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
+    { label: 'Average 1Y return', value: formatReturn(stats?.avg_return_1yr) },
+  ];
+  const summaryMetrics = [
+    { label: 'Total funds', value: formatNumber(stats?.total_funds) },
+    { label: 'Average rating', value: formatRating(stats?.avg_rating) },
+    {
+      label: 'Avg 1-year return',
+      value: formatReturn(stats?.avg_return_1yr),
+      positive: Number(stats?.avg_return_1yr) >= 0,
+    },
+    { label: 'Avg MER', value: formatMer(stats?.avg_mer) },
+    { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
+    { label: 'Data as of', value: asOfDate },
+  ];
+
   return (
     <>
       <SEO path="/" />
@@ -581,7 +649,8 @@ const LandingPage = () => {
             }}
           >
             FundLens now leans into cooler neutrals, sharper hierarchy, and darker desk surfaces so
-            the data looks deliberate instead of decorative.
+            the data looks deliberate instead of decorative. Live landing metrics now mirror the
+            dashboard instead of relying on placeholder marketing numbers.
           </Box>
 
           <Box
@@ -639,11 +708,7 @@ const LandingPage = () => {
               mb: '34px',
             }}
           >
-            {[
-              { label: 'Funds indexed', value: '12.4K+' },
-              { label: 'Domains in view', value: '8' },
-              { label: 'Workflow latency', value: '<1 min' },
-            ].map((stat) => (
+            {overviewMetrics.map((stat) => (
               <Box
                 key={stat.label}
                 sx={{
@@ -670,7 +735,7 @@ const LandingPage = () => {
             ))}
           </Box>
 
-          <PreviewShell />
+          <PreviewShell stats={stats} asOfDate={asOfDate} />
         </AnimatedSection>
 
         <AnimatedSection
@@ -784,7 +849,9 @@ const LandingPage = () => {
               }}
             >
               <Box>
-                <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '6px' }}>Market tape</Box>
+                <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '6px' }}>
+                  Dashboard snapshot
+                </Box>
                 <Box
                   sx={{
                     fontFamily: 'var(--font-head)',
@@ -793,7 +860,7 @@ const LandingPage = () => {
                     letterSpacing: '-0.05em',
                   }}
                 >
-                  A cleaner glance across the board
+                  Live desk metrics at a glance
                 </Box>
               </Box>
               <Box
@@ -821,7 +888,7 @@ const LandingPage = () => {
                 gap: '10px',
               }}
             >
-              {marketTape.map((item) => (
+              {summaryMetrics.map((item) => (
                 <Box
                   key={item.label}
                   sx={{
@@ -831,27 +898,19 @@ const LandingPage = () => {
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <Box sx={{ fontSize: '11px', color: 'var(--text-4)', mb: '10px' }}>
-                    {item.label}
-                  </Box>
                   <Box
                     sx={{
-                      fontSize: '16px',
+                      fontFamily: 'var(--font-head)',
+                      fontSize: '22px',
                       fontWeight: 700,
                       color: 'var(--text-1)',
-                      mb: '3px',
-                    }}
-                  >
-                    {item.label}
-                  </Box>
-                  <Box
-                    sx={{
-                      fontSize: '12px',
-                      color: item.positive ? 'var(--emerald)' : 'var(--red)',
+                      letterSpacing: '-0.04em',
+                      mb: '6px',
                     }}
                   >
                     {item.value}
                   </Box>
+                  <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>{item.label}</Box>
                 </Box>
               ))}
             </Box>

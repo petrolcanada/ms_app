@@ -87,6 +87,7 @@ app.get('/ready', async (req, res) => {
 const fundsRouter = require('./routes/funds');
 const categoriesRouter = require('./routes/categories');
 const dashboardRouter = require('./routes/dashboard');
+const publicRouter = require('./routes/public');
 const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
 const watchlistRouter = require('./routes/watchlist');
@@ -98,6 +99,7 @@ app.use('/api/auth', authLimiter);
 app.use('/api/funds', fundsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/watchlist', watchlistRouter);
