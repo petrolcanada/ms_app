@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fundService } from '../services/api';
+import { mapScreenerRow } from '../config/screenerMetrics';
 
 /**
  * Fetches screener data with server-side sorting and pagination.
@@ -9,7 +10,15 @@ import { fundService } from '../services/api';
  * and limited to the current page, so the client no longer needs
  * to sort or truncate locally.
  */
-export const useScreener = ({ category, type, asofDate, sortBy, sortDir, page = 1, limit = 25 } = {}) => {
+export const useScreener = ({
+  category,
+  type,
+  asofDate,
+  sortBy,
+  sortDir,
+  page = 1,
+  limit = 25,
+} = {}) => {
   const query = useQuery({
     queryKey: ['screener', { category, type, asofDate, sortBy, sortDir, page, limit }],
     queryFn: async () => {
@@ -30,23 +39,7 @@ export const useScreener = ({ category, type, asofDate, sortBy, sortDir, page = 
 
   const data = useMemo(() => {
     const rows = query.data?.data || [];
-    return rows.map(row => ({
-      _id: row._id,
-      fundname: row.fundname,
-      ticker: row.ticker,
-      categoryname: row.categoryname,
-      securitytype: row.securitytype,
-      performance: {
-        return1yr: row.return1yr,
-        return3yr: row.return3yr,
-        return5yr: row.return5yr,
-        return10yr: row.return10yr,
-      },
-      fees: { mer: row.mer },
-      risk: { sharperatio3yr: row.sharperatio3yr },
-      ratings: { ratingoverall: row.ratingoverall },
-      assets: { fundnetassets: row.fundnetassets },
-    }));
+    return rows.map(mapScreenerRow);
   }, [query.data]);
 
   const meta = query.data?.meta || {};

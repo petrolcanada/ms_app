@@ -1,15 +1,7 @@
 const { pool } = require('../config/db');
+const { ALL_SCREENER_SORT_KEYS } = require('../constants/screenerOutputColumns');
 
-const SORTABLE_COLUMNS = {
-  return1yr: 'return1yr',
-  return3yr: 'return3yr',
-  return5yr: 'return5yr',
-  return10yr: 'return10yr',
-  mer: 'mer',
-  sharperatio3yr: 'sharperatio3yr',
-  ratingoverall: 'ratingoverall',
-  fundnetassets: 'fundnetassets',
-};
+const SORTABLE_COLUMNS = Object.fromEntries(ALL_SCREENER_SORT_KEYS.map((k) => [k, k]));
 
 /**
  * Server-side sorted & paginated screener query.
@@ -39,9 +31,10 @@ const queryScreener = async ({ category, type, asofDate, sortBy, sortDir, limit,
     idx++;
   }
 
-  const fnCall = args.length > 0
-    ? `ms.fn_get_screener_at_date(${args.join(', ')})`
-    : `ms.fn_get_screener_at_date()`;
+  const fnCall =
+    args.length > 0
+      ? `ms.fn_get_screener_at_date(${args.join(', ')})`
+      : `ms.fn_get_screener_at_date()`;
 
   const sortColumn = SORTABLE_COLUMNS[sortBy] || 'return1yr';
   const direction = sortDir === 'asc' ? 'ASC' : 'DESC';

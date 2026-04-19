@@ -1,63 +1,60 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Popover from '@mui/material/Popover';
 import useScreener from '../hooks/useScreener';
 import useCategories from '../hooks/useCategories';
 import useAvailableDates from '../hooks/useAvailableDates';
 import SignalBadge from './SignalBadge';
 import StarRating from './StarRating';
 import UpgradePrompt from './UpgradePrompt';
+import {
+  METRIC_COLUMNS,
+  METRIC_COLUMN_ORDER,
+  METRIC_BY_KEY,
+  DEFAULT_METRIC_KEYS,
+  normalizeStoredMetricKeys,
+} from '../config/screenerMetrics';
 
-/* ── Column definitions ── */
+const getByPath = (obj, path) => {
+  if (!obj || !path) return null;
+  return path.split('.').reduce((curr, seg) => (curr == null ? null : curr[seg]), obj);
+};
 
-const SORTABLE_COLUMNS = [
-  { key: 'return1yr', label: '1Y Return', domain: 'performance', field: 'return1yr', higherIsBetter: true },
-  { key: 'return3yr', label: '3Y Ann.', domain: 'performance', field: 'return3yr', higherIsBetter: true },
-  { key: 'return5yr', label: '5Y Ann.', domain: 'performance', field: 'return5yr', higherIsBetter: true },
-  { key: 'return10yr', label: '10Y Ann.', domain: 'performance', field: 'return10yr', higherIsBetter: true },
-  { key: 'mer', label: 'MER', domain: 'fees', field: 'mer', higherIsBetter: false },
-  { key: 'sharpe', label: 'Sharpe', domain: 'risk', field: 'sharperatio3yr', higherIsBetter: true },
-  { key: 'rating', label: 'Rating', domain: 'ratings', field: 'ratingoverall', higherIsBetter: true },
-  { key: 'aum', label: 'AUM (M)', domain: 'assets', field: 'fundnetassets', higherIsBetter: true },
-];
+const SCREENER_METRICS_STORAGE_KEY = 'ms_screener_metric_keys';
 
-const RANK_BY_OPTIONS = [
-  { value: 'return1yr', label: '1-Year Return' },
-  { value: 'return3yr', label: '3-Year Annualized' },
-  { value: 'return5yr', label: '5-Year Annualized' },
-  { value: 'return10yr', label: '10-Year Annualized' },
-  { value: 'mer', label: 'MER (Low to High)' },
-  { value: 'sharpe', label: 'Sharpe Ratio' },
-  { value: 'rating', label: 'Risk-Adjusted Rating' },
-  { value: 'aum', label: 'AUM' },
-];
+const loadStoredMetricKeys = () => {
+  try {
+    const raw = localStorage.getItem(SCREENER_METRICS_STORAGE_KEY);
+    if (!raw) return [...DEFAULT_METRIC_KEYS];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [...DEFAULT_METRIC_KEYS];
+    const valid = normalizeStoredMetricKeys(parsed);
+    const ordered = METRIC_COLUMN_ORDER.filter((k) => valid.includes(k));
+    return ordered.length ? ordered : [...DEFAULT_METRIC_KEYS];
+  } catch {
+    return [...DEFAULT_METRIC_KEYS];
+  }
+};
 
 const PER_PAGE = 25;
 
-const SORT_KEY_TO_API = {
-  return1yr: 'return1yr',
-  return3yr: 'return3yr',
-  return5yr: 'return5yr',
-  return10yr: 'return10yr',
-  mer: 'mer',
-  sharpe: 'sharperatio3yr',
-  rating: 'ratingoverall',
-  aum: 'fundnetassets',
-};
-
 /* ── Utility functions ── */
-
 const getFieldValue = (fund, col) => {
-  const raw = fund[col.domain]?.[col.field];
+  const raw = col.valuePath
+    ? getByPath(fund, col.valuePath)
+    : col.apiField
+      ? getByPath(fund, `metrics.${col.apiField}`)
+      : null;
   return raw != null ? Number(raw) : null;
 };
 
 const getQuintile = (value, allValues, higherIsBetter = true) => {
-  const valid = allValues.filter(v => v != null && !isNaN(v));
+  const valid = allValues.filter((v) => v != null && !isNaN(v));
   if (value == null || valid.length < 5) return 3;
   const sorted = [...valid].sort((a, b) => a - b);
-  const below = sorted.filter(v => v < value).length;
+  const below = sorted.filter((v) => v < value).length;
   const pct = below / (sorted.length - 1);
 
   let q;
@@ -104,6 +101,8 @@ const formatReturn = (val) => {
 
 const formatPct = (val) => (val == null ? '—' : `${Number(val).toFixed(2)}%`);
 const formatNum = (val) => (val == null ? '—' : Number(val).toFixed(2));
+/** Peer percentile 0–100 from rankings domain; lower = better within category. */
+const formatRankPct = (val) => (val == null ? '—' : Number(val).toFixed(1));
 
 const formatAum = (val) => {
   if (val == null) return '—';
@@ -131,12 +130,117 @@ const Screener = () => {
   const [sortKey, setSortKey] = useState('return1yr');
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
+  const [selectedMetricKeys, setSelectedMetricKeys] = useState(loadStoredMetricKeys);
+  const [columnsAnchor, setColumnsAnchor] = useState(null);
+  const [metricSearch, setMetricSearch] = useState('');
 
-  const { data, totalFunds, totalPages, limited, planLimit, isLoading, isFetching, isError, error } = useScreener({
+  const activeColumns = useMemo(
+    () =>
+      METRIC_COLUMN_ORDER.map((k) => METRIC_BY_KEY[k]).filter((col) =>
+        selectedMetricKeys.includes(col.key),
+      ),
+    [selectedMetricKeys],
+  );
+
+  const catalogSortable = useMemo(() => METRIC_COLUMNS.filter((col) => col.apiField), []);
+
+  const sortableActiveColumns = useMemo(
+    () => activeColumns.filter((col) => col.apiField),
+    [activeColumns],
+  );
+
+  const sortKeyToApi = useMemo(
+    () => Object.fromEntries(catalogSortable.map((col) => [col.key, col.apiField])),
+    [catalogSortable],
+  );
+
+  const rankByOptions = useMemo(
+    () => catalogSortable.map((col) => ({ value: col.key, label: col.rankLabel || col.label })),
+    [catalogSortable],
+  );
+
+  const metricsByGroup = useMemo(() => {
+    const q = metricSearch.trim().toLowerCase();
+    const filtered = METRIC_COLUMNS.filter((col) => {
+      if (!q) return true;
+      return (
+        col.label.toLowerCase().includes(q) ||
+        col.group.toLowerCase().includes(q) ||
+        col.key.toLowerCase().includes(q)
+      );
+    });
+    const groups = {};
+    filtered.forEach((col) => {
+      if (!groups[col.group]) groups[col.group] = [];
+      groups[col.group].push(col);
+    });
+    return groups;
+  }, [metricSearch]);
+
+  const persistMetricKeys = useCallback((keys) => {
+    setSelectedMetricKeys(keys);
+    try {
+      localStorage.setItem(SCREENER_METRICS_STORAGE_KEY, JSON.stringify(keys));
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }, []);
+
+  const toggleMetricKey = useCallback((key) => {
+    setSelectedMetricKeys((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      if (next.length === 0) return prev;
+      const ordered = METRIC_COLUMN_ORDER.filter((k) => next.includes(k));
+      try {
+        localStorage.setItem(SCREENER_METRICS_STORAGE_KEY, JSON.stringify(ordered));
+      } catch {
+        /* ignore */
+      }
+      return ordered;
+    });
+  }, []);
+
+  const selectAllVisibleMetrics = useCallback(() => {
+    const keys = METRIC_COLUMNS.filter((col) => {
+      const q = metricSearch.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        col.label.toLowerCase().includes(q) ||
+        col.group.toLowerCase().includes(q) ||
+        col.key.toLowerCase().includes(q)
+      );
+    }).map((col) => col.key);
+    const merged = [...new Set([...selectedMetricKeys, ...keys])];
+    const ordered = METRIC_COLUMN_ORDER.filter((k) => merged.includes(k));
+    persistMetricKeys(ordered);
+  }, [metricSearch, selectedMetricKeys, persistMetricKeys]);
+
+  const resetMetricKeysToDefault = useCallback(() => {
+    persistMetricKeys([...DEFAULT_METRIC_KEYS]);
+  }, [persistMetricKeys]);
+
+  useEffect(() => {
+    if (sortKeyToApi[sortKey]) return;
+    const fallback = catalogSortable[0]?.key || 'return1yr';
+    setSortKey(fallback);
+    setSortDesc(METRIC_BY_KEY[fallback]?.higherIsBetter ?? true);
+  }, [sortKey, sortKeyToApi, catalogSortable]);
+
+  const {
+    data,
+    totalFunds,
+    totalPages,
+    limited,
+    planLimit,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useScreener({
     category,
     type,
     asofDate,
-    sortBy: SORT_KEY_TO_API[sortKey] || 'return1yr',
+    sortBy: sortKeyToApi[sortKey] || 'return1yr',
     sortDir: sortDesc ? 'desc' : 'asc',
     page,
     limit: PER_PAGE,
@@ -144,23 +248,26 @@ const Screener = () => {
 
   const quintileArrays = useMemo(() => {
     const arrays = {};
-    SORTABLE_COLUMNS.forEach(col => {
-      arrays[col.key] = data.map(f => getFieldValue(f, col)).filter(v => v != null);
+    activeColumns.forEach((col) => {
+      arrays[col.key] = data.map((f) => getFieldValue(f, col)).filter((v) => v != null);
     });
     return arrays;
-  }, [data]);
+  }, [data, activeColumns]);
 
-  const handleSort = useCallback((key) => {
-    const col = SORTABLE_COLUMNS.find(c => c.key === key);
-    if (!col) return;
-    if (sortKey === key) {
-      setSortDesc(d => !d);
-    } else {
-      setSortKey(key);
-      setSortDesc(col.higherIsBetter);
-    }
-    setPage(1);
-  }, [sortKey]);
+  const handleSort = useCallback(
+    (key) => {
+      const col = sortableActiveColumns.find((c) => c.key === key);
+      if (!col) return;
+      if (sortKey === key) {
+        setSortDesc((d) => !d);
+      } else {
+        setSortKey(key);
+        setSortDesc(col.higherIsBetter);
+      }
+      setPage(1);
+    },
+    [sortKey, sortableActiveColumns],
+  );
 
   const handleReset = useCallback(() => {
     setCategory('');
@@ -171,14 +278,21 @@ const Screener = () => {
     setPage(1);
   }, []);
 
-  const handleFundClick = useCallback((fundId) => {
-    const params = asofDate ? `?asof=${asofDate}` : '';
-    navigate(`/funds/${fundId}${params}`);
-  }, [navigate, asofDate]);
+  const handleFundClick = useCallback(
+    (fundId) => {
+      const params = asofDate ? `?asof=${asofDate}` : '';
+      navigate(`/funds/${fundId}${params}`);
+    },
+    [navigate, asofDate],
+  );
 
-  const sortLabel = RANK_BY_OPTIONS.find(o => o.value === sortKey)?.label
-  || SORTABLE_COLUMNS.find(c => c.key === sortKey)?.label
-  || '1-Year Return';
+  const sortLabel =
+    rankByOptions.find((o) => o.value === sortKey)?.label ||
+    METRIC_BY_KEY[sortKey]?.rankLabel ||
+    METRIC_BY_KEY[sortKey]?.label ||
+    '1-Year Return';
+
+  const columnsPickerOpen = Boolean(columnsAnchor);
 
   /* ── Pagination helpers ── */
 
@@ -189,7 +303,8 @@ const Screener = () => {
     } else {
       pages.push(1);
       if (page > 3) pages.push('...');
-      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++)
+        pages.push(i);
       if (page < totalPages - 2) pages.push('...');
       pages.push(totalPages);
     }
@@ -205,8 +320,12 @@ const Screener = () => {
         <Box
           component="h1"
           sx={{
-            fontFamily: 'var(--font-head)', fontSize: '24px', fontWeight: 600,
-            color: 'var(--text-1)', letterSpacing: '-0.03em', mb: '4px',
+            fontFamily: 'var(--font-head)',
+            fontSize: '24px',
+            fontWeight: 600,
+            color: 'var(--text-1)',
+            letterSpacing: '-0.03em',
+            mb: '4px',
           }}
         >
           Fund Screener
@@ -217,14 +336,23 @@ const Screener = () => {
       </Box>
 
       {/* Controls */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: '12px', mb: '24px', flexWrap: 'wrap' }}>
+      <Box
+        sx={{ display: 'flex', alignItems: 'flex-end', gap: '12px', mb: '24px', flexWrap: 'wrap' }}
+      >
         <ControlGroup label="Category">
           <StyledSelect
             value={category}
-            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(1);
+            }}
           >
             <option value="">All Categories</option>
-            {(categories || []).map(c => <option key={c} value={c}>{c}</option>)}
+            {(categories || []).map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </StyledSelect>
         </ControlGroup>
 
@@ -233,19 +361,30 @@ const Screener = () => {
             <CircularProgress size={16} sx={{ color: 'var(--text-4)', m: '10px' }} />
           ) : (
             <StyledSelect
-              value={asofDate || (availableDates?.[0] || '')}
-              onChange={(e) => { setAsofDate(e.target.value); setPage(1); }}
+              value={asofDate || availableDates?.[0] || ''}
+              onChange={(e) => {
+                setAsofDate(e.target.value);
+                setPage(1);
+              }}
               mono
             >
-              {(availableDates || []).map(d => (
-                <option key={d} value={d}>{formatDateLabel(d)}</option>
+              {(availableDates || []).map((d) => (
+                <option key={d} value={d}>
+                  {formatDateLabel(d)}
+                </option>
               ))}
             </StyledSelect>
           )}
         </ControlGroup>
 
         <ControlGroup label="Fund Type">
-          <StyledSelect value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
+          <StyledSelect
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setPage(1);
+            }}
+          >
             <option value="">All Types</option>
             <option value="ETF">ETF</option>
             <option value="Mutual Fund">Mutual Fund</option>
@@ -257,14 +396,207 @@ const Screener = () => {
             value={sortKey}
             onChange={(e) => {
               const key = e.target.value;
-              const col = SORTABLE_COLUMNS.find(c => c.key === key);
+              const col = METRIC_BY_KEY[key];
               setSortKey(key);
               setSortDesc(col?.higherIsBetter ?? true);
               setPage(1);
             }}
           >
-            {RANK_BY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {rankByOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </StyledSelect>
+        </ControlGroup>
+
+        <ControlGroup label="Table">
+          <ControlButton
+            type="button"
+            aria-expanded={columnsPickerOpen}
+            aria-haspopup="dialog"
+            onClick={(e) => setColumnsAnchor(columnsAnchor ? null : e.currentTarget)}
+          >
+            Columns ({selectedMetricKeys.length})
+          </ControlButton>
+          <Popover
+            open={columnsPickerOpen}
+            anchorEl={columnsAnchor}
+            onClose={() => {
+              setColumnsAnchor(null);
+              setMetricSearch('');
+            }}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                width: { xs: 'min(100vw - 24px, 380px)', sm: 380 },
+                maxHeight: 'min(70vh, 520px)',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.45)',
+                overflow: 'hidden',
+              },
+            }}
+          >
+            <Box sx={{ p: '14px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+              <Box
+                component="div"
+                sx={{
+                  fontFamily: 'var(--font-head)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'var(--text-1)',
+                  letterSpacing: '-0.02em',
+                  mb: '10px',
+                }}
+              >
+                Screener columns
+              </Box>
+              <Box
+                component="input"
+                type="search"
+                placeholder="Search metrics…"
+                value={metricSearch}
+                onChange={(e) => setMetricSearch(e.target.value)}
+                sx={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)',
+                  color: 'var(--text-1)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '13px',
+                  padding: '8px 12px',
+                  outline: 'none',
+                  '&::placeholder': { color: 'var(--text-4)' },
+                  '&:focus': { borderColor: 'var(--emerald)' },
+                }}
+              />
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  mt: '10px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>
+                  {selectedMetricKeys.length} of {METRIC_COLUMNS.length} shown
+                </Box>
+                <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={selectAllVisibleMetrics}
+                    sx={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: 'var(--emerald)',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: '2px',
+                    }}
+                  >
+                    Add all matching
+                  </Box>
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={resetMetricKeysToDefault}
+                    sx={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: 'var(--text-3)',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: '2px',
+                    }}
+                  >
+                    Reset to default
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ overflowY: 'auto', flex: 1, px: '8px', py: '8px' }}>
+              {Object.keys(metricsByGroup).length === 0 ? (
+                <Box
+                  sx={{
+                    px: '8px',
+                    py: '20px',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    color: 'var(--text-4)',
+                  }}
+                >
+                  No metrics match your search
+                </Box>
+              ) : (
+                Object.entries(metricsByGroup).map(([groupName, cols]) => (
+                  <Box key={groupName} sx={{ mb: '12px' }}>
+                    <Box
+                      sx={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: 'var(--text-4)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        px: '8px',
+                        py: '6px',
+                        position: 'sticky',
+                        top: 0,
+                        background: 'var(--bg-elevated)',
+                        zIndex: 1,
+                      }}
+                    >
+                      {groupName}
+                    </Box>
+                    {cols.map((col) => {
+                      const checked = selectedMetricKeys.includes(col.key);
+                      return (
+                        <MetricPickerRow
+                          key={col.key}
+                          col={col}
+                          checked={checked}
+                          onToggle={() => toggleMetricKey(col.key)}
+                        />
+                      );
+                    })}
+                  </Box>
+                ))
+              )}
+            </Box>
+            <Box
+              sx={{
+                flexShrink: 0,
+                px: '16px',
+                py: '12px',
+                borderTop: '1px solid var(--border)',
+                fontSize: '11px',
+                color: 'var(--text-4)',
+                lineHeight: 1.45,
+              }}
+            >
+              Metrics without server support show “—” until the API exposes the field. Rank by lists
+              every sort the server supports. Category rank % is a 0–100 peer percentile (lower is
+              better).
+            </Box>
+          </Popover>
         </ControlGroup>
 
         <Box sx={{ ml: 'auto', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
@@ -276,9 +608,13 @@ const Screener = () => {
       {isError && (
         <Box
           sx={{
-            background: 'var(--red-soft)', border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: 'var(--radius)', padding: '16px 20px', mb: '20px',
-            color: 'var(--red)', fontSize: '13px',
+            background: 'var(--red-soft)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius)',
+            padding: '16px 20px',
+            mb: '20px',
+            color: 'var(--red)',
+            fontSize: '13px',
           }}
         >
           {error?.message || 'Failed to load screener data. Please try again.'}
@@ -287,7 +623,14 @@ const Screener = () => {
 
       {/* Loading */}
       {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '400px',
+          }}
+        >
           <CircularProgress sx={{ color: 'var(--emerald)' }} />
         </Box>
       )}
@@ -298,42 +641,61 @@ const Screener = () => {
           {/* Result summary */}
           <Box
             sx={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: '16px',
             }}
           >
             <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
               <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{totalFunds}</strong>
               {' funds in '}
-              <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{category || 'All Categories'}</strong>
+              <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+                {category || 'All Categories'}
+              </strong>
             </Box>
             <Box
               sx={{
-                fontSize: '12px', color: 'var(--text-3)',
-                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px',
+                color: 'var(--text-3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
               Sorted by{' '}
-              <span style={{ color: 'var(--emerald)', fontWeight: 500 }}>{sortLabel}</span>
-              {' '}{sortDesc ? '\u25BC' : '\u25B2'}
+              <span style={{ color: 'var(--emerald)', fontWeight: 500 }}>{sortLabel}</span>{' '}
+              {sortDesc ? '\u25BC' : '\u25B2'}
             </Box>
           </Box>
 
           {/* Table */}
           <Box
             sx={{
-              background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', overflow: 'hidden', position: 'relative',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              position: 'relative',
             }}
           >
             {isFetching && (
               <>
                 <Box
                   sx={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-                    zIndex: 30, overflow: 'hidden',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    zIndex: 30,
+                    overflow: 'hidden',
                     '&::after': {
-                      content: '""', position: 'absolute', inset: 0,
-                      background: 'linear-gradient(90deg, transparent 0%, var(--emerald) 50%, transparent 100%)',
+                      content: '""',
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(90deg, transparent 0%, var(--emerald) 50%, transparent 100%)',
                       animation: 'shimmer 1.2s ease-in-out infinite',
                     },
                     '@keyframes shimmer': {
@@ -344,18 +706,26 @@ const Screener = () => {
                 />
                 <Box
                   sx={{
-                    position: 'absolute', inset: 0, zIndex: 25,
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 25,
                     background: 'rgba(4, 6, 12, 0.5)',
                     backdropFilter: 'blur(1px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     animation: 'fadeIn 200ms ease',
                   }}
                 >
                   <Box
                     sx={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius)', padding: '12px 24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius)',
+                      padding: '12px 24px',
                       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
                     }}
                   >
@@ -369,152 +739,157 @@ const Screener = () => {
             )}
 
             <Box sx={{ overflowX: 'auto' }}>
-            <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
-              <Box component="thead">
-                <Box component="tr">
-                  <TH sx={{ width: '50px' }}>#</TH>
-                  <TH>Signal</TH>
-                  <TH>Fund Name</TH>
-                  {SORTABLE_COLUMNS.map(col => (
-                    <TH
-                      key={col.key}
-                      numeric
-                      sorted={sortKey === col.key}
-                      onClick={() => handleSort(col.key)}
-                    >
-                      {col.label}
-                      {sortKey === col.key && (
-                        <span style={{ marginLeft: '3px', fontSize: '10px' }}>
-                          {sortDesc ? '\u25BC' : '\u25B2'}
-                        </span>
-                      )}
-                    </TH>
-                  ))}
-                </Box>
-              </Box>
-
-              <Box component="tbody">
-                {data.length === 0 ? (
+              <Box
+                component="table"
+                sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}
+              >
+                <Box component="thead">
                   <Box component="tr">
-                    <Box
-                      component="td"
-                      colSpan={11}
-                      sx={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-3)', fontSize: '13px' }}
-                    >
-                      No funds found for this category
-                    </Box>
+                    <TH sx={{ width: '50px' }}>#</TH>
+                    <TH>Signal</TH>
+                    <TH>Fund Name</TH>
+                    {activeColumns.map((col) => (
+                      <TH
+                        key={col.key}
+                        numeric
+                        sorted={sortKey === col.key}
+                        onClick={col.apiField ? () => handleSort(col.key) : undefined}
+                      >
+                        {col.label}
+                        {col.apiField && sortKey === col.key && (
+                          <span style={{ marginLeft: '3px', fontSize: '10px' }}>
+                            {sortDesc ? '\u25BC' : '\u25B2'}
+                          </span>
+                        )}
+                      </TH>
+                    ))}
                   </Box>
-                ) : (
-                  data.map((fund, idx) => {
-                    const globalRank = (page - 1) * PER_PAGE + idx + 1;
-                    const rankPct = totalFunds > 1
-                      ? (globalRank - 1) / (totalFunds - 1)
-                      : 0;
-                    const signal = getSignal(rankPct);
-                    const tier = getRankTier(globalRank, totalFunds);
+                </Box>
 
-                    return (
+                <Box component="tbody">
+                  {data.length === 0 ? (
+                    <Box component="tr">
                       <Box
-                        component="tr"
-                        key={fund._id}
-                        onClick={() => handleFundClick(fund._id)}
+                        component="td"
+                        colSpan={activeColumns.length + 3}
                         sx={{
-                          borderBottom: '1px solid rgba(30, 41, 59, 0.5)',
-                          transition: 'background var(--transition)',
-                          cursor: 'pointer',
-                          animation: 'rowFadeIn 400ms ease both',
-                          animationDelay: `${Math.min(idx * 25, 300)}ms`,
-                          '&:last-child': { borderBottom: 'none' },
-                          '&:hover': { background: 'var(--bg-surface-hover)' },
-                          '&:hover .screener-fund-name': { color: 'var(--blue)' },
+                          textAlign: 'center',
+                          padding: '48px 16px',
+                          color: 'var(--text-3)',
+                          fontSize: '13px',
                         }}
                       >
-                        {/* Rank */}
-                        <TD>
-                          <RankBadge rank={globalRank} tier={tier} />
-                        </TD>
+                        No funds found for this category
+                      </Box>
+                    </Box>
+                  ) : (
+                    data.map((fund, idx) => {
+                      const globalRank = (page - 1) * PER_PAGE + idx + 1;
+                      const rankPct = totalFunds > 1 ? (globalRank - 1) / (totalFunds - 1) : 0;
+                      const signal = getSignal(rankPct);
+                      const tier = getRankTier(globalRank, totalFunds);
 
-                        {/* Signal */}
-                        <TD>
-                          <SignalBadge signal={signal} size="small" />
-                        </TD>
-
-                        {/* Fund Name */}
-                        <TD
-                          className="screener-fund-name"
+                      return (
+                        <Box
+                          component="tr"
+                          key={fund._id}
+                          onClick={() => handleFundClick(fund._id)}
                           sx={{
-                            color: 'var(--text-1)', fontWeight: 500,
-                            maxWidth: '280px', overflow: 'hidden',
-                            textOverflow: 'ellipsis', transition: 'color var(--transition)',
+                            borderBottom: '1px solid rgba(30, 41, 59, 0.5)',
+                            transition: 'background var(--transition)',
+                            cursor: 'pointer',
+                            animation: 'rowFadeIn 400ms ease both',
+                            animationDelay: `${Math.min(idx * 25, 300)}ms`,
+                            '&:last-child': { borderBottom: 'none' },
+                            '&:hover': { background: 'var(--bg-surface-hover)' },
+                            '&:hover .screener-fund-name': { color: 'var(--blue)' },
                           }}
                         >
-                          {fund.fundname || fund._name || 'N/A'}
-                        </TD>
+                          {/* Rank */}
+                          <TD>
+                            <RankBadge rank={globalRank} tier={tier} />
+                          </TD>
 
-                        {/* 1Y Return */}
-                        <HeatCell
-                          value={getFieldValue(fund, SORTABLE_COLUMNS[0])}
-                          allValues={quintileArrays.return1yr}
-                          format={formatReturn}
-                          higherIsBetter
-                        />
+                          {/* Signal */}
+                          <TD>
+                            <SignalBadge signal={signal} size="small" />
+                          </TD>
 
-                        {/* 3Y Ann. */}
-                        <HeatCell
-                          value={getFieldValue(fund, SORTABLE_COLUMNS[1])}
-                          allValues={quintileArrays.return3yr}
-                          format={formatReturn}
-                          higherIsBetter
-                        />
+                          {/* Fund Name */}
+                          <TD
+                            className="screener-fund-name"
+                            sx={{
+                              color: 'var(--text-1)',
+                              fontWeight: 500,
+                              maxWidth: '280px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              transition: 'color var(--transition)',
+                            }}
+                          >
+                            {fund.fundname || fund._name || 'N/A'}
+                          </TD>
 
-                        {/* 5Y Ann. */}
-                        <HeatCell
-                          value={getFieldValue(fund, SORTABLE_COLUMNS[2])}
-                          allValues={quintileArrays.return5yr}
-                          format={formatReturn}
-                          higherIsBetter
-                        />
-
-                        {/* 10Y Ann. */}
-                        <HeatCell
-                          value={getFieldValue(fund, SORTABLE_COLUMNS[3])}
-                          allValues={quintileArrays.return10yr}
-                          format={formatReturn}
-                          higherIsBetter
-                        />
-
-                        {/* MER */}
-                        <MerCell mer={fund.fees?.mer} />
-
-                        {/* Sharpe */}
-                        <HeatCell
-                          value={getFieldValue(fund, SORTABLE_COLUMNS[5])}
-                          allValues={quintileArrays.sharpe}
-                          format={formatNum}
-                          higherIsBetter
-                        />
-
-                        {/* Rating */}
-                        <TD>
-                          <StarRating rating={fund.ratings?.ratingoverall} />
-                        </TD>
-
-                        {/* AUM */}
-                        <TD numeric>{formatAum(fund.assets?.fundnetassets)}</TD>
-                      </Box>
-                    );
-                  })
-                )}
+                          {activeColumns.map((col) => {
+                            const value = getFieldValue(fund, col);
+                            if (col.type === 'heat') {
+                              const formatter =
+                                col.format === 'return'
+                                  ? formatReturn
+                                  : col.format === 'pct'
+                                    ? formatPct
+                                    : col.format === 'rankpct'
+                                      ? formatRankPct
+                                      : formatNum;
+                              return (
+                                <HeatCell
+                                  key={col.key}
+                                  value={value}
+                                  allValues={quintileArrays[col.key] || []}
+                                  format={formatter}
+                                  higherIsBetter={col.higherIsBetter}
+                                />
+                              );
+                            }
+                            if (col.type === 'mer') {
+                              return <MerCell key={col.key} mer={value} />;
+                            }
+                            if (col.type === 'stars') {
+                              return (
+                                <TD key={col.key}>
+                                  <StarRating rating={value} />
+                                </TD>
+                              );
+                            }
+                            if (col.type === 'numeric') {
+                              return (
+                                <TD key={col.key} numeric>
+                                  {col.format === 'aum' ? formatAum(value) : formatNum(value)}
+                                </TD>
+                              );
+                            }
+                            return (
+                              <TD key={col.key} numeric>
+                                {formatNum(value)}
+                              </TD>
+                            );
+                          })}
+                        </Box>
+                      );
+                    })
+                  )}
+                </Box>
               </Box>
-            </Box>
-
             </Box>
             {/* Pagination */}
             {totalFunds > 0 && (
               <Box
                 sx={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '16px 20px', borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  borderTop: '1px solid var(--border)',
                   background: 'var(--bg-base)',
                 }}
               >
@@ -524,18 +899,24 @@ const Screener = () => {
                     {(page - 1) * PER_PAGE + 1}&ndash;{Math.min(page * PER_PAGE, totalFunds)}
                   </strong>{' '}
                   of{' '}
-                  <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
-                    {totalFunds}
-                  </strong>{' '}
+                  <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{totalFunds}</strong>{' '}
                   funds
                 </Box>
                 <Box sx={{ display: 'flex', gap: '4px' }}>
-                  <PageBtn aria-label="Previous page" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+                  <PageBtn
+                    aria-label="Previous page"
+                    onClick={() => setPage((p) => p - 1)}
+                    disabled={page === 1}
+                  >
                     &#8249;
                   </PageBtn>
                   {pageNumbers.map((p, i) =>
                     p === '...' ? (
-                      <PageBtn key={`dot-${i}`} disabled style={{ cursor: 'default', color: 'var(--text-4)' }}>
+                      <PageBtn
+                        key={`dot-${i}`}
+                        disabled
+                        style={{ cursor: 'default', color: 'var(--text-4)' }}
+                      >
                         ...
                       </PageBtn>
                     ) : (
@@ -544,7 +925,11 @@ const Screener = () => {
                       </PageBtn>
                     ),
                   )}
-                  <PageBtn aria-label="Next page" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>
+                  <PageBtn
+                    aria-label="Next page"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page >= totalPages}
+                  >
                     &#8250;
                   </PageBtn>
                 </Box>
@@ -555,8 +940,12 @@ const Screener = () => {
           {/* Legend */}
           <Box
             sx={{
-              display: 'flex', gap: '20px', mt: '16px',
-              fontSize: '11px', color: 'var(--text-4)', flexWrap: 'wrap',
+              display: 'flex',
+              gap: '20px',
+              mt: '16px',
+              fontSize: '11px',
+              color: 'var(--text-4)',
+              flexWrap: 'wrap',
             }}
           >
             <span style={{ color: 'var(--text-3)', fontWeight: 500 }}>Heatmap:</span>
@@ -602,13 +991,62 @@ const RANK_COLORS = {
   bottom: { color: 'var(--red)', bg: 'var(--red-soft)' },
 };
 
+const MetricPickerRow = ({ col, checked, onToggle }) => (
+  <Box
+    component="label"
+    sx={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      px: '8px',
+      py: '8px',
+      borderRadius: 'var(--radius)',
+      cursor: 'pointer',
+      transition: 'background var(--transition)',
+      '&:hover': { background: 'var(--bg-surface-hover)' },
+    }}
+  >
+    <Box
+      component="input"
+      type="checkbox"
+      checked={checked}
+      onChange={onToggle}
+      sx={{
+        mt: '2px',
+        accentColor: 'var(--emerald)',
+        width: '16px',
+        height: '16px',
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    />
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ fontSize: '13px', color: 'var(--text-2)', fontWeight: 500, lineHeight: 1.35 }}>
+        {col.label}
+      </Box>
+      {!col.apiField && (
+        <Box sx={{ fontSize: '10px', color: 'var(--text-4)', mt: '3px', lineHeight: 1.35 }}>
+          Awaiting API / sort support
+        </Box>
+      )}
+    </Box>
+  </Box>
+);
+
 const thBase = {
-  fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600,
-  color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em',
-  padding: '14px 14px', textAlign: 'left',
+  fontFamily: 'var(--font-body)',
+  fontSize: '11px',
+  fontWeight: 600,
+  color: 'var(--text-3)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  padding: '14px 14px',
+  textAlign: 'left',
   borderBottom: '1px solid var(--border)',
-  background: 'var(--bg-base)', zIndex: 10,
-  userSelect: 'none', whiteSpace: 'nowrap',
+  background: 'var(--bg-base)',
+  zIndex: 10,
+  userSelect: 'none',
+  whiteSpace: 'nowrap',
   transition: 'color var(--transition)',
 };
 
@@ -618,7 +1056,16 @@ const TH = ({ children, numeric, sorted, onClick, sx: sxOverride }) => (
     role={onClick ? 'columnheader' : undefined}
     aria-sort={sorted ? 'descending' : undefined}
     tabIndex={onClick ? 0 : undefined}
-    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+    onKeyDown={
+      onClick
+        ? (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onClick();
+            }
+          }
+        : undefined
+    }
     onClick={onClick}
     sx={{
       ...thBase,
@@ -637,7 +1084,10 @@ const TD = ({ children, numeric, className, sx: sxOverride }) => (
     component="td"
     className={className}
     sx={{
-      fontSize: '13px', padding: '12px 14px', color: 'var(--text-2)', whiteSpace: 'nowrap',
+      fontSize: '13px',
+      padding: '12px 14px',
+      color: 'var(--text-2)',
+      whiteSpace: 'nowrap',
       ...(numeric ? { fontFamily: 'var(--font-mono)', fontSize: '13px', textAlign: 'right' } : {}),
       ...sxOverride,
     }}
@@ -654,14 +1104,22 @@ const HeatCell = ({ value, allValues, format, higherIsBetter }) => {
     <Box
       component="td"
       sx={{
-        fontSize: '13px', padding: '12px 14px', whiteSpace: 'nowrap',
-        fontFamily: 'var(--font-mono)', textAlign: 'right', position: 'relative',
+        fontSize: '13px',
+        padding: '12px 14px',
+        whiteSpace: 'nowrap',
+        fontFamily: 'var(--font-mono)',
+        textAlign: 'right',
+        position: 'relative',
       }}
     >
       <Box
         sx={{
-          position: 'absolute', inset: '4px 8px', borderRadius: '4px',
-          background: style.bg, opacity: style.bgOpacity, zIndex: 0,
+          position: 'absolute',
+          inset: '4px 8px',
+          borderRadius: '4px',
+          background: style.bg,
+          opacity: style.bgOpacity,
+          zIndex: 0,
         }}
       />
       <Box component="span" sx={{ position: 'relative', zIndex: 1, color: style.color }}>
@@ -682,23 +1140,38 @@ const MerCell = ({ mer }) => {
     <Box
       component="td"
       sx={{
-        fontSize: '13px', padding: '12px 14px', whiteSpace: 'nowrap',
-        fontFamily: 'var(--font-mono)', textAlign: 'right',
+        fontSize: '13px',
+        padding: '12px 14px',
+        whiteSpace: 'nowrap',
+        fontFamily: 'var(--font-mono)',
+        textAlign: 'right',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-        <span style={{
-          color: isLow ? 'var(--emerald)' : isExtreme ? 'var(--red)' : undefined,
-        }}>
+        <span
+          style={{
+            color: isLow ? 'var(--emerald)' : isExtreme ? 'var(--red)' : undefined,
+          }}
+        >
           {formatPct(mer)}
         </span>
         <Box
           sx={{
-            width: '40px', height: '4px',
-            background: 'rgba(30, 41, 59, 0.8)', borderRadius: '2px', overflow: 'hidden',
+            width: '40px',
+            height: '4px',
+            background: 'rgba(30, 41, 59, 0.8)',
+            borderRadius: '2px',
+            overflow: 'hidden',
           }}
         >
-          <Box sx={{ height: '100%', width: `${barWidth}%`, borderRadius: '2px', background: barColor }} />
+          <Box
+            sx={{
+              height: '100%',
+              width: `${barWidth}%`,
+              borderRadius: '2px',
+              background: barColor,
+            }}
+          />
         </Box>
       </Box>
     </Box>
@@ -711,10 +1184,17 @@ const RankBadge = ({ rank, tier }) => {
     <Box
       component="span"
       sx={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: '28px', height: '28px', borderRadius: '50%',
-        fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500,
-        color: colors.color, background: colors.bg,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '28px',
+        height: '28px',
+        borderRadius: '50%',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '12px',
+        fontWeight: 500,
+        color: colors.color,
+        background: colors.bg,
       }}
     >
       {rank}
@@ -734,8 +1214,11 @@ const ControlGroup = ({ label, children }) => (
     <Box
       component="span"
       sx={{
-        fontSize: '10px', fontWeight: 600, color: 'var(--text-4)',
-        textTransform: 'uppercase', letterSpacing: '0.06em',
+        fontSize: '10px',
+        fontWeight: 600,
+        color: 'var(--text-4)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
       }}
     >
       {label}
@@ -783,8 +1266,11 @@ const ControlButton = ({ children, primary, ...props }) => (
       border: primary ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border)',
       borderRadius: 'var(--radius)',
       color: primary ? 'var(--emerald)' : 'var(--text-2)',
-      fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 500,
-      padding: '8px 16px', cursor: 'pointer',
+      fontFamily: 'var(--font-body)',
+      fontSize: '12px',
+      fontWeight: 500,
+      padding: '8px 16px',
+      cursor: 'pointer',
       transition: 'all var(--transition)',
       '&:hover': {
         borderColor: primary ? undefined : 'var(--border-hover)',
@@ -803,13 +1289,17 @@ const PageBtn = ({ children, active, disabled, onClick, style }) => (
     onClick={disabled ? undefined : onClick}
     disabled={disabled}
     sx={{
-      width: '32px', height: '32px',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      width: '32px',
+      height: '32px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 'var(--radius)',
       border: active ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent',
       background: active ? 'var(--emerald-soft)' : 'transparent',
       color: active ? 'var(--emerald)' : 'var(--text-3)',
-      fontFamily: 'var(--font-mono)', fontSize: '12px',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '12px',
       cursor: disabled ? 'default' : 'pointer',
       opacity: disabled && !style ? 0.3 : 1,
       transition: 'all var(--transition)',
