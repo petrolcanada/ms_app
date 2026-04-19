@@ -12,13 +12,15 @@ const steps = [
   },
   {
     title: 'Dashboard',
-    description: 'Get a snapshot of the market — top performers, highest rated, and the biggest fund flows.',
+    description:
+      'Get a snapshot of the market — top performers, highest rated, and the biggest fund flows.',
     icon: '📊',
     link: '/dashboard',
   },
   {
     title: 'Fund Explorer',
-    description: 'Browse thousands of mutual funds and ETFs with full-text search and category filters.',
+    description:
+      'Browse thousands of mutual funds and ETFs with full-text search and category filters.',
     icon: '🔍',
     link: '/explorer',
   },
@@ -35,8 +37,9 @@ const steps = [
     link: '/compare',
   },
   {
-    title: 'You\'re all set!',
-    description: 'Explore at your own pace. You can always access settings from the top-right menu.',
+    title: "You're all set!",
+    description:
+      'Explore at your own pace. You can always access settings from the top-right menu.',
     icon: '🚀',
   },
 ];
@@ -88,11 +91,13 @@ const OnboardingTour = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(4, 6, 12, 0.85)',
+        background: 'var(--overlay-scrim)',
         backdropFilter: 'blur(8px)',
         animation: 'fadeIn 300ms ease',
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) dismiss();
+      }}
     >
       <Box
         sx={{
@@ -121,7 +126,16 @@ const OnboardingTour = () => {
           {current.title}
         </Box>
 
-        <Box sx={{ fontSize: '14px', color: 'var(--text-3)', lineHeight: 1.65, mb: '28px', maxWidth: '360px', mx: 'auto' }}>
+        <Box
+          sx={{
+            fontSize: '14px',
+            color: 'var(--text-3)',
+            lineHeight: 1.65,
+            mb: '28px',
+            maxWidth: '360px',
+            mx: 'auto',
+          }}
+        >
           {current.description}
         </Box>
 

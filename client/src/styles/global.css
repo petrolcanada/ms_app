@@ -1,23 +1,35 @@
-:root {
-  --bg-void: #04060C;
-  --bg-base: #080D16;
-  --bg-surface: #0E1521;
-  --bg-surface-hover: #141D2C;
-  --bg-elevated: #1A2438;
-  --border: #1E293B;
-  --border-hover: #2D3F5C;
-  --text-1: #E2E8F0;
-  --text-2: #94A3B8;
-  --text-3: #64748B;
+:root,
+[data-theme='dark'] {
+  --bg-void: #04060c;
+  --bg-base: #080d16;
+  --bg-surface: #0e1521;
+  --bg-surface-hover: #141d2c;
+  --bg-elevated: #1a2438;
+  --border: #1e293b;
+  --border-hover: #2d3f5c;
+  --text-1: #e2e8f0;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
   --text-4: #475569;
-  --emerald: #10B981;
-  --emerald-soft: rgba(16, 185, 129, 0.10);
-  --red: #EF4444;
-  --red-soft: rgba(239, 68, 68, 0.10);
-  --blue: #3B82F6;
-  --blue-soft: rgba(59, 130, 246, 0.10);
-  --amber: #F59E0B;
-  --amber-soft: rgba(245, 158, 11, 0.10);
+  --emerald: #10b981;
+  --emerald-soft: rgba(16, 185, 129, 0.1);
+  --red: #ef4444;
+  --red-soft: rgba(239, 68, 68, 0.1);
+  --blue: #3b82f6;
+  --blue-soft: rgba(59, 130, 246, 0.1);
+  --amber: #f59e0b;
+  --amber-soft: rgba(245, 158, 11, 0.1);
+  --glass-nav: rgba(4, 6, 12, 0.82);
+  --glass-nav-strong: rgba(4, 6, 12, 0.95);
+  --overlay-scrim: rgba(4, 6, 12, 0.85);
+  --overlay-soft: rgba(4, 6, 12, 0.5);
+  --row-border: rgba(30, 41, 59, 0.5);
+  --bar-track: rgba(30, 41, 59, 0.8);
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --backdrop-dot: rgba(30, 41, 59, 0.4);
+  --wash-a: rgba(16, 185, 129, 0.1);
+  --wash-b: rgba(59, 130, 246, 0.1);
   --radius: 8px;
   --radius-lg: 12px;
   --radius-pill: 20px;
@@ -25,9 +37,46 @@
   --font-head: 'Sora', sans-serif;
   --font-body: 'Be Vietnam Pro', sans-serif;
   --font-mono: 'Fira Code', monospace;
+  color-scheme: dark;
 }
 
-*, *::before, *::after {
+[data-theme='light'] {
+  --bg-void: #f5f1e8;
+  --bg-base: #fbf8f2;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f2eee6;
+  --bg-elevated: #ece6da;
+  --border: #d7deea;
+  --border-hover: #b7c4d9;
+  --text-1: #162033;
+  --text-2: #4a5b73;
+  --text-3: #708198;
+  --text-4: #8a96a8;
+  --emerald: #0f9d74;
+  --emerald-soft: rgba(15, 157, 116, 0.1);
+  --red: #dc2626;
+  --red-soft: rgba(220, 38, 38, 0.1);
+  --blue: #2563eb;
+  --blue-soft: rgba(37, 99, 235, 0.1);
+  --amber: #d97706;
+  --amber-soft: rgba(217, 119, 6, 0.1);
+  --glass-nav: rgba(245, 241, 232, 0.82);
+  --glass-nav-strong: rgba(251, 248, 242, 0.96);
+  --overlay-scrim: rgba(22, 32, 51, 0.32);
+  --overlay-soft: rgba(245, 241, 232, 0.58);
+  --row-border: rgba(122, 141, 166, 0.24);
+  --bar-track: rgba(148, 163, 184, 0.32);
+  --shadow-soft: 0 16px 40px rgba(21, 36, 58, 0.1);
+  --shadow-strong: 0 24px 60px rgba(21, 36, 58, 0.16);
+  --backdrop-dot: rgba(148, 163, 184, 0.22);
+  --wash-a: rgba(15, 157, 116, 0.08);
+  --wash-b: rgba(37, 99, 235, 0.07);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -45,14 +94,28 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
 }
 
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(30, 41, 59, 0.4) 0.5px, transparent 0.5px);
+  background-image: radial-gradient(circle, var(--backdrop-dot) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: -10% -20%;
+  background:
+    radial-gradient(circle at 10% 10%, var(--wash-a), transparent 32%),
+    radial-gradient(circle at 90% 0%, var(--wash-b), transparent 30%);
   pointer-events: none;
   z-index: 0;
 }
@@ -67,21 +130,43 @@ a {
   text-decoration: none;
 }
 
-input, select, button {
+input,
+select,
+button {
   font-family: inherit;
 }
 
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes rowFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

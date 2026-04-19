@@ -40,7 +40,7 @@ const Terms = () => (
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        background: 'rgba(4, 6, 12, 0.82)',
+        background: 'var(--glass-nav)',
         backdropFilter: 'blur(20px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
         borderBottom: '1px solid var(--border)',
@@ -121,15 +121,16 @@ const Terms = () => (
 
       <Section title="2. Description of Service">
         FundLens provides analytics, screening, comparison, and data visualization tools for mutual
-        funds and ETFs across US and Canadian markets. The data is provided for informational purposes
-        only and should not be construed as financial advice. FundLens does not provide investment
-        recommendations.
+        funds and ETFs across US and Canadian markets. The data is provided for informational
+        purposes only and should not be construed as financial advice. FundLens does not provide
+        investment recommendations.
       </Section>
 
       <Section title="3. User Accounts">
-        You are responsible for maintaining the confidentiality of your account credentials. You agree
-        to provide accurate and complete information when creating an account and to update such
-        information as needed. You are responsible for all activity that occurs under your account.
+        You are responsible for maintaining the confidentiality of your account credentials. You
+        agree to provide accurate and complete information when creating an account and to update
+        such information as needed. You are responsible for all activity that occurs under your
+        account.
       </Section>
 
       <Section title="4. Acceptable Use">
@@ -161,14 +162,14 @@ const Terms = () => (
 
       <Section title="8. Termination">
         We may suspend or terminate your account at our discretion if you violate these terms. Upon
-        termination, your right to use the Service ceases immediately. You may delete your account at
-        any time through the Settings page.
+        termination, your right to use the Service ceases immediately. You may delete your account
+        at any time through the Settings page.
       </Section>
 
       <Section title="9. Changes to Terms">
-        We reserve the right to modify these terms at any time. Material changes will be communicated
-        via email or in-app notice. Continued use of the Service after changes constitutes acceptance
-        of the revised terms.
+        We reserve the right to modify these terms at any time. Material changes will be
+        communicated via email or in-app notice. Continued use of the Service after changes
+        constitutes acceptance of the revised terms.
       </Section>
 
       <Section title="10. Contact">

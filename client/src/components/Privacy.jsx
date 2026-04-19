@@ -40,7 +40,7 @@ const Privacy = () => (
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        background: 'rgba(4, 6, 12, 0.82)',
+        background: 'var(--glass-nav)',
         backdropFilter: 'blur(20px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
         borderBottom: '1px solid var(--border)',
@@ -121,8 +121,9 @@ const Privacy = () => (
 
       <Section title="2. How We Use Your Information">
         We use your information to: (a) provide and maintain the Service; (b) process transactions
-        and manage subscriptions; (c) send important notifications about your account or the Service;
-        (d) improve and personalize the user experience; and (e) comply with legal obligations.
+        and manage subscriptions; (c) send important notifications about your account or the
+        Service; (d) improve and personalize the user experience; and (e) comply with legal
+        obligations.
       </Section>
 
       <Section title="3. Data Storage">

@@ -66,11 +66,16 @@ const Pricing = () => {
 
   return (
     <Box sx={{ background: 'var(--bg-void)', minHeight: '100vh', color: 'var(--text-1)' }}>
-      <SEO title="Pricing" description="Simple, transparent pricing for FundLens. Start free, upgrade to Pro for unlimited access." path="/pricing" />
+      <SEO
+        title="Pricing"
+        description="Simple, transparent pricing for FundLens. Start free, upgrade to Pro for unlimited access."
+        path="/pricing"
+      />
       <Box
         sx={{
           height: '2px',
-          background: 'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
+          background:
+            'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
           opacity: 0.5,
         }}
       />
@@ -82,7 +87,7 @@ const Pricing = () => {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          background: 'rgba(4, 6, 12, 0.82)',
+          background: 'var(--glass-nav)',
           backdropFilter: 'blur(20px) saturate(1.4)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
           borderBottom: '1px solid var(--border)',
@@ -276,20 +281,52 @@ const Pricing = () => {
                 </Box>
               )}
 
-              <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '20px', fontWeight: 600, color: 'var(--text-1)', mb: '4px' }}>
+              <Box
+                sx={{
+                  fontFamily: 'var(--font-head)',
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  color: 'var(--text-1)',
+                  mb: '4px',
+                }}
+              >
                 {tier.name}
               </Box>
-              <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '24px' }}>{tier.description}</Box>
-              <Box sx={{ fontFamily: 'var(--font-head)', fontSize: '42px', fontWeight: 700, color: 'var(--text-1)', mb: '28px' }}>
+              <Box sx={{ fontSize: '13px', color: 'var(--text-3)', mb: '24px' }}>
+                {tier.description}
+              </Box>
+              <Box
+                sx={{
+                  fontFamily: 'var(--font-head)',
+                  fontSize: '42px',
+                  fontWeight: 700,
+                  color: 'var(--text-1)',
+                  mb: '28px',
+                }}
+              >
                 {tier.price}
-                <Box component="span" sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}>
+                <Box
+                  component="span"
+                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
+                >
                   /month
                 </Box>
               </Box>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mb: '32px', flex: 1 }}>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mb: '32px', flex: 1 }}
+              >
                 {tier.features.map((f) => (
-                  <Box key={f} sx={{ fontSize: '13px', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Box
+                    key={f}
+                    sx={{
+                      fontSize: '13px',
+                      color: 'var(--text-2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
                     <span style={{ color: 'var(--emerald)', fontWeight: 600 }}>&#10003;</span>
                     {f}
                   </Box>
@@ -312,7 +349,9 @@ const Pricing = () => {
                     background: tier.highlighted ? 'var(--emerald)' : 'transparent',
                     border: tier.highlighted ? 'none' : '1px solid var(--border)',
                     transition: 'all var(--transition)',
-                    '&:hover': tier.highlighted ? { opacity: 0.88 } : { borderColor: 'var(--border-hover)' },
+                    '&:hover': tier.highlighted
+                      ? { opacity: 0.88 }
+                      : { borderColor: 'var(--border-hover)' },
                   }}
                 >
                   {tier.cta}
@@ -350,7 +389,9 @@ const Pricing = () => {
           </Box>
           <Box sx={{ fontSize: '13px', color: 'var(--text-4)' }}>
             Questions? Contact us at{' '}
-            <Box component="span" sx={{ color: 'var(--text-3)' }}>support@fundlens.app</Box>
+            <Box component="span" sx={{ color: 'var(--text-3)' }}>
+              support@fundlens.app
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -371,10 +412,28 @@ const Pricing = () => {
             &copy; 2026 FundLens. All rights reserved.
           </Box>
           <Box sx={{ display: 'flex', gap: '20px' }}>
-            <Box component={Link} to="/terms" sx={{ fontSize: '12px', color: 'var(--text-4)', textDecoration: 'none', '&:hover': { color: 'var(--text-2)' } }}>
+            <Box
+              component={Link}
+              to="/terms"
+              sx={{
+                fontSize: '12px',
+                color: 'var(--text-4)',
+                textDecoration: 'none',
+                '&:hover': { color: 'var(--text-2)' },
+              }}
+            >
               Terms
             </Box>
-            <Box component={Link} to="/privacy" sx={{ fontSize: '12px', color: 'var(--text-4)', textDecoration: 'none', '&:hover': { color: 'var(--text-2)' } }}>
+            <Box
+              component={Link}
+              to="/privacy"
+              sx={{
+                fontSize: '12px',
+                color: 'var(--text-4)',
+                textDecoration: 'none',
+                '&:hover': { color: 'var(--text-2)' },
+              }}
+            >
               Privacy
             </Box>
           </Box>

@@ -21,7 +21,7 @@ const PerfBar = ({ label, value, percentage, labelWidth = '60px' }) => {
         sx={{
           flex: 1,
           height: '24px',
-          background: 'rgba(30, 41, 59, 0.5)',
+          background: 'var(--bar-track)',
           borderRadius: '4px',
           position: 'relative',
           overflow: 'hidden',

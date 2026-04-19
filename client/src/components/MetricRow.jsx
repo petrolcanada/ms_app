@@ -9,7 +9,7 @@ const MetricRow = ({ label, value, valueColor, useBodyFont = false }) => {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '10px 0',
-        borderBottom: '1px solid rgba(30, 41, 59, 0.5)',
+        borderBottom: '1px solid var(--row-border)',
         '&:last-child': {
           borderBottom: 'none',
         },

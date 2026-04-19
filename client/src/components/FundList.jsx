@@ -40,10 +40,13 @@ const FundList = () => {
     setPage(1);
   }, []);
 
-  const handleFundClick = useCallback((fundId) => {
-    const params = asofDate ? `?asof=${asofDate}` : '';
-    navigate(`/funds/${fundId}${params}`);
-  }, [navigate, asofDate]);
+  const handleFundClick = useCallback(
+    (fundId) => {
+      const params = asofDate ? `?asof=${asofDate}` : '';
+      navigate(`/funds/${fundId}${params}`);
+    },
+    [navigate, asofDate],
+  );
 
   const funds = data?.data || [];
   const pagination = data?.pagination || { total: 0, totalPages: 0, page: 1 };
@@ -78,8 +81,15 @@ const FundList = () => {
         }}
       >
         <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>
-          Showing <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{start}&ndash;{end}</strong> of{' '}
-          <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{total.toLocaleString()}</strong> funds
+          Showing{' '}
+          <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+            {start}&ndash;{end}
+          </strong>{' '}
+          of{' '}
+          <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+            {total.toLocaleString()}
+          </strong>{' '}
+          funds
         </Box>
         <Box sx={{ display: 'flex', gap: '4px' }}>
           <PageBtn onClick={() => setPage(page - 1)} disabled={page === 1}>
@@ -87,16 +97,24 @@ const FundList = () => {
           </PageBtn>
           {pages.map((p, i) =>
             p === '...' ? (
-              <PageBtn key={`dot-${i}`} disabled style={{ cursor: 'default', color: 'var(--text-4)' }}>
+              <PageBtn
+                key={`dot-${i}`}
+                disabled
+                style={{ cursor: 'default', color: 'var(--text-4)' }}
+              >
                 ...
               </PageBtn>
             ) : (
               <PageBtn key={p} active={p === page} onClick={() => setPage(p)}>
                 {p}
               </PageBtn>
-            )
+            ),
           )}
-          <PageBtn aria-label="Next page" onClick={() => setPage(page + 1)} disabled={page === totalPages || totalPages === 0}>
+          <PageBtn
+            aria-label="Next page"
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages || totalPages === 0}
+          >
             &#8250;
           </PageBtn>
         </Box>
@@ -124,21 +142,36 @@ const FundList = () => {
         <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
           Canadian open-end fund universe
           {pagination.total > 0 && (
-            <span style={{ color: 'var(--text-2)' }}> &middot; {pagination.total.toLocaleString()} funds</span>
+            <span style={{ color: 'var(--text-2)' }}>
+              {' '}
+              &middot; {pagination.total.toLocaleString()} funds
+            </span>
           )}
         </Box>
       </Box>
 
       {/* Stat Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '16px', mb: '28px' }}>
-        <StatCard label="Total Funds" value={pagination.total ? pagination.total.toLocaleString() : '—'} />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: '16px',
+          mb: '28px',
+        }}
+      >
+        <StatCard
+          label="Total Funds"
+          value={pagination.total ? pagination.total.toLocaleString() : '—'}
+        />
         <StatCard label="Avg 1-Year Return" value="—" />
         <StatCard label="Avg MER" value="—" />
         <StatCard label="Avg Morningstar Rating" value="—" />
       </Box>
 
       {/* Toolbar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '20px', flexWrap: 'wrap' }}>
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '20px', flexWrap: 'wrap' }}
+      >
         <SearchBar onSearch={handleSearch} placeholder="Search by fund name, ticker, or ISIN..." />
         <FilterPanel filters={filters} onFilterChange={handleFilterChange} />
         <Box sx={{ ml: { xs: 0, sm: 'auto' } }}>
@@ -165,7 +198,14 @@ const FundList = () => {
 
       {/* Loading */}
       {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '400px',
+          }}
+        >
           <CircularProgress sx={{ color: 'var(--emerald)' }} />
         </Box>
       )}
@@ -186,11 +226,19 @@ const FundList = () => {
             <>
               <Box
                 sx={{
-                  position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-                  zIndex: 30, overflow: 'hidden',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '3px',
+                  zIndex: 30,
+                  overflow: 'hidden',
                   '&::after': {
-                    content: '""', position: 'absolute', inset: 0,
-                    background: 'linear-gradient(90deg, transparent 0%, var(--emerald) 50%, transparent 100%)',
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(90deg, transparent 0%, var(--emerald) 50%, transparent 100%)',
                     animation: 'shimmer 1.2s ease-in-out infinite',
                   },
                   '@keyframes shimmer': {
@@ -201,19 +249,27 @@ const FundList = () => {
               />
               <Box
                 sx={{
-                  position: 'absolute', inset: 0, zIndex: 25,
-                  background: 'rgba(4, 6, 12, 0.5)',
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 25,
+                  background: 'var(--overlay-soft)',
                   backdropFilter: 'blur(1px)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   animation: 'fadeIn 200ms ease',
                 }}
               >
                 <Box
                   sx={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius)', padding: '12px 24px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    padding: '12px 24px',
+                    boxShadow: 'var(--shadow-soft)',
                   }}
                 >
                   <CircularProgress size={18} sx={{ color: 'var(--emerald)' }} />
@@ -226,129 +282,143 @@ const FundList = () => {
           )}
 
           <Box sx={{ overflowX: 'auto' }}>
-          <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '640px' }}>
-            <Box component="thead">
-              <Box component="tr">
-                {['Fund Name', 'Ticker', 'Type', 'Category', 'Inception'].map((col) => (
-                  <Box
-                    component="th"
-                    key={col}
-                    sx={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: 'var(--text-3)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      padding: '14px 16px',
-                      textAlign: 'left',
-                      borderBottom: '1px solid var(--border)',
-                      background: 'var(--bg-base)',
-                      zIndex: 10,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {col}
+            <Box
+              component="table"
+              sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '640px' }}
+            >
+              <Box component="thead">
+                <Box component="tr">
+                  {['Fund Name', 'Ticker', 'Type', 'Category', 'Inception'].map((col) => (
+                    <Box
+                      component="th"
+                      key={col}
+                      sx={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: 'var(--text-3)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        padding: '14px 16px',
+                        textAlign: 'left',
+                        borderBottom: '1px solid var(--border)',
+                        background: 'var(--bg-base)',
+                        zIndex: 10,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {col}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              <Box component="tbody">
+                {funds.length === 0 ? (
+                  <Box component="tr">
+                    <Box
+                      component="td"
+                      colSpan={5}
+                      sx={{
+                        textAlign: 'center',
+                        padding: '48px 16px',
+                        color: 'var(--text-3)',
+                        fontSize: '13px',
+                      }}
+                    >
+                      No funds found
+                    </Box>
                   </Box>
-                ))}
+                ) : (
+                  funds.map((fund, index) => (
+                    <Box
+                      component="tr"
+                      key={fund._id}
+                      onClick={() => handleFundClick(fund._id)}
+                      sx={{
+                        borderBottom: '1px solid var(--row-border)',
+                        transition: 'background var(--transition)',
+                        cursor: 'pointer',
+                        animation: 'rowFadeIn 400ms ease both',
+                        animationDelay: `${Math.min(index * 30, 300)}ms`,
+                        '&:last-child': { borderBottom: 'none' },
+                        '&:hover': { background: 'var(--bg-surface-hover)' },
+                        '&:hover .fund-name-cell': { color: 'var(--blue)' },
+                      }}
+                    >
+                      <Box
+                        component="td"
+                        className="fund-name-cell"
+                        sx={{
+                          fontSize: '13px',
+                          padding: '14px 16px',
+                          color: 'var(--text-1)',
+                          fontWeight: 500,
+                          maxWidth: '320px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          transition: 'color var(--transition)',
+                        }}
+                      >
+                        {fund.fundname || fund._name || 'N/A'}
+                        <TypeBadge type={fund.securitytype || fund.legalstructure} />
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          fontSize: '13px',
+                          padding: '14px 16px',
+                          color: 'var(--text-2)',
+                          fontFamily: 'var(--font-mono)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {fund.ticker || '—'}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          fontSize: '13px',
+                          padding: '14px 16px',
+                          color: 'var(--text-2)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {fund.securitytype || fund.legalstructure || '—'}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          fontSize: '13px',
+                          padding: '14px 16px',
+                          color: 'var(--text-2)',
+                          maxWidth: '220px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {fund.categoryname || fund.globalcategoryname || '—'}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          fontSize: '13px',
+                          padding: '14px 16px',
+                          color: 'var(--text-2)',
+                          fontFamily: 'var(--font-mono)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {fund.inceptiondate
+                          ? new Date(fund.inceptiondate).toLocaleDateString('en-CA')
+                          : '—'}
+                      </Box>
+                    </Box>
+                  ))
+                )}
               </Box>
             </Box>
-            <Box component="tbody">
-              {funds.length === 0 ? (
-                <Box component="tr">
-                  <Box
-                    component="td"
-                    colSpan={5}
-                    sx={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-3)', fontSize: '13px' }}
-                  >
-                    No funds found
-                  </Box>
-                </Box>
-              ) : (
-                funds.map((fund, index) => (
-                  <Box
-                    component="tr"
-                    key={fund._id}
-                    onClick={() => handleFundClick(fund._id)}
-                    sx={{
-                      borderBottom: '1px solid rgba(30, 41, 59, 0.5)',
-                      transition: 'background var(--transition)',
-                      cursor: 'pointer',
-                      animation: 'rowFadeIn 400ms ease both',
-                      animationDelay: `${Math.min(index * 30, 300)}ms`,
-                      '&:last-child': { borderBottom: 'none' },
-                      '&:hover': { background: 'var(--bg-surface-hover)' },
-                      '&:hover .fund-name-cell': { color: 'var(--blue)' },
-                    }}
-                  >
-                    <Box
-                      component="td"
-                      className="fund-name-cell"
-                      sx={{
-                        fontSize: '13px',
-                        padding: '14px 16px',
-                        color: 'var(--text-1)',
-                        fontWeight: 500,
-                        maxWidth: '320px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        transition: 'color var(--transition)',
-                      }}
-                    >
-                      {fund.fundname || fund._name || 'N/A'}
-                      <TypeBadge type={fund.securitytype || fund.legalstructure} />
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{
-                        fontSize: '13px',
-                        padding: '14px 16px',
-                        color: 'var(--text-2)',
-                        fontFamily: 'var(--font-mono)',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {fund.ticker || '—'}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{ fontSize: '13px', padding: '14px 16px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}
-                    >
-                      {fund.securitytype || fund.legalstructure || '—'}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{
-                        fontSize: '13px',
-                        padding: '14px 16px',
-                        color: 'var(--text-2)',
-                        maxWidth: '220px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {fund.categoryname || fund.globalcategoryname || '—'}
-                    </Box>
-                    <Box
-                      component="td"
-                      sx={{
-                        fontSize: '13px',
-                        padding: '14px 16px',
-                        color: 'var(--text-2)',
-                        fontFamily: 'var(--font-mono)',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {fund.inceptiondate ? new Date(fund.inceptiondate).toLocaleDateString('en-CA') : '—'}
-                    </Box>
-                  </Box>
-                ))
-              )}
-            </Box>
-          </Box>
-
           </Box>
           {pagination.total > 0 && renderPagination()}
         </Box>

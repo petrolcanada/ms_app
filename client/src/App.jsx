@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from './theme';
+import createAppTheme from './theme';
 import './styles/global.css';
 import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -26,6 +26,27 @@ import Terms from './components/Terms';
 import Privacy from './components/Privacy';
 import NotFound from './components/NotFound';
 
+const THEME_STORAGE_KEY = 'fundlens_theme_mode';
+const THEME_COLORS = {
+  dark: '#04060C',
+  light: '#F5F1E8',
+};
+
+const resolveInitialThemeMode = () => {
+  if (typeof window === 'undefined') return 'dark';
+
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+  } catch {
+    /* ignore storage failures */
+  }
+
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,6 +59,29 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const [themeMode, setThemeMode] = useState(resolveInitialThemeMode);
+  const theme = createAppTheme(themeMode);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode);
+    document.documentElement.style.colorScheme = themeMode;
+
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    } catch {
+      /* ignore storage failures */
+    }
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', THEME_COLORS[themeMode]);
+    }
+  }, [themeMode]);
+
+  const toggleThemeMode = () => {
+    setThemeMode((currentMode) => (currentMode === 'dark' ? 'light' : 'dark'));
+  };
+
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
@@ -57,7 +101,9 @@ function App() {
 
                   {/* Authenticated app pages (Layout wrapper + auth guard) */}
                   <Route element={<ProtectedRoute />}>
-                    <Route element={<Layout />}>
+                    <Route
+                      element={<Layout themeMode={themeMode} onToggleTheme={toggleThemeMode} />}
+                    >
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/explorer" element={<FundList />} />
                       <Route path="/funds/:id" element={<FundDetail />} />

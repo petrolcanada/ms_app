@@ -438,7 +438,7 @@ const Screener = () => {
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: '0 16px 48px rgba(0,0,0,0.45)',
+                boxShadow: 'var(--shadow-strong)',
                 overflow: 'hidden',
               },
             }}
@@ -709,7 +709,7 @@ const Screener = () => {
                     position: 'absolute',
                     inset: 0,
                     zIndex: 25,
-                    background: 'rgba(4, 6, 12, 0.5)',
+                    background: 'var(--overlay-soft)',
                     backdropFilter: 'blur(1px)',
                     display: 'flex',
                     alignItems: 'center',
@@ -726,7 +726,7 @@ const Screener = () => {
                       border: '1px solid var(--border)',
                       borderRadius: 'var(--radius)',
                       padding: '12px 24px',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                      boxShadow: 'var(--shadow-soft)',
                     }}
                   >
                     <CircularProgress size={18} sx={{ color: 'var(--emerald)' }} />
@@ -795,7 +795,7 @@ const Screener = () => {
                           key={fund._id}
                           onClick={() => handleFundClick(fund._id)}
                           sx={{
-                            borderBottom: '1px solid rgba(30, 41, 59, 0.5)',
+                            borderBottom: '1px solid var(--row-border)',
                             transition: 'background var(--transition)',
                             cursor: 'pointer',
                             animation: 'rowFadeIn 400ms ease both',
@@ -1159,7 +1159,7 @@ const MerCell = ({ mer }) => {
           sx={{
             width: '40px',
             height: '4px',
-            background: 'rgba(30, 41, 59, 0.8)',
+            background: 'var(--bar-track)',
             borderRadius: '2px',
             overflow: 'hidden',
           }}

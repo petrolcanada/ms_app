@@ -4,6 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#04060C" />
+    <script>
+      (function () {
+        try {
+          var key = 'fundlens_theme_mode';
+          var stored = localStorage.getItem(key);
+          var mode = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.setAttribute('data-theme', mode);
+          document.documentElement.style.colorScheme = mode;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute('content', mode === 'light' ? '#F5F1E8' : '#04060C');
+          }
+        } catch (error) {
+          /* ignore */
+        }
+      })();
+    </script>
     <meta name="description" content="FundLens — Precision Glass fund analytics dashboard" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

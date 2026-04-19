@@ -45,12 +45,36 @@ const AnimatedSection = ({ children, sx, ...props }) => {
 };
 
 const featureCards = [
-  { icon: '🔍', title: 'Fund Explorer', desc: 'Browse and search across thousands of mutual funds and ETFs with advanced filtering.' },
-  { icon: '📊', title: 'Smart Screener', desc: 'Rank funds by returns, fees, ratings, risk metrics, and more with customizable criteria.' },
-  { icon: '⚖️', title: 'Side-by-Side Compare', desc: 'Compare up to 4 funds across all data domains in a unified view.' },
-  { icon: '📈', title: 'Historical Analysis', desc: 'Track performance, flows, and assets over time with interactive charts.' },
-  { icon: '🗂️', title: '8 Data Domains', desc: 'Deep dive into basic info, performance, rankings, fees, ratings, risk, flows, and assets.' },
-  { icon: '⭐', title: 'Watchlist', desc: 'Save and track your favorite funds with personalized alerts.' },
+  {
+    icon: '🔍',
+    title: 'Fund Explorer',
+    desc: 'Browse and search across thousands of mutual funds and ETFs with advanced filtering.',
+  },
+  {
+    icon: '📊',
+    title: 'Smart Screener',
+    desc: 'Rank funds by returns, fees, ratings, risk metrics, and more with customizable criteria.',
+  },
+  {
+    icon: '⚖️',
+    title: 'Side-by-Side Compare',
+    desc: 'Compare up to 4 funds across all data domains in a unified view.',
+  },
+  {
+    icon: '📈',
+    title: 'Historical Analysis',
+    desc: 'Track performance, flows, and assets over time with interactive charts.',
+  },
+  {
+    icon: '🗂️',
+    title: '8 Data Domains',
+    desc: 'Deep dive into basic info, performance, rankings, fees, ratings, risk, flows, and assets.',
+  },
+  {
+    icon: '⭐',
+    title: 'Watchlist',
+    desc: 'Save and track your favorite funds with personalized alerts.',
+  },
 ];
 
 const LandingPage = () => {
@@ -64,7 +88,8 @@ const LandingPage = () => {
         <Box
           sx={{
             height: '2px',
-            background: 'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
+            background:
+              'linear-gradient(90deg, transparent, var(--emerald), var(--blue), transparent)',
             opacity: 0.5,
           }}
         />
@@ -76,7 +101,7 @@ const LandingPage = () => {
             position: 'sticky',
             top: 0,
             zIndex: 100,
-            background: 'rgba(4, 6, 12, 0.82)',
+            background: 'var(--glass-nav)',
             backdropFilter: 'blur(20px) saturate(1.4)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
             borderBottom: '1px solid var(--border)',
@@ -233,8 +258,8 @@ const LandingPage = () => {
               mb: '36px',
             }}
           >
-            Powerful analytics for mutual funds and ETFs across US and Canadian markets.
-            Screen, compare, and analyze with institutional-grade data.
+            Powerful analytics for mutual funds and ETFs across US and Canadian markets. Screen,
+            compare, and analyze with institutional-grade data.
           </Box>
 
           <Box sx={{ display: 'flex', gap: '14px', justifyContent: 'center', mb: '56px' }}>
@@ -283,7 +308,8 @@ const LandingPage = () => {
               mx: 'auto',
               p: '1px',
               borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, var(--emerald) 0%, var(--blue) 50%, var(--emerald) 100%)',
+              background:
+                'linear-gradient(135deg, var(--emerald) 0%, var(--blue) 50%, var(--emerald) 100%)',
               opacity: 0.92,
             }}
           >
@@ -482,18 +508,32 @@ const LandingPage = () => {
                 }}
               >
                 $0
-                <Box component="span" sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}>
+                <Box
+                  component="span"
+                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
+                >
                   /month
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}
+              >
                 {[
                   'Limited screener access',
                   '5 watchlist slots',
                   'Basic fund detail',
                   'Compare up to 2 funds',
                 ].map((item) => (
-                  <Box key={item} sx={{ fontSize: '13px', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Box
+                    key={item}
+                    sx={{
+                      fontSize: '13px',
+                      color: 'var(--text-2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
                     <span style={{ color: 'var(--emerald)' }}>✓</span>
                     {item}
                   </Box>
@@ -576,11 +616,16 @@ const LandingPage = () => {
                 }}
               >
                 $19
-                <Box component="span" sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}>
+                <Box
+                  component="span"
+                  sx={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-3)' }}
+                >
                   /month
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}>
+              <Box
+                sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mb: '28px', flex: 1 }}
+              >
                 {[
                   'Unlimited screener access',
                   'Unlimited watchlist',
@@ -589,7 +634,16 @@ const LandingPage = () => {
                   'CSV export',
                   'Priority support',
                 ].map((item) => (
-                  <Box key={item} sx={{ fontSize: '13px', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Box
+                    key={item}
+                    sx={{
+                      fontSize: '13px',
+                      color: 'var(--text-2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
                     <span style={{ color: 'var(--emerald)' }}>✓</span>
                     {item}
                   </Box>

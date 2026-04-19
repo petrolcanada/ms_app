@@ -13,7 +13,17 @@ import { useAuth } from '../context/AuthContext';
 const PRO_MAX_FUNDS = 4;
 const FREE_MAX_FUNDS = 2;
 
-const ALL_DOMAINS = ['basicInfo', 'performance', 'rankings', 'fees', 'ratings', 'risk', 'flows', 'assets', 'categoryPerformance'];
+const ALL_DOMAINS = [
+  'basicInfo',
+  'performance',
+  'rankings',
+  'fees',
+  'ratings',
+  'risk',
+  'flows',
+  'assets',
+  'categoryPerformance',
+];
 
 const Compare = () => {
   const navigate = useNavigate();
@@ -39,29 +49,39 @@ const Compare = () => {
     }
   }, []);
 
-  const addFund = useCallback((fund) => {
-    setFundIds((prev) => {
-      if (prev.includes(fund._id) || prev.length >= MAX_FUNDS) return prev;
-      const next = [...prev, fund._id];
-      setSearchParams({ ids: next.join(',') }, { replace: true });
-      return next;
-    });
-    setSearchResults([]);
-  }, [setSearchParams, MAX_FUNDS]);
+  const addFund = useCallback(
+    (fund) => {
+      setFundIds((prev) => {
+        if (prev.includes(fund._id) || prev.length >= MAX_FUNDS) return prev;
+        const next = [...prev, fund._id];
+        setSearchParams({ ids: next.join(',') }, { replace: true });
+        return next;
+      });
+      setSearchResults([]);
+    },
+    [setSearchParams, MAX_FUNDS],
+  );
 
-  const removeFund = useCallback((id) => {
-    setFundIds((prev) => {
-      const next = prev.filter((fid) => fid !== id);
-      setSearchParams(next.length ? { ids: next.join(',') } : {}, { replace: true });
-      return next;
-    });
-  }, [setSearchParams]);
+  const removeFund = useCallback(
+    (id) => {
+      setFundIds((prev) => {
+        const next = prev.filter((fid) => fid !== id);
+        setSearchParams(next.length ? { ids: next.join(',') } : {}, { replace: true });
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
 
   const { data: domainsData, isLoading } = useQuery({
     queryKey: ['compare-domains', fundIds, asofDate],
     queryFn: async () => {
       if (fundIds.length === 0) return null;
-      const response = await fundService.fetchMultipleDomains(ALL_DOMAINS, fundIds, asofDate || undefined);
+      const response = await fundService.fetchMultipleDomains(
+        ALL_DOMAINS,
+        fundIds,
+        asofDate || undefined,
+      );
       return response.data;
     },
     enabled: fundIds.length > 0,
@@ -140,10 +160,17 @@ const Compare = () => {
     <Box>
       {/* Header */}
       <Box sx={{ mb: '32px' }}>
-        <Box component="h1" sx={{
-          fontFamily: 'var(--font-head)', fontSize: '24px', fontWeight: 600,
-          color: 'var(--text-1)', letterSpacing: '-0.03em', mb: '4px',
-        }}>
+        <Box
+          component="h1"
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '24px',
+            fontWeight: 600,
+            color: 'var(--text-1)',
+            letterSpacing: '-0.03em',
+            mb: '4px',
+          }}
+        >
           Fund Comparison
         </Box>
         <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
@@ -156,25 +183,38 @@ const Compare = () => {
         <Box sx={{ flex: 1, position: 'relative' }}>
           <SearchBar
             onSearch={handleSearch}
-            placeholder={fundIds.length >= MAX_FUNDS ? 'Maximum funds reached' : 'Search to add a fund...'}
+            placeholder={
+              fundIds.length >= MAX_FUNDS ? 'Maximum funds reached' : 'Search to add a fund...'
+            }
             disabled={fundIds.length >= MAX_FUNDS}
             instant
           />
           {searchResults.length > 0 && (
-            <Box sx={{
-              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-              mt: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              maxHeight: '280px', overflow: 'auto',
-            }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                mt: '4px',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)',
+                boxShadow: 'var(--shadow-soft)',
+                maxHeight: '280px',
+                overflow: 'auto',
+              }}
+            >
               {searchResults.map((fund) => (
                 <Box
                   key={fund._id}
                   onClick={() => addFund(fund)}
                   sx={{
-                    padding: '10px 16px', cursor: 'pointer',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
                     transition: 'background var(--transition)',
-                    borderBottom: '1px solid rgba(30,41,59,0.3)',
+                    borderBottom: '1px solid var(--row-border)',
                     '&:last-child': { borderBottom: 'none' },
                     '&:hover': { background: 'var(--bg-surface-hover)' },
                     opacity: fundIds.includes(fund._id) ? 0.4 : 1,
@@ -202,11 +242,15 @@ const Compare = () => {
 
       {/* Empty State */}
       {fundIds.length === 0 && (
-        <Box sx={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)', padding: '60px 20px',
-          textAlign: 'center',
-        }}>
+        <Box
+          sx={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '60px 20px',
+            textAlign: 'center',
+          }}
+        >
           <Box sx={{ fontSize: '48px', mb: '16px', opacity: 0.3 }}>&#9670; &#9670;</Box>
           <Box sx={{ fontSize: '15px', color: 'var(--text-2)', mb: '8px', fontWeight: 500 }}>
             No funds selected
@@ -228,35 +272,59 @@ const Compare = () => {
       {fundIds.length > 0 && !isLoading && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Fund Headers */}
-          <Box sx={{
-            display: 'grid',
-            gridTemplateColumns: `200px repeat(${funds.length}, 1fr)`,
-            gap: '12px',
-          }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `200px repeat(${funds.length}, 1fr)`,
+              gap: '12px',
+            }}
+          >
             <Box />
             {funds.map((f, i) => {
               const info = f.basicInfo || {};
               return (
-                <Box key={fundIds[i]} sx={{
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)', padding: '16px', position: 'relative',
-                }}>
+                <Box
+                  key={fundIds[i]}
+                  sx={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px',
+                    position: 'relative',
+                  }}
+                >
                   <Box
                     onClick={() => removeFund(fundIds[i])}
                     sx={{
-                      position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      borderRadius: '50%', cursor: 'pointer', fontSize: '14px',
-                      color: 'var(--text-4)', transition: 'all var(--transition)',
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: 'var(--text-4)',
+                      transition: 'all var(--transition)',
                       '&:hover': { color: 'var(--red)', background: 'var(--red-soft)' },
                     }}
-                  >&times;</Box>
+                  >
+                    &times;
+                  </Box>
                   <Box
                     onClick={() => navigate(`/funds/${fundIds[i]}`)}
                     sx={{
-                      fontSize: '14px', fontWeight: 600, color: 'var(--text-1)', mb: '6px',
-                      cursor: 'pointer', transition: 'color var(--transition)',
-                      pr: '24px', '&:hover': { color: 'var(--blue)' },
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      mb: '6px',
+                      cursor: 'pointer',
+                      transition: 'color var(--transition)',
+                      pr: '24px',
+                      '&:hover': { color: 'var(--blue)' },
                     }}
                   >
                     {info.fundname || info._name || fundIds[i]}
@@ -300,11 +368,7 @@ const Compare = () => {
               return (
                 <CompareRow key={row.key} label={row.label} colCount={funds.length}>
                   {values.map((v, i) => (
-                    <CompareCell
-                      key={i}
-                      value={fmtPct(v)}
-                      isBest={i === best}
-                    />
+                    <CompareCell key={i} value={fmtPct(v)} isBest={i === best} />
                   ))}
                 </CompareRow>
               );
@@ -350,7 +414,11 @@ const Compare = () => {
                 <CompareCell
                   key={i}
                   value={fmtMoney(f.flows?.estfundlevelnetflow1momoend)}
-                  color={Number(f.flows?.estfundlevelnetflow1momoend) >= 0 ? 'var(--emerald)' : 'var(--red)'}
+                  color={
+                    Number(f.flows?.estfundlevelnetflow1momoend) >= 0
+                      ? 'var(--emerald)'
+                      : 'var(--red)'
+                  }
                 />
               ))}
             </CompareRow>
@@ -359,7 +427,11 @@ const Compare = () => {
                 <CompareCell
                   key={i}
                   value={fmtMoney(f.flows?.estfundlevelnetflow1yrmoend)}
-                  color={Number(f.flows?.estfundlevelnetflow1yrmoend) >= 0 ? 'var(--emerald)' : 'var(--red)'}
+                  color={
+                    Number(f.flows?.estfundlevelnetflow1yrmoend) >= 0
+                      ? 'var(--emerald)'
+                      : 'var(--red)'
+                  }
                 />
               ))}
             </CompareRow>
@@ -373,50 +445,84 @@ const Compare = () => {
 /* Sub-components */
 
 const CompareSection = ({ title, children }) => (
-  <Box sx={{
-    background: 'var(--bg-surface)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)', overflow: 'hidden',
-  }}>
-    <Box sx={{
-      padding: '14px 20px', borderBottom: '1px solid var(--border)',
-      fontFamily: 'var(--font-head)', fontSize: '13px', fontWeight: 600,
-      color: 'var(--text-2)', letterSpacing: '-0.01em',
-      textTransform: 'uppercase',
-    }}>{title}</Box>
+  <Box
+    sx={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-lg)',
+      overflow: 'hidden',
+    }}
+  >
+    <Box
+      sx={{
+        padding: '14px 20px',
+        borderBottom: '1px solid var(--border)',
+        fontFamily: 'var(--font-head)',
+        fontSize: '13px',
+        fontWeight: 600,
+        color: 'var(--text-2)',
+        letterSpacing: '-0.01em',
+        textTransform: 'uppercase',
+      }}
+    >
+      {title}
+    </Box>
     {children}
   </Box>
 );
 
 const CompareRow = ({ label, colCount, children }) => (
-  <Box sx={{
-    display: 'grid',
-    gridTemplateColumns: `200px repeat(${colCount}, 1fr)`,
-    borderBottom: '1px solid rgba(30,41,59,0.3)',
-    '&:last-child': { borderBottom: 'none' },
-    '&:hover': { background: 'rgba(14,21,33,0.5)' },
-  }}>
-    <Box sx={{
-      padding: '12px 20px', fontSize: '13px', color: 'var(--text-3)',
-      fontWeight: 500, display: 'flex', alignItems: 'center',
-    }}>{label}</Box>
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: `200px repeat(${colCount}, 1fr)`,
+      borderBottom: '1px solid var(--row-border)',
+      '&:last-child': { borderBottom: 'none' },
+      '&:hover': { background: 'var(--bg-surface-hover)' },
+    }}
+  >
+    <Box
+      sx={{
+        padding: '12px 20px',
+        fontSize: '13px',
+        color: 'var(--text-3)',
+        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+      }}
+    >
+      {label}
+    </Box>
     {children}
   </Box>
 );
 
 const CompareCell = ({ value, color, isBest }) => (
-  <Box sx={{
-    padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: '13px',
-    color: color || 'var(--text-2)', textAlign: 'right',
-    fontWeight: isBest ? 600 : 400,
-    position: 'relative',
-  }}>
+  <Box
+    sx={{
+      padding: '12px 16px',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '13px',
+      color: color || 'var(--text-2)',
+      textAlign: 'right',
+      fontWeight: isBest ? 600 : 400,
+      position: 'relative',
+    }}
+  >
     {isBest && (
-      <Box sx={{
-        position: 'absolute', inset: '4px 8px', borderRadius: '4px',
-        background: 'var(--emerald)', opacity: 0.08,
-      }} />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: '4px 8px',
+          borderRadius: '4px',
+          background: 'var(--emerald)',
+          opacity: 0.08,
+        }}
+      />
     )}
-    <Box component="span" sx={{ position: 'relative', zIndex: 1 }}>{value}</Box>
+    <Box component="span" sx={{ position: 'relative', zIndex: 1 }}>
+      {value}
+    </Box>
   </Box>
 );
 
