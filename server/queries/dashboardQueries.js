@@ -24,7 +24,7 @@ const queryDashboardStats = async (asofDate) => {
        AND r.monthenddate = s.monthenddate
      WHERE s.return1yr IS NOT NULL
        ${dateClause}`,
-    params
+    params,
   );
   return result.rows[0];
 };
@@ -58,7 +58,45 @@ const queryTopPerformers = async (asofDate, limit = 10) => {
        ${dateClause}
      ORDER BY p.return1yr::NUMERIC DESC NULLS LAST
      LIMIT ${limitParam}`,
-    params
+    params,
+  );
+  return result.rows;
+};
+
+const queryTopCategories = async (asofDate, limit = 10) => {
+  const dateClause = asofDate
+    ? `AND c.dayenddate = $1::DATE`
+    : `AND c.dayenddate = (
+        SELECT MAX(dayenddate) FROM ms.category_monthly_nav_trailing_performance_returns
+        WHERE dayenddate IS NOT NULL
+      )`;
+  const params = asofDate ? [asofDate, limit] : [limit];
+  const limitParam = asofDate ? '$2' : '$1';
+
+  const result = await pool.query(
+    `WITH category_fund_counts AS (
+       SELECT
+         categorycode,
+         COUNT(DISTINCT _id) AS fund_count
+       FROM ms.mv_fund_share_class_basic_info_ca_openend_latest
+       WHERE categorycode IS NOT NULL
+       GROUP BY categorycode
+     )
+     SELECT
+       c.categorycode,
+       c.categoryname,
+       c.dayenddate::TEXT AS dayenddate,
+       c.return1yr::NUMERIC AS return1yr,
+       c.return3yr::NUMERIC AS return3yr,
+       c.returnytd::NUMERIC AS returnytd,
+       COALESCE(f.fund_count, 0) AS fund_count
+     FROM ms.category_monthly_nav_trailing_performance_returns c
+     LEFT JOIN category_fund_counts f ON f.categorycode = c.categorycode
+     WHERE c.return1yr IS NOT NULL
+       ${dateClause}
+     ORDER BY c.return1yr::NUMERIC DESC NULLS LAST, COALESCE(f.fund_count, 0) DESC, c.categoryname ASC
+     LIMIT ${limitParam}`,
+    params,
   );
   return result.rows;
 };
@@ -103,7 +141,57 @@ const queryLargestFlows = async (asofDate, limit = 10) => {
        ${dateClause}
      ORDER BY f.estfundlevelnetflow1momoend::NUMERIC ASC NULLS LAST
      LIMIT ${limitParam})`,
-    params
+    params,
+  );
+  return result.rows;
+};
+
+const queryLargestFlowCategories = async (asofDate, limit = 10) => {
+  const dateClause = asofDate
+    ? `AND f.estfundlevelnetflowdatemoend = $1::TEXT`
+    : `AND f.estfundlevelnetflowdatemoend = (
+        SELECT MAX(estfundlevelnetflowdatemoend) FROM ms.fund_flow_details_ca_openend
+        WHERE estfundlevelnetflowdatemoend IS NOT NULL
+      )`;
+  const params = asofDate ? [asofDate, limit] : [limit];
+  const limitParam = asofDate ? '$2' : '$1';
+
+  const result = await pool.query(
+    `WITH category_flows AS (
+       SELECT
+         b.categoryname,
+         COUNT(DISTINCT f._id) AS fund_count,
+         SUM(f.estfundlevelnetflow1momoend::NUMERIC) AS flow_1m,
+         SUM(f.estfundlevelnetflow1yrmoend::NUMERIC) AS flow_1yr
+       FROM ms.fund_flow_details_ca_openend f
+       JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = f._id
+       WHERE f.estfundlevelnetflow1momoend IS NOT NULL
+         AND b.categoryname IS NOT NULL
+         ${dateClause}
+       GROUP BY b.categoryname
+     )
+     (SELECT
+        categoryname,
+        fund_count,
+        flow_1m,
+        flow_1yr,
+        'inflow' AS direction
+      FROM category_flows
+      WHERE flow_1m > 0
+      ORDER BY flow_1m DESC, fund_count DESC, categoryname ASC
+      LIMIT ${limitParam})
+     UNION ALL
+     (SELECT
+        categoryname,
+        fund_count,
+        flow_1m,
+        flow_1yr,
+        'outflow' AS direction
+      FROM category_flows
+      WHERE flow_1m < 0
+      ORDER BY flow_1m ASC, fund_count DESC, categoryname ASC
+      LIMIT ${limitParam})`,
+    params,
   );
   return result.rows;
 };
@@ -140,7 +228,7 @@ const queryHighestRated = async (asofDate, limit = 10) => {
        ${dateClause}
      ORDER BY r.ratingoverall::NUMERIC DESC, p.return1yr::NUMERIC DESC NULLS LAST
      LIMIT ${limitParam}`,
-    params
+    params,
   );
   return result.rows;
 };
@@ -181,7 +269,7 @@ const queryCategoryOverview = async (category, asofDate) => {
        )
      WHERE b.categoryname = $1
        ${dateClause}`,
-    params
+    params,
   );
   return result.rows[0];
 };
@@ -189,7 +277,9 @@ const queryCategoryOverview = async (category, asofDate) => {
 module.exports = {
   queryDashboardStats,
   queryTopPerformers,
+  queryTopCategories,
   queryLargestFlows,
+  queryLargestFlowCategories,
   queryHighestRated,
   queryCategoryOverview,
 };

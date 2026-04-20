@@ -1,8 +1,8 @@
 const {
   queryDashboardStats,
   queryTopPerformers,
-  queryLargestFlows,
-  queryHighestRated,
+  queryTopCategories,
+  queryLargestFlowCategories,
   queryCategoryOverview,
 } = require('../queries/dashboardQueries');
 
@@ -22,14 +22,14 @@ const cached = async (key, fn) => {
 };
 
 const fetchDashboardData = async (asofDate) => {
-  return cached(`dashboard|${asofDate || ''}`, async () => {
-    const [stats, topPerformers, largestFlows, highestRated] = await Promise.all([
+  return cached(`dashboard-v3|${asofDate || ''}`, async () => {
+    const [stats, topPerformers, topCategories, largestFlowCategories] = await Promise.all([
       queryDashboardStats(asofDate),
       queryTopPerformers(asofDate, 10),
-      queryLargestFlows(asofDate, 5),
-      queryHighestRated(asofDate, 10),
+      queryTopCategories(asofDate, 10),
+      queryLargestFlowCategories(asofDate, 10),
     ]);
-    return { stats, topPerformers, largestFlows, highestRated };
+    return { stats, topPerformers, topCategories, largestFlowCategories };
   });
 };
 

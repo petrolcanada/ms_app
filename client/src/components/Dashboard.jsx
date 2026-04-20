@@ -5,16 +5,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import useDashboard from '../hooks/useDashboard';
 import useAvailableDates from '../hooks/useAvailableDates';
 import StatCard from './StatCard';
-import StarRating from './StarRating';
 import SEO from './SEO';
 import OnboardingTour from './OnboardingTour';
-
-const quickLinks = [
-  { label: 'Fund Explorer', sub: 'Browse the full universe', route: '/explorer' },
-  { label: 'Screener', sub: 'Rank and filter with precision', route: '/screener' },
-  { label: 'Watchlist', sub: 'Track your saved ideas', route: '/watchlist' },
-  { label: 'Compare', sub: 'Read funds side by side', route: '/compare' },
-];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -42,6 +34,11 @@ const Dashboard = () => {
     if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
     if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
     return `${sign}$${abs.toLocaleString()}`;
+  };
+
+  const formatFundCount = (value) => {
+    if (value == null) return 'Pool size unavailable';
+    return `${Number(value).toLocaleString()} funds`;
   };
 
   if (isLoading) {
@@ -72,10 +69,17 @@ const Dashboard = () => {
     );
   }
 
-  const { stats, topPerformers, largestFlows, highestRated } = data;
-  const inflows = largestFlows?.filter((fund) => fund.direction === 'inflow') || [];
-  const outflows = largestFlows?.filter((fund) => fund.direction === 'outflow') || [];
+  const { stats, topPerformers, topCategories, largestFlowCategories } = data;
+  const inflows =
+    largestFlowCategories?.filter((category) => category.direction === 'inflow') || [];
+  const outflows =
+    largestFlowCategories?.filter((category) => category.direction === 'outflow') || [];
   const asOfDate = formatDateLabel(stats?.latest_date || latestDate);
+  const topCategoriesAsOfDate = topCategories?.[0]?.dayenddate
+    ? formatDateLabel(topCategories[0].dayenddate)
+    : '';
+  const avgReturnPositive =
+    stats?.avg_return_1yr != null ? Number(stats.avg_return_1yr) >= 0 : undefined;
 
   return (
     <Box>
@@ -225,13 +229,9 @@ const Dashboard = () => {
                 value: stats?.total_funds ? Number(stats.total_funds).toLocaleString() : '--',
               },
               {
-                label: 'Average rating',
-                value: stats?.avg_rating != null ? Number(stats.avg_rating).toFixed(1) : '--',
-              },
-              {
                 label: 'Average 1Y return',
                 value: formatReturn(stats?.avg_return_1yr),
-                positive: Number(stats?.avg_return_1yr) >= 0,
+                positive: avgReturnPositive,
               },
             ].map((item) => (
               <Box
@@ -272,7 +272,7 @@ const Dashboard = () => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' },
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', xl: 'repeat(2, minmax(0, 1fr))' },
           gap: '16px',
           mb: '24px',
         }}
@@ -284,47 +284,48 @@ const Dashboard = () => {
         <StatCard
           label="Avg 1-Year Return"
           value={formatReturn(stats?.avg_return_1yr)}
-          valueColor={Number(stats?.avg_return_1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
-        />
-        <StatCard
-          label="Avg MER"
-          value={stats?.avg_mer != null ? `${Number(stats.avg_mer).toFixed(2)}%` : '--'}
-        />
-        <StatCard
-          label="Avg Rating"
-          value={stats?.avg_rating != null ? Number(stats.avg_rating).toFixed(1) : '--'}
+          valueColor={
+            avgReturnPositive == null
+              ? undefined
+              : avgReturnPositive
+                ? 'var(--emerald)'
+                : 'var(--red)'
+          }
         />
       </Box>
 
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-          gap: '14px',
-          mb: '24px',
-        }}
-      >
-        {quickLinks.map((link, index) => (
-          <QuickLink
-            key={link.label}
-            label={link.label}
-            sub={link.sub}
-            accent={index === 1}
-            onClick={() => navigate(link.route)}
-          />
-        ))}
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' },
           gap: '20px',
           mb: '24px',
         }}
       >
-        <SectionCard title="Top Performers" subtitle="1-year return">
-          {(topPerformers || []).slice(0, 8).map((fund, index) => (
+        <SectionCard
+          title="Top Performing Categories"
+          subtitle={
+            topCategoriesAsOfDate
+              ? `Category 1Y return | ${topCategoriesAsOfDate}`
+              : 'Category 1Y return'
+          }
+        >
+          {(topCategories || []).slice(0, 10).map((category, index) => (
+            <CategoryRow
+              key={`${category.categorycode || category.categoryname}-${index}`}
+              rank={index + 1}
+              category={category}
+              metric={formatReturn(category.return1yr)}
+              metricColor={Number(category.return1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
+              sublabel={formatFundCount(category.fund_count)}
+              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
+            />
+          ))}
+          {(!topCategories || topCategories.length === 0) && <EmptyState />}
+        </SectionCard>
+
+        <SectionCard title="Top Performers" subtitle="Fund 1Y return">
+          {(topPerformers || []).slice(0, 10).map((fund, index) => (
             <FundRow
               key={fund._id}
               rank={index + 1}
@@ -336,19 +337,6 @@ const Dashboard = () => {
           ))}
           {(!topPerformers || topPerformers.length === 0) && <EmptyState />}
         </SectionCard>
-
-        <SectionCard title="Highest Rated" subtitle="Analyst quality at a glance">
-          {(highestRated || []).slice(0, 8).map((fund, index) => (
-            <FundRow
-              key={fund._id}
-              rank={index + 1}
-              fund={fund}
-              metric={<StarRating rating={fund.ratingoverall} />}
-              onClick={() => navigate(`/funds/${fund._id}`)}
-            />
-          ))}
-          {(!highestRated || highestRated.length === 0) && <EmptyState />}
-        </SectionCard>
       </Box>
 
       <Box
@@ -358,29 +346,31 @@ const Dashboard = () => {
           gap: '20px',
         }}
       >
-        <SectionCard title="Largest Inflows" subtitle="1-month flow momentum">
-          {inflows.map((fund, index) => (
-            <FundRow
-              key={fund._id}
+        <SectionCard title="Largest Inflow Categories" subtitle="Summed 1-month category flows">
+          {inflows.map((category, index) => (
+            <CategoryRow
+              key={`${category.categoryname}-inflow-${index}`}
               rank={index + 1}
-              fund={fund}
-              metric={formatMoney(fund.flow_1m)}
+              category={category}
+              metric={formatMoney(category.flow_1m)}
               metricColor="var(--emerald)"
-              onClick={() => navigate(`/funds/${fund._id}`)}
+              sublabel={formatFundCount(category.fund_count)}
+              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
             />
           ))}
           {inflows.length === 0 && <EmptyState />}
         </SectionCard>
 
-        <SectionCard title="Largest Outflows" subtitle="1-month capital pressure">
-          {outflows.map((fund, index) => (
-            <FundRow
-              key={fund._id}
+        <SectionCard title="Largest Outflow Categories" subtitle="Summed 1-month category flows">
+          {outflows.map((category, index) => (
+            <CategoryRow
+              key={`${category.categoryname}-outflow-${index}`}
               rank={index + 1}
-              fund={fund}
-              metric={formatMoney(fund.flow_1m)}
+              category={category}
+              metric={formatMoney(category.flow_1m)}
               metricColor="var(--red)"
-              onClick={() => navigate(`/funds/${fund._id}`)}
+              sublabel={formatFundCount(category.fund_count)}
+              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
             />
           ))}
           {outflows.length === 0 && <EmptyState />}
@@ -389,53 +379,6 @@ const Dashboard = () => {
     </Box>
   );
 };
-
-const QuickLink = ({ label, sub, onClick, accent = false }) => (
-  <Box
-    onClick={onClick}
-    sx={{
-      position: 'relative',
-      overflow: 'hidden',
-      background: accent
-        ? 'linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0.02))'
-        : 'rgba(255,255,255,0.03)',
-      border: accent ? '1px solid var(--accent-ring)' : '1px solid var(--border)',
-      borderRadius: '22px',
-      padding: '20px',
-      cursor: 'pointer',
-      boxShadow: 'var(--shadow-panel)',
-      transition: 'all var(--transition)',
-      '&:hover': {
-        transform: 'translateY(-2px)',
-        borderColor: accent ? 'var(--accent-strong)' : 'var(--border-hover)',
-      },
-    }}
-  >
-    <Box
-      sx={{
-        fontSize: '11px',
-        color: 'var(--text-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        mb: '12px',
-      }}
-    >
-      Module
-    </Box>
-    <Box
-      sx={{
-        fontFamily: 'var(--font-head)',
-        fontSize: '24px',
-        fontWeight: 800,
-        letterSpacing: '-0.04em',
-        mb: '6px',
-      }}
-    >
-      {label}
-    </Box>
-    <Box sx={{ fontSize: '13px', color: 'var(--text-3)', lineHeight: 1.65 }}>{sub}</Box>
-  </Box>
-);
 
 const SectionCard = ({ title, subtitle, children }) => (
   <Box
@@ -473,6 +416,63 @@ const SectionCard = ({ title, subtitle, children }) => (
       </Box>
     </Box>
     <Box sx={{ padding: '6px 0' }}>{children}</Box>
+  </Box>
+);
+
+const CategoryRow = ({ rank, category, metric, metricColor, sublabel, onClick }) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '12px 22px',
+      cursor: 'pointer',
+      transition: 'background var(--transition)',
+      '&:hover': { background: 'var(--bg-surface-hover)' },
+      '&:hover .category-name': { color: 'var(--accent-strong)' },
+    }}
+  >
+    <Box
+      sx={{
+        width: '28px',
+        textAlign: 'right',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '12px',
+        color: 'var(--text-4)',
+        flexShrink: 0,
+      }}
+    >
+      {rank}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box
+        className="category-name"
+        sx={{
+          fontSize: '13px',
+          fontWeight: 600,
+          color: 'var(--text-1)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          transition: 'color var(--transition)',
+        }}
+      >
+        {category.categoryname || 'Uncategorized'}
+      </Box>
+      <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>{sublabel}</Box>
+    </Box>
+    <Box
+      sx={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '13px',
+        fontWeight: 600,
+        color: metricColor || 'var(--text-2)',
+        flexShrink: 0,
+      }}
+    >
+      {metric}
+    </Box>
   </Box>
 );
 
@@ -519,7 +519,7 @@ const FundRow = ({ rank, fund, metric, metricColor, onClick }) => (
       </Box>
       <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>
         {fund.ticker || '--'}
-        {fund.categoryname ? ` · ${fund.categoryname}` : ''}
+        {fund.categoryname ? ` | ${fund.categoryname}` : ''}
       </Box>
     </Box>
     <Box

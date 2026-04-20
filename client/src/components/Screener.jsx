@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Popover from '@mui/material/Popover';
@@ -121,18 +121,34 @@ const formatDateLabel = (iso) => {
 
 const Screener = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: categories } = useCategories();
   const { data: availableDates, isLoading: datesLoading } = useAvailableDates();
 
-  const [category, setCategory] = useState('');
-  const [type, setType] = useState('');
-  const [asofDate, setAsofDate] = useState('');
+  const category = searchParams.get('category') || '';
+  const type = searchParams.get('type') || '';
+  const asofDate = searchParams.get('asofDate') || '';
   const [sortKey, setSortKey] = useState('return1yr');
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedMetricKeys, setSelectedMetricKeys] = useState(loadStoredMetricKeys);
   const [columnsAnchor, setColumnsAnchor] = useState(null);
   const [metricSearch, setMetricSearch] = useState('');
+
+  const updateFilters = useCallback(
+    (updates) => {
+      const next = new URLSearchParams(searchParams);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          next.set(key, value);
+        } else {
+          next.delete(key);
+        }
+      });
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
 
   const activeColumns = useMemo(
     () =>
@@ -226,6 +242,10 @@ const Screener = () => {
     setSortDesc(METRIC_BY_KEY[fallback]?.higherIsBetter ?? true);
   }, [sortKey, sortKeyToApi, catalogSortable]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [category, type, asofDate]);
+
   const {
     data,
     totalFunds,
@@ -270,13 +290,15 @@ const Screener = () => {
   );
 
   const handleReset = useCallback(() => {
-    setCategory('');
-    setType('');
-    setAsofDate('');
+    updateFilters({
+      category: '',
+      type: '',
+      asofDate: '',
+    });
     setSortKey('return1yr');
     setSortDesc(true);
     setPage(1);
-  }, []);
+  }, [updateFilters]);
 
   const handleFundClick = useCallback(
     (fundId) => {
@@ -343,8 +365,7 @@ const Screener = () => {
           <StyledSelect
             value={category}
             onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(1);
+              updateFilters({ category: e.target.value });
             }}
           >
             <option value="">All Categories</option>
@@ -363,8 +384,7 @@ const Screener = () => {
             <StyledSelect
               value={asofDate || availableDates?.[0] || ''}
               onChange={(e) => {
-                setAsofDate(e.target.value);
-                setPage(1);
+                updateFilters({ asofDate: e.target.value });
               }}
               mono
             >
@@ -381,8 +401,7 @@ const Screener = () => {
           <StyledSelect
             value={type}
             onChange={(e) => {
-              setType(e.target.value);
-              setPage(1);
+              updateFilters({ type: e.target.value });
             }}
           >
             <option value="">All Types</option>

@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import SEO from './SEO';
 import usePublicDashboard from '../hooks/usePublicDashboard';
 import usePublicAvailableDates from '../hooks/usePublicAvailableDates';
+import { METRIC_COLUMNS } from '../config/screenerMetrics';
+import screenerPreview from '../assets/screener-preview.png';
 
 const fadeKeyframes = `
 @keyframes landingFadeUp {
@@ -12,22 +14,49 @@ const fadeKeyframes = `
 }
 `;
 
+const classifyScreenerGroup = (group) => {
+  if (group.startsWith('Performance')) return 'Performance';
+  if (group === 'Category ranks') return 'Category ranks';
+  if (group === 'Fees') return 'Fees';
+  if (group.startsWith('Risk')) return 'Risk';
+  if (group.startsWith('Ratings')) return 'Ratings';
+  if (group === 'Fund flows') return 'Fund flows';
+  if (group === 'Assets & flows') return 'Assets';
+  return group;
+};
+
+const SCREENER_FAMILY_ORDER = [
+  'Performance',
+  'Category ranks',
+  'Fees',
+  'Risk',
+  'Ratings',
+  'Fund flows',
+  'Assets',
+];
+
+const SCREENER_FAMILY_STATS = SCREENER_FAMILY_ORDER.map((family) => ({
+  family,
+  count: METRIC_COLUMNS.filter((column) => classifyScreenerGroup(column.group) === family).length,
+}));
+
 const deskModules = [
   {
-    title: 'Explorer',
-    body: 'Search the full universe quickly, then narrow to the exact mandate, structure, and domicile you need.',
+    title: 'Screen the full universe',
+    body: `Rank funds across ${METRIC_COLUMNS.length} live metrics before you ever open a detail page.`,
   },
   {
-    title: 'Screener',
-    body: 'Sort conviction ideas with tighter ranking, cleaner filters, and a surface that reads like a professional desk.',
+    title: 'Stack the signals',
+    body: 'Put performance, fees, risk, ratings, flows, and assets beside each other so the shortlist tightens quickly.',
   },
   {
-    title: 'Compare',
-    body: 'Keep multiple funds in view at once so fees, performance, flows, and risk signals stay easy to parse.',
+    title: 'Move into compare',
+    body: 'Once the screener gives you conviction, carry the shortlist into compare and deeper fund-level research.',
   },
 ];
 
 const RESEARCH_DOMAIN_COUNT = 8;
+const SCREENER_METRIC_COUNT = METRIC_COLUMNS.length;
 
 const pricingTiers = [
   {
@@ -96,12 +125,6 @@ const formatDateLabel = (iso) => {
   return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-const formatReturn = (value) => {
-  if (value == null) return '--';
-  const number = Number(value);
-  return `${number >= 0 ? '+' : ''}${number.toFixed(2)}%`;
-};
-
 const formatNumber = (value) => {
   if (value == null) return '--';
   return Number(value).toLocaleString();
@@ -117,57 +140,71 @@ const formatMer = (value) => {
   return `${Number(value).toFixed(2)}%`;
 };
 
-const PreviewShell = ({ stats, asOfDate }) => (
+const ScreenerShowcase = ({ stats, asOfDate, screenerFamilies }) => (
   <Box
     sx={{
       position: 'relative',
       background: 'linear-gradient(180deg, #110d1d 0%, #0b0814 100%)',
-      borderRadius: '26px',
+      borderRadius: '28px',
       border: '1px solid rgba(145, 116, 255, 0.24)',
       boxShadow: '0 34px 90px rgba(7, 6, 13, 0.45)',
       overflow: 'hidden',
+      p: { xs: '18px', md: '24px' },
     }}
   >
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
         justifyContent: 'space-between',
-        padding: '14px 18px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(255,255,255,0.02)',
+        gap: '14px',
+        mb: '20px',
       }}
     >
-      <Box sx={{ display: 'flex', gap: '8px' }}>
-        {['#FF627A', '#F4B860', '#17C978'].map((dot) => (
-          <Box
-            key={dot}
-            sx={{
-              width: '9px',
-              height: '9px',
-              borderRadius: '50%',
-              background: dot,
-              opacity: 0.9,
-            }}
-          />
-        ))}
+      <Box>
+        <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.52)', mb: '8px' }}>
+          Actual product capture
+        </Box>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: { xs: '28px', md: '42px' },
+            fontWeight: 800,
+            letterSpacing: '-0.05em',
+            color: '#fff',
+            lineHeight: 0.98,
+            mb: '10px',
+            maxWidth: '640px',
+          }}
+        >
+          Show the real screener, not an invented mock.
+        </Box>
+        <Box sx={{ fontSize: '14px', color: 'rgba(255,255,255,0.66)', maxWidth: '620px' }}>
+          The landing page now uses an actual FundLens screener capture so visitors can see the
+          ranked table, heatmap signals, and metric layout before they click through.
+        </Box>
       </Box>
-      <Box sx={{ display: 'flex', gap: '8px' }}>
-        {['Explorer', 'Screen', 'Compare'].map((tab, index) => (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {[
+          `${formatNumber(SCREENER_METRIC_COUNT)} metrics`,
+          `${formatNumber(stats?.total_funds)} funds`,
+          `${RESEARCH_DOMAIN_COUNT} domains`,
+        ].map((item) => (
           <Box
-            key={tab}
+            key={item}
             sx={{
-              px: '10px',
-              py: '4px',
+              px: '12px',
+              py: '7px',
               borderRadius: '999px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 600,
-              color: index === 0 ? '#fff' : 'rgba(255,255,255,0.55)',
-              background: index === 0 ? 'rgba(111, 76, 245, 0.18)' : 'transparent',
-              border: index === 0 ? '1px solid rgba(145, 116, 255, 0.24)' : '1px solid transparent',
+              color: '#fff',
+              background: 'rgba(111, 76, 245, 0.18)',
+              border: '1px solid rgba(145, 116, 255, 0.24)',
             }}
           >
-            {tab}
+            {item}
           </Box>
         ))}
       </Box>
@@ -176,18 +213,11 @@ const PreviewShell = ({ stats, asOfDate }) => (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr) 240px' },
+        gridTemplateColumns: { xs: '1fr', xl: '280px minmax(0, 1fr)' },
+        gap: '20px',
       }}
     >
-      <Box
-        sx={{
-          padding: '18px',
-          borderRight: { md: '1px solid rgba(255,255,255,0.06)' },
-          borderBottom: { xs: '1px solid rgba(255,255,255,0.06)', md: 'none' },
-          display: 'grid',
-          gap: '14px',
-        }}
-      >
+      <Box sx={{ display: 'grid', gap: '14px' }}>
         <Box
           sx={{
             p: '14px',
@@ -197,12 +227,14 @@ const PreviewShell = ({ stats, asOfDate }) => (
           }}
         >
           <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
-            Funds covered
+            Screener surface
           </Box>
           <Box sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.04em', color: '#fff' }}>
-            {formatNumber(stats?.total_funds)}
+            {formatNumber(SCREENER_METRIC_COUNT)}
           </Box>
-          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>live on the dashboard</Box>
+          <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+            metrics live in the screener
+          </Box>
         </Box>
         <Box
           sx={{
@@ -213,149 +245,15 @@ const PreviewShell = ({ stats, asOfDate }) => (
           }}
         >
           <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
-            Research coverage
+            Universe coverage
           </Box>
           <Box sx={{ fontSize: '13px', fontWeight: 700, color: '#fff', mb: '6px' }}>
-            {RESEARCH_DOMAIN_COUNT} live data domains
+            {formatNumber(stats?.total_funds)} funds, {RESEARCH_DOMAIN_COUNT} domains
           </Box>
           <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.68)' }}>
-            Dashboard as of {asOfDate}
+            Public snapshot as of {asOfDate}
           </Box>
         </Box>
-        <Box sx={{ display: 'grid', gap: '8px' }}>
-          {[
-            { label: 'Average rating', value: formatRating(stats?.avg_rating) },
-            { label: 'Average MER', value: formatMer(stats?.avg_mer) },
-            { label: 'Average 1Y return', value: formatReturn(stats?.avg_return_1yr) },
-          ].map((item, index) => (
-            <Box
-              key={item.label}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                p: '10px 12px',
-                borderRadius: '14px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.05)',
-              }}
-            >
-              <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>{item.label}</Box>
-              <Box
-                sx={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color:
-                    index === 2 && Number(stats?.avg_return_1yr) < 0
-                      ? 'var(--red)'
-                      : index === 2
-                        ? 'var(--emerald)'
-                        : '#fff',
-                }}
-              >
-                {item.value}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          padding: '18px',
-          borderRight: { md: '1px solid rgba(255,255,255,0.06)' },
-          borderBottom: { xs: '1px solid rgba(255,255,255,0.06)', md: 'none' },
-        }}
-      >
-        <Box
-          sx={{
-            height: '100%',
-            minHeight: '280px',
-            borderRadius: '22px',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-            border: '1px solid rgba(255,255,255,0.06)',
-            position: 'relative',
-            overflow: 'hidden',
-            p: '18px',
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '18px' }}>
-            <Box>
-              <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)' }}>
-                Dashboard average
-              </Box>
-              <Box sx={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>1-year return</Box>
-            </Box>
-            <Box
-              sx={{
-                px: '10px',
-                py: '6px',
-                borderRadius: '999px',
-                background: 'rgba(23, 201, 120, 0.12)',
-                color: 'var(--emerald)',
-                fontSize: '11px',
-                fontWeight: 700,
-              }}
-            >
-              {formatReturn(stats?.avg_return_1yr)}
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: '92px 18px 18px',
-              overflow: 'hidden',
-            }}
-          >
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Box
-                key={index}
-                sx={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: `${index * 24}%`,
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
-                }}
-              />
-            ))}
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Box
-                key={index}
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  left: `${index * 18}%`,
-                  borderLeft: '1px solid rgba(255,255,255,0.04)',
-                }}
-              />
-            ))}
-            <Box
-              component="svg"
-              viewBox="0 0 600 220"
-              preserveAspectRatio="none"
-              sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-            >
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-                  <stop offset="0%" stopColor="#6F4CF5" />
-                  <stop offset="100%" stopColor="#A89DFF" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,172 C48,150 92,138 140,126 C188,114 216,126 264,92 C312,58 348,54 400,76 C452,98 498,110 546,84 C568,74 586,56 600,38"
-                fill="none"
-                stroke="url(#lineGradient)"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ padding: '18px', display: 'grid', gap: '12px' }}>
         <Box
           sx={{
             p: '14px',
@@ -364,43 +262,30 @@ const PreviewShell = ({ stats, asOfDate }) => (
             border: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '12px' }}>
-            Dashboard snapshot
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '10px' }}>
+            Coverage split
           </Box>
-          {[
-            { label: 'Total funds', value: formatNumber(stats?.total_funds) },
-            { label: 'Average rating', value: formatRating(stats?.avg_rating) },
-            { label: 'Average MER', value: formatMer(stats?.avg_mer) },
-            { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
-          ].map((item, index) => (
-            <Box
-              key={item.label}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                py: index === 3 ? 0 : '0 0 10px',
-                mb: index === 3 ? 0 : '10px',
-                borderBottom: index === 3 ? 'none' : '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <Box>
-                <Box sx={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{item.label}</Box>
-                <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.48)' }}>
-                  Live dashboard stat
-                </Box>
-              </Box>
+          <Box sx={{ display: 'grid', gap: '8px' }}>
+            {screenerFamilies.slice(0, 4).map((item) => (
               <Box
+                key={item.family}
                 sx={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: item.label === 'Average MER' ? 'var(--text-3)' : 'var(--emerald)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: '10px 12px',
+                  borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.05)',
                 }}
               >
-                {item.value}
+                <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.72)' }}>{item.family}</Box>
+                <Box sx={{ fontSize: '12px', fontWeight: 700, color: 'var(--emerald)' }}>
+                  {formatNumber(item.count)}
+                </Box>
               </Box>
-            </Box>
-          ))}
+            ))}
+          </Box>
         </Box>
         <Box
           sx={{
@@ -411,10 +296,112 @@ const PreviewShell = ({ stats, asOfDate }) => (
             border: '1px solid rgba(145, 116, 255, 0.18)',
           }}
         >
-          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '8px' }}>Desk note</Box>
+          <Box sx={{ fontSize: '11px', color: 'rgba(255,255,255,0.56)', mb: '8px' }}>
+            Why the screenshot matters
+          </Box>
           <Box sx={{ fontSize: '13px', lineHeight: 1.7, color: 'rgba(255,255,255,0.76)' }}>
-            The interface stays quiet until it matters. Strong type, darker panels, and fewer colors
-            make the data read faster.
+            It shows the real table density, real fund rows, and real metric columns. That lands
+            harder than a stylized preview box.
+          </Box>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          position: 'relative',
+          minWidth: 0,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: '#090711',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.35)',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '18px',
+              left: '18px',
+              right: '18px',
+              zIndex: 1,
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              gap: '10px',
+            }}
+          >
+            <Box
+              sx={{
+                px: '12px',
+                py: '8px',
+                borderRadius: '999px',
+                background: 'rgba(7, 6, 13, 0.72)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#fff',
+              }}
+            >
+              Actual screener screenshot
+            </Box>
+            <Box
+              sx={{
+                px: '12px',
+                py: '8px',
+                borderRadius: '999px',
+                background: 'rgba(7, 6, 13, 0.72)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.78)',
+              }}
+            >
+              Dark desk view
+            </Box>
+          </Box>
+          <Box
+            component="img"
+            src={screenerPreview}
+            alt="Actual FundLens screener showing ranked funds, signal badges, and sortable metric columns."
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: { xs: '380px', md: '760px' },
+              objectFit: 'cover',
+              objectPosition: 'top center',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              p: '18px',
+              background: 'linear-gradient(180deg, rgba(9,7,17,0) 0%, rgba(9,7,17,0.92) 100%)',
+            }}
+          >
+            <Box sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', mb: '6px' }}>
+              Captured from the live product
+            </Box>
+            <Box
+              sx={{
+                fontSize: { xs: '16px', md: '18px' },
+                fontWeight: 700,
+                color: '#fff',
+                maxWidth: '640px',
+              }}
+            >
+              Ranked rows, heatmap cells, signal badges, sortable columns, and plan limits all show
+              up exactly the way a visitor will experience them.
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -428,21 +415,18 @@ const LandingPage = () => {
   const { data: dashboardResponse } = usePublicDashboard();
   const stats = dashboardResponse?.data?.stats;
   const asOfDate = formatDateLabel(stats?.latest_date || latestDate);
+  const screenerMetricCountLabel = formatNumber(SCREENER_METRIC_COUNT);
   const overviewMetrics = [
+    { label: 'Screener metrics', value: screenerMetricCountLabel },
     { label: 'Funds covered', value: formatNumber(stats?.total_funds) },
     { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
-    { label: 'Average 1Y return', value: formatReturn(stats?.avg_return_1yr) },
   ];
   const summaryMetrics = [
-    { label: 'Total funds', value: formatNumber(stats?.total_funds) },
-    { label: 'Average rating', value: formatRating(stats?.avg_rating) },
-    {
-      label: 'Avg 1-year return',
-      value: formatReturn(stats?.avg_return_1yr),
-      positive: Number(stats?.avg_return_1yr) >= 0,
-    },
-    { label: 'Avg MER', value: formatMer(stats?.avg_mer) },
+    { label: 'Screener metrics', value: screenerMetricCountLabel },
+    { label: 'Funds covered', value: formatNumber(stats?.total_funds) },
     { label: 'Research domains', value: String(RESEARCH_DOMAIN_COUNT) },
+    { label: 'Average rating', value: formatRating(stats?.avg_rating) },
+    { label: 'Avg MER', value: formatMer(stats?.avg_mer) },
     { label: 'Data as of', value: asOfDate },
   ];
 
@@ -514,7 +498,7 @@ const LandingPage = () => {
             </Link>
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: '6px' }}>
-              {['Workflow', 'Pricing', 'Why it reads better'].map((item) => (
+              {['Screener', 'Coverage', 'Pricing'].map((item) => (
                 <Box
                   key={item}
                   component="a"
@@ -616,7 +600,7 @@ const LandingPage = () => {
               }}
             >
               <BrandMark size={18} />
-              Kraken-inspired visual refresh
+              {screenerMetricCountLabel}-metric fund screener
             </Box>
           </Box>
 
@@ -634,7 +618,7 @@ const LandingPage = () => {
               mb: '20px',
             }}
           >
-            Professional fund research with a calmer trading-desk feel.
+            Screen the fund universe before you research it.
           </Box>
 
           <Box
@@ -648,9 +632,11 @@ const LandingPage = () => {
               mb: '30px',
             }}
           >
-            FundLens now leans into cooler neutrals, sharper hierarchy, and darker desk surfaces so
-            the data looks deliberate instead of decorative. Live landing metrics now mirror the
-            dashboard instead of relying on placeholder marketing numbers.
+            FundLens now leads with the product surface that matters most for marketing: a live
+            screener with {screenerMetricCountLabel} metrics across performance, category ranks,
+            fees, risk, ratings, flows, and assets. The Kraken-inspired refresh keeps the page
+            cleaner, but the real hook is how fast the screener gets a visitor from universe to
+            shortlist.
           </Box>
 
           <Box
@@ -664,7 +650,7 @@ const LandingPage = () => {
           >
             <Box
               component={Link}
-              to="/signup"
+              to="/screener"
               sx={{
                 px: '22px',
                 py: '13px',
@@ -677,11 +663,11 @@ const LandingPage = () => {
                 boxShadow: '0 18px 34px rgba(111, 76, 245, 0.24)',
               }}
             >
-              Open the desk
+              Open the screener
             </Box>
             <Box
               component={Link}
-              to="/pricing"
+              to="/signup"
               sx={{
                 px: '22px',
                 py: '13px',
@@ -694,7 +680,7 @@ const LandingPage = () => {
                 '&:hover': { borderColor: 'var(--border-hover)', color: 'var(--text-1)' },
               }}
             >
-              See pricing
+              Start free
             </Box>
           </Box>
 
@@ -735,11 +721,15 @@ const LandingPage = () => {
             ))}
           </Box>
 
-          <PreviewShell stats={stats} asOfDate={asOfDate} />
+          <ScreenerShowcase
+            stats={stats}
+            asOfDate={asOfDate}
+            screenerFamilies={SCREENER_FAMILY_STATS}
+          />
         </AnimatedSection>
 
         <AnimatedSection
-          id="workflow"
+          id="screener"
           sx={{
             maxWidth: '1320px',
             mx: 'auto',
@@ -757,11 +747,12 @@ const LandingPage = () => {
                 mb: '10px',
               }}
             >
-              Built to read faster.
+              The screener is the pitch.
             </Box>
             <Box sx={{ maxWidth: '640px', mx: 'auto', color: 'var(--text-3)', lineHeight: 1.75 }}>
-              The visual system borrows from Kraken&apos;s restraint: fewer competing accents, more
-              structure, and dark panels where the data deserves the eye.
+              Instead of advertising vague “research tools,” the page now shows concrete screener
+              coverage. Visitors can immediately see how wide the metric surface is and how the
+              shortlist workflow works.
             </Box>
           </Box>
 
@@ -821,7 +812,7 @@ const LandingPage = () => {
         </AnimatedSection>
 
         <AnimatedSection
-          id="why-it-reads-better"
+          id="coverage"
           sx={{
             maxWidth: '1320px',
             mx: 'auto',
@@ -850,7 +841,7 @@ const LandingPage = () => {
             >
               <Box>
                 <Box sx={{ fontSize: '12px', color: 'var(--text-4)', mb: '6px' }}>
-                  Dashboard snapshot
+                  Screener proof
                 </Box>
                 <Box
                   sx={{
@@ -860,12 +851,12 @@ const LandingPage = () => {
                     letterSpacing: '-0.05em',
                   }}
                 >
-                  Live desk metrics at a glance
+                  Concrete coverage, not generic claims
                 </Box>
               </Box>
               <Box
                 component={Link}
-                to="/dashboard"
+                to="/screener"
                 sx={{
                   px: '16px',
                   py: '10px',
@@ -877,7 +868,7 @@ const LandingPage = () => {
                   fontWeight: 700,
                 }}
               >
-                View dashboard
+                View screener
               </Box>
             </Box>
 
