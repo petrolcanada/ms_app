@@ -3,7 +3,7 @@ import { dashboardService } from '../services/api';
 
 export const useDashboard = (asofDate) => {
   return useQuery({
-    queryKey: ['dashboard', 'v3', asofDate],
+    queryKey: ['dashboard', 'v4', asofDate],
     queryFn: async () => {
       const params = {};
       if (asofDate) params.asofDate = asofDate;

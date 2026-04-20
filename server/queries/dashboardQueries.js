@@ -12,6 +12,18 @@ const queryDashboardStats = async (asofDate) => {
   const result = await pool.query(
     `SELECT
        (SELECT COUNT(*) FROM ms.mv_fund_share_class_basic_info_ca_openend_latest) AS total_funds,
+       (
+         SELECT ROUND(SUM(latest_assets.fundnetassets)::NUMERIC, 0)
+         FROM (
+           SELECT DISTINCT ON (a._id)
+             a._id,
+             a.fundnetassets::NUMERIC AS fundnetassets
+           FROM ms.fund_level_net_assets_ca_openend a
+           WHERE a.fundnetassets IS NOT NULL
+             ${asofDate ? 'AND a.netassetsdate <= $1::TEXT' : ''}
+           ORDER BY a._id, a.netassetsdate DESC NULLS LAST
+         ) latest_assets
+       ) AS total_aum,
        ROUND(AVG(s.return1yr::NUMERIC), 2) AS avg_return_1yr,
        ROUND(AVG(f.mer::NUMERIC), 2) AS avg_mer,
        ROUND(AVG(r.ratingoverall::NUMERIC), 1) AS avg_rating,
@@ -63,6 +75,40 @@ const queryTopPerformers = async (asofDate, limit = 10) => {
   return result.rows;
 };
 
+const queryBottomPerformers = async (asofDate, limit = 10) => {
+  const dateClause = asofDate
+    ? `AND p.monthenddate = $1::TEXT`
+    : `AND p.monthenddate = (
+        SELECT MAX(monthenddate) FROM ms.month_end_trailing_total_returns_ca_openend
+        WHERE monthenddate IS NOT NULL
+      )`;
+  const params = asofDate ? [asofDate, limit] : [limit];
+  const limitParam = asofDate ? '$2' : '$1';
+
+  const result = await pool.query(
+    `SELECT
+       p._id,
+       b.fundname,
+       b.ticker,
+       b.categoryname,
+       b.securitytype,
+       p.return1yr::NUMERIC,
+       p.return3yr::NUMERIC,
+       p.return5yr::NUMERIC,
+       r.ratingoverall::NUMERIC
+     FROM ms.month_end_trailing_total_returns_ca_openend p
+     JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = p._id
+     LEFT JOIN ms.morningstar_rating_ca_openend r
+       ON r._id = p._id AND r.monthenddate = p.monthenddate
+     WHERE p.return1yr IS NOT NULL
+       ${dateClause}
+     ORDER BY p.return1yr::NUMERIC ASC NULLS LAST
+     LIMIT ${limitParam}`,
+    params,
+  );
+  return result.rows;
+};
+
 const queryTopCategories = async (asofDate, limit = 10) => {
   const dateClause = asofDate
     ? `AND c.dayenddate = $1::DATE`
@@ -95,6 +141,44 @@ const queryTopCategories = async (asofDate, limit = 10) => {
      WHERE c.return1yr IS NOT NULL
        ${dateClause}
      ORDER BY c.return1yr::NUMERIC DESC NULLS LAST, COALESCE(f.fund_count, 0) DESC, c.categoryname ASC
+     LIMIT ${limitParam}`,
+    params,
+  );
+  return result.rows;
+};
+
+const queryBottomCategories = async (asofDate, limit = 10) => {
+  const dateClause = asofDate
+    ? `AND c.dayenddate = $1::DATE`
+    : `AND c.dayenddate = (
+        SELECT MAX(dayenddate) FROM ms.category_monthly_nav_trailing_performance_returns
+        WHERE dayenddate IS NOT NULL
+      )`;
+  const params = asofDate ? [asofDate, limit] : [limit];
+  const limitParam = asofDate ? '$2' : '$1';
+
+  const result = await pool.query(
+    `WITH category_fund_counts AS (
+       SELECT
+         categorycode,
+         COUNT(DISTINCT _id) AS fund_count
+       FROM ms.mv_fund_share_class_basic_info_ca_openend_latest
+       WHERE categorycode IS NOT NULL
+       GROUP BY categorycode
+     )
+     SELECT
+       c.categorycode,
+       c.categoryname,
+       c.dayenddate::TEXT AS dayenddate,
+       c.return1yr::NUMERIC AS return1yr,
+       c.return3yr::NUMERIC AS return3yr,
+       c.returnytd::NUMERIC AS returnytd,
+       COALESCE(f.fund_count, 0) AS fund_count
+     FROM ms.category_monthly_nav_trailing_performance_returns c
+     LEFT JOIN category_fund_counts f ON f.categorycode = c.categorycode
+     WHERE c.return1yr IS NOT NULL
+       ${dateClause}
+     ORDER BY c.return1yr::NUMERIC ASC NULLS LAST, COALESCE(f.fund_count, 0) DESC, c.categoryname ASC
      LIMIT ${limitParam}`,
     params,
   );
@@ -277,7 +361,9 @@ const queryCategoryOverview = async (category, asofDate) => {
 module.exports = {
   queryDashboardStats,
   queryTopPerformers,
+  queryBottomPerformers,
   queryTopCategories,
+  queryBottomCategories,
   queryLargestFlows,
   queryLargestFlowCategories,
   queryHighestRated,
