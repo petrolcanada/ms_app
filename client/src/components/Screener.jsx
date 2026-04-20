@@ -7,6 +7,7 @@ import useScreener from '../hooks/useScreener';
 import useCategories from '../hooks/useCategories';
 import useAvailableDates from '../hooks/useAvailableDates';
 import SignalBadge from './SignalBadge';
+import SearchBar from './SearchBar';
 import StarRating from './StarRating';
 import UpgradePrompt from './UpgradePrompt';
 import {
@@ -125,9 +126,11 @@ const Screener = () => {
   const { data: categories } = useCategories();
   const { data: availableDates, isLoading: datesLoading } = useAvailableDates();
 
+  const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
   const type = searchParams.get('type') || '';
   const asofDate = searchParams.get('asofDate') || '';
+  const [searchInput, setSearchInput] = useState(search);
   const [sortKey, setSortKey] = useState('return1yr');
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(1);
@@ -243,8 +246,12 @@ const Screener = () => {
   }, [sortKey, sortKeyToApi, catalogSortable]);
 
   useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
     setPage(1);
-  }, [category, type, asofDate]);
+  }, [search, category, type, asofDate]);
 
   const {
     data,
@@ -257,6 +264,7 @@ const Screener = () => {
     isError,
     error,
   } = useScreener({
+    search,
     category,
     type,
     asofDate,
@@ -291,6 +299,7 @@ const Screener = () => {
 
   const handleReset = useCallback(() => {
     updateFilters({
+      search: '',
       category: '',
       type: '',
       asofDate: '',
@@ -353,14 +362,53 @@ const Screener = () => {
           Fund Screener
         </Box>
         <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
-          Rank and compare funds by performance, fees, and ratings within any category
+          Search, filter, and rank funds from one merged research surface
         </Box>
       </Box>
 
       {/* Controls */}
       <Box
-        sx={{ display: 'flex', alignItems: 'flex-end', gap: '12px', mb: '24px', flexWrap: 'wrap' }}
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: '12px',
+          mb: '24px',
+          flexWrap: 'wrap',
+        }}
       >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            minWidth: 0,
+            flex: '1 1 340px',
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              fontSize: '10px',
+              fontWeight: 600,
+              color: 'var(--text-4)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
+            Search
+          </Box>
+          <SearchBar
+            id="screener-search"
+            value={searchInput}
+            onValueChange={setSearchInput}
+            onSearch={(nextValue) => {
+              updateFilters({ search: nextValue.trim() });
+            }}
+            placeholder="Search by fund name, ticker, or ID…"
+            debounceMs={300}
+          />
+        </Box>
+
         <ControlGroup label="Category">
           <StyledSelect
             value={category}
@@ -668,7 +716,14 @@ const Screener = () => {
           >
             <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
               <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{totalFunds}</strong>
-              {' funds in '}
+              {' funds'}
+              {search && (
+                <>
+                  {' matching '}
+                  <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>{search}</strong>
+                </>
+              )}
+              {' in '}
               <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
                 {category || 'All Categories'}
               </strong>
@@ -798,7 +853,7 @@ const Screener = () => {
                           fontSize: '13px',
                         }}
                       >
-                        No funds found for this category
+                        No funds match the current screener filters
                       </Box>
                     </Box>
                   ) : (
@@ -840,13 +895,34 @@ const Screener = () => {
                             sx={{
                               color: 'var(--text-1)',
                               fontWeight: 500,
-                              maxWidth: '280px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
+                              maxWidth: '320px',
+                              minWidth: '260px',
+                              whiteSpace: 'normal',
                               transition: 'color var(--transition)',
                             }}
                           >
-                            {fund.fundname || fund._name || 'N/A'}
+                            <Box sx={{ display: 'grid', gap: '6px', minWidth: 0 }}>
+                              <Box
+                                sx={{
+                                  color: 'inherit',
+                                  fontWeight: 500,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {fund.fundname || fund._name || 'N/A'}
+                              </Box>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {fund.ticker && <MetaChip mono>{fund.ticker}</MetaChip>}
+                                {fund.securitytype && <MetaChip>{fund.securitytype}</MetaChip>}
+                                {(fund.categoryname || fund.globalcategoryname) && (
+                                  <MetaChip>
+                                    {fund.categoryname || fund.globalcategoryname}
+                                  </MetaChip>
+                                )}
+                              </Box>
+                            </Box>
                           </TD>
 
                           {activeColumns.map((col) => {
@@ -1225,6 +1301,33 @@ const LegendItem = ({ color, opacity, label }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
     <Box sx={{ width: '10px', height: '10px', borderRadius: '3px', background: color, opacity }} />
     {label}
+  </Box>
+);
+
+const MetaChip = ({ children, mono = false }) => (
+  <Box
+    component="span"
+    sx={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      minWidth: 0,
+      maxWidth: '100%',
+      px: '8px',
+      py: '4px',
+      borderRadius: '999px',
+      background: 'rgba(148, 163, 184, 0.1)',
+      border: '1px solid rgba(148, 163, 184, 0.12)',
+      color: 'var(--text-4)',
+      fontSize: '10px',
+      fontWeight: 600,
+      lineHeight: 1,
+      fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }}
+  >
+    {children}
   </Box>
 );
 

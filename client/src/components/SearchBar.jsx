@@ -3,15 +3,19 @@ import Box from '@mui/material/Box';
 
 const SearchBar = ({
   onSearch,
-  placeholder = 'Search funds...',
+  placeholder = 'Search funds…',
   debounceMs = 500,
   disabled = false,
   instant = false,
   id = 'fund-search',
+  value,
+  onValueChange,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(value ?? '');
   const onSearchRef = useRef(onSearch);
   const inputRef = useRef(null);
+  const searchTerm = isControlled ? value : internalValue;
 
   useEffect(() => {
     onSearchRef.current = onSearch;
@@ -63,10 +67,18 @@ const SearchBar = ({
         type="search"
         role="searchbox"
         aria-label="Search funds"
+        name={id}
+        autoComplete="off"
         placeholder={placeholder}
         value={searchTerm}
         disabled={disabled}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={(e) => {
+          const nextValue = e.target.value;
+          if (!isControlled) {
+            setInternalValue(nextValue);
+          }
+          onValueChange?.(nextValue);
+        }}
         sx={{
           width: '100%',
           background: 'var(--bg-surface)',

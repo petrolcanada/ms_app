@@ -10,7 +10,16 @@ const SORTABLE_COLUMNS = Object.fromEntries(ALL_SCREENER_SORT_KEYS.map((k) => [k
  * ORDER BY / LIMIT / OFFSET and uses COUNT(*) OVER() to return
  * the unfiltered total in a single round-trip.
  */
-const queryScreener = async ({ category, type, asofDate, sortBy, sortDir, limit, offset }) => {
+const queryScreener = async ({
+  search,
+  category,
+  type,
+  asofDate,
+  sortBy,
+  sortDir,
+  limit,
+  offset,
+}) => {
   const args = [];
   const params = [];
   let idx = 1;
@@ -40,6 +49,19 @@ const queryScreener = async ({ category, type, asofDate, sortBy, sortDir, limit,
   const direction = sortDir === 'asc' ? 'ASC' : 'DESC';
   const nullsOrder = 'NULLS LAST';
 
+  let whereClause = '';
+  if (search) {
+    whereClause = `
+      WHERE (
+        fundname ILIKE $${idx}
+        OR ticker ILIKE $${idx}
+        OR _id ILIKE $${idx}
+      )
+    `;
+    params.push(`%${search}%`);
+    idx++;
+  }
+
   const limitParam = `$${idx}`;
   const offsetParam = `$${idx + 1}`;
   params.push(limit, offset);
@@ -47,6 +69,7 @@ const queryScreener = async ({ category, type, asofDate, sortBy, sortDir, limit,
   const queryText = `
     SELECT *, COUNT(*) OVER() AS _total_count
     FROM ${fnCall}
+    ${whereClause}
     ORDER BY ${sortColumn} ${direction} ${nullsOrder}, _id ASC
     LIMIT ${limitParam} OFFSET ${offsetParam}
   `;

@@ -17,18 +17,35 @@ const Watchlist = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '32px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          mb: '32px',
+        }}
+      >
         <Box>
-          <Box component="h1" sx={{
-            fontFamily: 'var(--font-head)', fontSize: '24px', fontWeight: 600,
-            color: 'var(--text-1)', letterSpacing: '-0.03em', mb: '4px',
-          }}>
+          <Box
+            component="h1"
+            sx={{
+              fontFamily: 'var(--font-head)',
+              fontSize: '24px',
+              fontWeight: 600,
+              color: 'var(--text-1)',
+              letterSpacing: '-0.03em',
+              mb: '4px',
+            }}
+          >
             Watchlist
           </Box>
           <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>
             Your saved funds
             {items.length > 0 && (
-              <span style={{ color: 'var(--text-2)' }}> · {items.length} fund{items.length !== 1 ? 's' : ''}</span>
+              <span style={{ color: 'var(--text-2)' }}>
+                {' '}
+                · {items.length} fund{items.length !== 1 ? 's' : ''}
+              </span>
             )}
           </Box>
         </Box>
@@ -43,36 +60,47 @@ const Watchlist = () => {
             >
               Compare ({items.length})
             </ActionButton>
-            <ActionButton onClick={clear} danger>Clear All</ActionButton>
+            <ActionButton onClick={clear} danger>
+              Clear All
+            </ActionButton>
           </Box>
         )}
       </Box>
 
       {/* Empty State */}
       {items.length === 0 && (
-        <Box sx={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)', padding: '60px 20px', textAlign: 'center',
-        }}>
+        <Box
+          sx={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '60px 20px',
+            textAlign: 'center',
+          }}
+        >
           <Box sx={{ fontSize: '48px', mb: '16px', opacity: 0.3 }}>&#9734;</Box>
           <Box sx={{ fontSize: '15px', color: 'var(--text-2)', mb: '8px', fontWeight: 500 }}>
             Your watchlist is empty
           </Box>
           <Box sx={{ fontSize: '13px', color: 'var(--text-4)', mb: '24px' }}>
-            Bookmark funds from the Explorer or Fund Detail page to track them here
+            Bookmark funds from the screener or fund detail page to track them here
           </Box>
-          <ActionButton onClick={() => navigate('/explorer')} primary>
-            Go to Explorer
+          <ActionButton onClick={() => navigate('/screener')} primary>
+            Open Screener
           </ActionButton>
         </Box>
       )}
 
       {/* Fund List */}
       {items.length > 0 && (
-        <Box sx={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)', overflow: 'hidden',
-        }}>
+        <Box
+          sx={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+          }}
+        >
           <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
             <Box component="thead">
               <Box component="tr">
@@ -81,12 +109,20 @@ const Watchlist = () => {
                     component="th"
                     key={col || 'actions'}
                     sx={{
-                      fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600,
-                      color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em',
-                      padding: '14px 16px', textAlign: 'left',
-                      borderBottom: '1px solid var(--border)', background: 'var(--bg-base)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--text-3)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      padding: '14px 16px',
+                      textAlign: 'left',
+                      borderBottom: '1px solid var(--border)',
+                      background: 'var(--bg-base)',
                     }}
-                  >{col}</Box>
+                  >
+                    {col}
+                  </Box>
                 ))}
               </Box>
             </Box>
@@ -107,47 +143,93 @@ const Watchlist = () => {
                   }}
                   onClick={() => navigate(`/funds/${fund._id}`)}
                 >
-                  <Box component="td" className="fund-name-cell" sx={{
-                    fontSize: '13px', padding: '14px 16px', color: 'var(--text-1)',
-                    fontWeight: 500, transition: 'color var(--transition)',
-                    maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
+                  <Box
+                    component="td"
+                    className="fund-name-cell"
+                    sx={{
+                      fontSize: '13px',
+                      padding: '14px 16px',
+                      color: 'var(--text-1)',
+                      fontWeight: 500,
+                      transition: 'color var(--transition)',
+                      maxWidth: '320px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {fund.fundname || 'N/A'}
                   </Box>
-                  <Box component="td" sx={{
-                    fontSize: '13px', padding: '14px 16px', color: 'var(--text-2)',
-                    fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap',
-                  }}>
+                  <Box
+                    component="td"
+                    sx={{
+                      fontSize: '13px',
+                      padding: '14px 16px',
+                      color: 'var(--text-2)',
+                      fontFamily: 'var(--font-mono)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {fund.ticker || '—'}
                   </Box>
-                  <Box component="td" sx={{
-                    fontSize: '13px', padding: '14px 16px', color: 'var(--text-2)', whiteSpace: 'nowrap',
-                  }}>
+                  <Box
+                    component="td"
+                    sx={{
+                      fontSize: '13px',
+                      padding: '14px 16px',
+                      color: 'var(--text-2)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {fund.securitytype || '—'}
                   </Box>
-                  <Box component="td" sx={{
-                    fontSize: '13px', padding: '14px 16px', color: 'var(--text-2)',
-                    maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
+                  <Box
+                    component="td"
+                    sx={{
+                      fontSize: '13px',
+                      padding: '14px 16px',
+                      color: 'var(--text-2)',
+                      maxWidth: '200px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {fund.categoryname || '—'}
                   </Box>
-                  <Box component="td" sx={{
-                    fontSize: '12px', padding: '14px 16px', color: 'var(--text-4)',
-                    fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap',
-                  }}>
+                  <Box
+                    component="td"
+                    sx={{
+                      fontSize: '12px',
+                      padding: '14px 16px',
+                      color: 'var(--text-4)',
+                      fontFamily: 'var(--font-mono)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {fund.addedAt ? new Date(fund.addedAt).toLocaleDateString('en-CA') : '—'}
                   </Box>
                   <Box component="td" sx={{ padding: '14px 16px', textAlign: 'right' }}>
                     <Box
                       component="button"
-                      onClick={(e) => { e.stopPropagation(); remove(fund._id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(fund._id);
+                      }}
                       sx={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-4)', fontSize: '16px', padding: '4px 8px',
-                        borderRadius: '4px', transition: 'all var(--transition)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-4)',
+                        fontSize: '16px',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        transition: 'all var(--transition)',
                         '&:hover': { color: 'var(--red)', background: 'var(--red-soft)' },
                       }}
-                    >&times;</Box>
+                    >
+                      &times;
+                    </Box>
                   </Box>
                 </Box>
               ))}
@@ -178,15 +260,26 @@ const ActionButton = ({ children, onClick, primary, danger, disabled }) => (
           : '1px solid var(--border)',
       borderRadius: 'var(--radius)',
       color: primary ? 'var(--emerald)' : danger ? 'var(--red)' : 'var(--text-2)',
-      fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 500,
-      padding: '8px 16px', cursor: disabled ? 'default' : 'pointer',
+      fontFamily: 'var(--font-body)',
+      fontSize: '12px',
+      fontWeight: 500,
+      padding: '8px 16px',
+      cursor: disabled ? 'default' : 'pointer',
       opacity: disabled ? 0.4 : 1,
       transition: 'all var(--transition)',
-      '&:hover': disabled ? {} : {
-        background: primary ? 'rgba(16,185,129,0.18)' : danger ? 'var(--red-soft)' : 'var(--bg-surface-hover)',
-      },
+      '&:hover': disabled
+        ? {}
+        : {
+            background: primary
+              ? 'rgba(16,185,129,0.18)'
+              : danger
+                ? 'var(--red-soft)'
+                : 'var(--bg-surface-hover)',
+          },
     }}
-  >{children}</Box>
+  >
+    {children}
+  </Box>
 );
 
 export default Watchlist;

@@ -6,7 +6,6 @@ import { usePageView } from '../hooks/useAnalytics';
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Dashboard', end: true },
-  { to: '/explorer', label: 'Explorer' },
   { to: '/screener', label: 'Screener' },
   { to: '/compare', label: 'Compare' },
   { to: '/watchlist', label: 'Watchlist' },

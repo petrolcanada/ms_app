@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -14,7 +14,6 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
-import FundList from './components/FundList';
 import FundDetail from './components/FundDetail';
 import Screener from './components/Screener';
 import Compare from './components/Compare';
@@ -105,7 +104,7 @@ function App() {
                       element={<Layout themeMode={themeMode} onToggleTheme={toggleThemeMode} />}
                     >
                       <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/explorer" element={<FundList />} />
+                      <Route path="/explorer" element={<Navigate to="/screener" replace />} />
                       <Route path="/funds/:id" element={<FundDetail />} />
                       <Route path="/screener" element={<Screener />} />
                       <Route path="/compare" element={<Compare />} />

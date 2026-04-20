@@ -8,6 +8,7 @@ const PER_PAGE = 25;
  */
 const getScreener = async (req, res, next) => {
   try {
+    const search = req.query.search || '';
     const category = req.query.category || '';
     const type = req.query.type || '';
     const asofDate = req.asofDate || req.query.asofDate || '';
@@ -29,11 +30,10 @@ const getScreener = async (req, res, next) => {
       });
     }
 
-    const effectiveLimit = planLimit < Infinity
-      ? Math.min(pageSize, planLimit - offset)
-      : pageSize;
+    const effectiveLimit = planLimit < Infinity ? Math.min(pageSize, planLimit - offset) : pageSize;
 
     const result = await getScreenerData({
+      search: search || undefined,
       category: category || undefined,
       type: type || undefined,
       asofDate: asofDate || undefined,
@@ -54,9 +54,7 @@ const getScreener = async (req, res, next) => {
         pageSize,
         totalPages: Math.ceil(visibleTotal / pageSize),
       },
-      ...(planLimit < Infinity && actualTotal > planLimit
-        ? { limited: true, planLimit }
-        : {}),
+      ...(planLimit < Infinity && actualTotal > planLimit ? { limited: true, planLimit } : {}),
     });
   } catch (err) {
     console.error('Error fetching screener data:', err);

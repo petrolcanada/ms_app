@@ -11,6 +11,7 @@ import { mapScreenerRow } from '../config/screenerMetrics';
  * to sort or truncate locally.
  */
 export const useScreener = ({
+  search,
   category,
   type,
   asofDate,
@@ -20,9 +21,10 @@ export const useScreener = ({
   limit = 25,
 } = {}) => {
   const query = useQuery({
-    queryKey: ['screener', { category, type, asofDate, sortBy, sortDir, page, limit }],
+    queryKey: ['screener', { search, category, type, asofDate, sortBy, sortDir, page, limit }],
     queryFn: async () => {
       const params = {};
+      if (search) params.search = search;
       if (category) params.category = category;
       if (type) params.type = type;
       if (asofDate) params.asofDate = asofDate;

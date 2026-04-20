@@ -63,7 +63,7 @@ const pricingTiers = [
     name: 'Free',
     price: '$0',
     description: 'A clean entry point for individual investors.',
-    features: ['Explorer access', 'Basic screening', '2-fund compare', '5 watchlist slots'],
+    features: ['Screener access', 'Core screening', '2-fund compare', '5 watchlist slots'],
     cta: 'Start free',
     to: '/signup',
     featured: false,

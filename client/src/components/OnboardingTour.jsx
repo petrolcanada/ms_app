@@ -17,15 +17,16 @@ const steps = [
     link: '/dashboard',
   },
   {
-    title: 'Fund Explorer',
+    title: 'Fund Screener',
     description:
-      'Browse thousands of mutual funds and ETFs with clearer search and category views.',
+      'Search, filter, and rank thousands of mutual funds and ETFs from one merged desk.',
     badge: '03',
-    link: '/explorer',
+    link: '/screener',
   },
   {
-    title: 'Smart Screener',
-    description: 'Rank funds by returns, fees, Sharpe ratio, and more with stronger hierarchy.',
+    title: 'Custom Columns',
+    description:
+      'Shape the table around returns, fees, Sharpe ratio, ratings, and other live metrics.',
     badge: '04',
     link: '/screener',
   },

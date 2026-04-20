@@ -37,7 +37,7 @@ const FundDetail = () => {
     if (location.key !== 'default') {
       navigate(-1);
     } else {
-      navigate('/explorer');
+      navigate('/screener');
     }
   };
   const [asofDate, setAsofDate] = useState(searchParams.get('asof') || '');

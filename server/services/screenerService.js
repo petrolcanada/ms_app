@@ -3,17 +3,35 @@ const { queryScreener } = require('../queries/screenerQueries');
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const cache = new Map();
 
-const cacheKey = ({ category, type, asofDate, sortBy, sortDir, limit, offset }) =>
-  `${category || ''}|${type || ''}|${asofDate || ''}|${sortBy || ''}|${sortDir || ''}|${limit}|${offset}`;
+const cacheKey = ({ search, category, type, asofDate, sortBy, sortDir, limit, offset }) =>
+  `${search || ''}|${category || ''}|${type || ''}|${asofDate || ''}|${sortBy || ''}|${sortDir || ''}|${limit}|${offset}`;
 
-const getScreenerData = async ({ category, type, asofDate, sortBy, sortDir, limit, offset }) => {
-  const key = cacheKey({ category, type, asofDate, sortBy, sortDir, limit, offset });
+const getScreenerData = async ({
+  search,
+  category,
+  type,
+  asofDate,
+  sortBy,
+  sortDir,
+  limit,
+  offset,
+}) => {
+  const key = cacheKey({ search, category, type, asofDate, sortBy, sortDir, limit, offset });
   const cached = cache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return cached.value;
   }
 
-  const { rows, total } = await queryScreener({ category, type, asofDate, sortBy, sortDir, limit, offset });
+  const { rows, total } = await queryScreener({
+    search,
+    category,
+    type,
+    asofDate,
+    sortBy,
+    sortDir,
+    limit,
+    offset,
+  });
   const value = { data: rows, meta: { total } };
 
   cache.set(key, { value, ts: Date.now() });

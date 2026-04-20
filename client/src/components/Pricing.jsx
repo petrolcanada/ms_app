@@ -11,8 +11,8 @@ const tiers = [
     price: '$0',
     description: 'For investors who want a clearer entry point into the research workflow.',
     features: [
-      'Explorer access',
-      'Basic screening',
+      'Screener access',
+      'Core screening',
       '2-fund compare',
       '5 watchlist slots',
       'Dashboard overview',
