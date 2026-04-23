@@ -8,6 +8,7 @@
     "server"
   ],
   "scripts": {
+    "dev": "concurrently -k -n server,client -c yellow,cyan \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm start --workspace=server",
     "dev:client": "npm start --workspace=client",
     "build": "npm run build --workspace=client",
@@ -26,6 +27,7 @@
     ]
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1"
