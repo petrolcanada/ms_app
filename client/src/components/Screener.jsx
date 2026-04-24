@@ -1264,7 +1264,7 @@ const MerCell = ({ mer }) => {
               height: '100%',
               width: `${barWidth}%`,
               borderRadius: '2px',
-              background: barColor,
+              background: `linear-gradient(90deg, rgba(255,255,255,0.22), ${barColor})`,
             }}
           />
         </Box>

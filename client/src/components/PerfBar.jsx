@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 
 const PerfBar = ({ label, value, percentage, labelWidth = '60px' }) => {
   const isPositive = percentage >= 0;
+  const barWidth = Math.min(Math.abs(percentage), 100);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', mb: '12px' }}>
@@ -17,27 +18,32 @@ const PerfBar = ({ label, value, percentage, labelWidth = '60px' }) => {
       >
         {label}
       </Box>
-      <Box
-        sx={{
-          flex: 1,
-          height: '24px',
-          background: 'var(--bar-track)',
-          borderRadius: '4px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+      <Box sx={{ flex: 1, py: '2px' }}>
         <Box
           sx={{
-            height: '100%',
-            width: `${Math.min(Math.abs(percentage), 100)}%`,
-            borderRadius: '4px',
-            background: isPositive
-              ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.3), var(--emerald))'
-              : 'linear-gradient(90deg, var(--red), rgba(239, 68, 68, 0.3))',
-            transition: 'width 800ms cubic-bezier(0.22, 1, 0.36, 1)',
+            height: '10px',
+            borderRadius: '999px',
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
+            border: '1px solid rgba(255,255,255,0.06)',
+            overflow: 'hidden',
           }}
-        />
+        >
+          <Box
+            sx={{
+              height: '100%',
+              width: `${barWidth}%`,
+              minWidth: barWidth > 0 ? '10px' : 0,
+              borderRadius: '999px',
+              background: isPositive
+                ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.28), var(--emerald))'
+                : 'linear-gradient(90deg, rgba(239, 68, 68, 0.28), var(--red))',
+              boxShadow: isPositive
+                ? 'inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px rgba(16, 185, 129, 0.32)'
+                : 'inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px rgba(239, 68, 68, 0.28)',
+              transition: 'width 800ms cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          />
+        </Box>
       </Box>
       <Box
         sx={{

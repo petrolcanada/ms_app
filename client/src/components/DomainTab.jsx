@@ -32,7 +32,13 @@ const DomainCard = ({ title, children, fullWidth = false }) => (
 );
 
 const DomainGrid = ({ children }) => (
-  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: '16px' }}>
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+      gap: '16px',
+    }}
+  >
     {children}
   </Box>
 );

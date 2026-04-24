@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import useDashboard from '../hooks/useDashboard';
 import useAvailableDates from '../hooks/useAvailableDates';
-import StatCard from './StatCard';
 import SEO from './SEO';
 import OnboardingTour from './OnboardingTour';
 
@@ -290,32 +289,6 @@ const Dashboard = () => {
             ))}
           </Box>
         </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
-          gap: '16px',
-          mb: '24px',
-        }}
-      >
-        <StatCard
-          label="Total Funds"
-          value={stats?.total_funds ? Number(stats.total_funds).toLocaleString() : '--'}
-        />
-        <StatCard label="Total AUM" value={formatAum(stats?.total_aum)} />
-        <StatCard
-          label="Avg 1-Year Return"
-          value={formatReturn(stats?.avg_return_1yr)}
-          valueColor={
-            avgReturnPositive == null
-              ? undefined
-              : avgReturnPositive
-                ? 'var(--emerald)'
-                : 'var(--red)'
-          }
-        />
       </Box>
 
       <DashboardGroup

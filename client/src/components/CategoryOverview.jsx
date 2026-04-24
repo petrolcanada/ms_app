@@ -5,6 +5,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {
   CartesianGrid,
   Cell,
+  LabelList,
+  ReferenceLine,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -16,6 +18,7 @@ import {
 import AsOfDateSelector from './AsOfDateSelector';
 import SEO from './SEO';
 import StatCard from './StatCard';
+import useCategories from '../hooks/useCategories';
 import useCategoryConstituents from '../hooks/useCategoryConstituents';
 
 const PANEL_SX = {
@@ -66,6 +69,26 @@ const axisStyle = {
   fontFamily: 'var(--font-mono)',
 };
 
+const selectStyle = {
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius)',
+  color: 'var(--text-2)',
+  fontFamily: 'var(--font-body)',
+  fontSize: '13px',
+  padding: '10px 16px',
+  cursor: 'pointer',
+  outline: 'none',
+  transition: 'all 180ms ease',
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: '32px',
+  whiteSpace: 'nowrap',
+};
+
 const formatDateLabel = (iso) => {
   if (!iso) return '--';
   const date = new Date(`${iso}T00:00:00`);
@@ -82,6 +105,308 @@ const formatPercent = (value, { signed = false, digits = 2 } = {}) => {
   const number = Number(value);
   const prefix = signed && number > 0 ? '+' : '';
   return `${prefix}${number.toFixed(digits)}%`;
+};
+
+const formatAxisPercent = (value, { digits = 2 } = {}) => {
+  if (value == null || Number.isNaN(Number(value))) return '--';
+  return `${new Intl.NumberFormat('en-CA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  }).format(Number(value))}%`;
+};
+
+const formatPinnedFundLabel = (value) => {
+  if (!value) return '--';
+  const compact = value
+    .replace(/\b(Fund|Portfolio|Trust|ETF|Series|Class)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (compact.length <= 28) return compact;
+  return `${compact.slice(0, 25).trimEnd()}...`;
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const normalizeRange = (value, min, max, fallback = 0.5) => {
+  if (value == null || !Number.isFinite(value)) return fallback;
+  if (min == null || max == null || min === max) return fallback;
+  return clamp((value - min) / (max - min), 0, 1);
+};
+
+const ratioToColor = (score) => {
+  const low = { r: 239, g: 68, b: 68 };
+  const high = { r: 16, g: 185, b: 129 };
+  const blend = clamp(score ?? 0.5, 0, 1);
+  const r = Math.round(low.r + (high.r - low.r) * blend);
+  const g = Math.round(low.g + (high.g - low.g) * blend);
+  const b = Math.round(low.b + (high.b - low.b) * blend);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+const SCATTER_LABEL_PLACEMENTS = [
+  {
+    name: 'upperRight',
+    labelDx: 28,
+    labelDy: -38,
+    textAnchor: 'start',
+    boxWidth: 156,
+    xOffset: 0.12,
+    yOffset: -0.14,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'upperLeft',
+    labelDx: -28,
+    labelDy: -38,
+    textAnchor: 'end',
+    boxWidth: 156,
+    xOffset: -0.12,
+    yOffset: -0.14,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'lowerRight',
+    labelDx: 28,
+    labelDy: 38,
+    textAnchor: 'start',
+    boxWidth: 156,
+    xOffset: 0.12,
+    yOffset: 0.14,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'lowerLeft',
+    labelDx: -28,
+    labelDy: 38,
+    textAnchor: 'end',
+    boxWidth: 156,
+    xOffset: -0.12,
+    yOffset: 0.14,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'right',
+    labelDx: 34,
+    labelDy: -8,
+    textAnchor: 'start',
+    boxWidth: 156,
+    xOffset: 0.14,
+    yOffset: -0.02,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'left',
+    labelDx: -34,
+    labelDy: -8,
+    textAnchor: 'end',
+    boxWidth: 156,
+    xOffset: -0.14,
+    yOffset: -0.02,
+    boxWidthNorm: 0.22,
+  },
+  {
+    name: 'farUpperRight',
+    labelDx: 52,
+    labelDy: -54,
+    textAnchor: 'start',
+    boxWidth: 160,
+    xOffset: 0.2,
+    yOffset: -0.2,
+    boxWidthNorm: 0.23,
+  },
+  {
+    name: 'farUpperLeft',
+    labelDx: -52,
+    labelDy: -54,
+    textAnchor: 'end',
+    boxWidth: 160,
+    xOffset: -0.2,
+    yOffset: -0.2,
+    boxWidthNorm: 0.23,
+  },
+  {
+    name: 'farLowerRight',
+    labelDx: 52,
+    labelDy: 54,
+    textAnchor: 'start',
+    boxWidth: 160,
+    xOffset: 0.2,
+    yOffset: 0.2,
+    boxWidthNorm: 0.23,
+  },
+  {
+    name: 'farLowerLeft',
+    labelDx: -52,
+    labelDy: 54,
+    textAnchor: 'end',
+    boxWidth: 160,
+    xOffset: -0.2,
+    yOffset: 0.2,
+    boxWidthNorm: 0.23,
+  },
+  {
+    name: 'outerLeft',
+    labelDx: -82,
+    labelDy: -8,
+    textAnchor: 'end',
+    boxWidth: 164,
+    xOffset: -0.28,
+    yOffset: -0.02,
+    boxWidthNorm: 0.24,
+  },
+  {
+    name: 'outerLowerLeft',
+    labelDx: -86,
+    labelDy: 42,
+    textAnchor: 'end',
+    boxWidth: 164,
+    xOffset: -0.3,
+    yOffset: 0.15,
+    boxWidthNorm: 0.24,
+  },
+  {
+    name: 'outerRight',
+    labelDx: 82,
+    labelDy: -8,
+    textAnchor: 'start',
+    boxWidth: 164,
+    xOffset: 0.28,
+    yOffset: -0.02,
+    boxWidthNorm: 0.24,
+  },
+  {
+    name: 'outerLowerRight',
+    labelDx: 86,
+    labelDy: 42,
+    textAnchor: 'start',
+    boxWidth: 164,
+    xOffset: 0.3,
+    yOffset: 0.15,
+    boxWidthNorm: 0.24,
+  },
+];
+
+const SCATTER_LABEL_SAFE_BOUNDS = {
+  left: -0.34,
+  right: 1.34,
+  top: -0.22,
+  bottom: 1.22,
+};
+
+const normalizeScatterCoord = (value, min, max) => {
+  if (min == null || max == null || min === max) return 0.5;
+  return clamp((value - min) / (max - min), 0, 1);
+};
+
+const buildScatterPlacementRect = (point, placement, bounds) => {
+  const xNorm = normalizeScatterCoord(point.x, bounds.xMin, bounds.xMax);
+  const yNorm = normalizeScatterCoord(point.y, bounds.yMin, bounds.yMax);
+  const centerX = xNorm + placement.xOffset;
+  const centerY = 1 - yNorm + placement.yOffset;
+  const width = placement.boxWidthNorm;
+  const height = 0.085;
+  const left = placement.textAnchor === 'start' ? centerX - 0.012 : centerX - width + 0.012;
+  const top = centerY - height / 2;
+
+  return {
+    left,
+    right: left + width,
+    top,
+    bottom: top + height,
+    centerX,
+    centerY,
+  };
+};
+
+const rectsOverlap = (left, right) =>
+  left.left < right.right &&
+  left.right > right.left &&
+  left.top < right.bottom &&
+  left.bottom > right.top;
+
+const scoreScatterPlacement = (point, placement, points, bounds, reservedRects = []) => {
+  const rect = buildScatterPlacementRect(point, placement, bounds);
+  const xNorm = normalizeScatterCoord(point.x, bounds.xMin, bounds.xMax);
+  const yNorm = 1 - normalizeScatterCoord(point.y, bounds.yMin, bounds.yMax);
+  let score = 0;
+
+  const overflow =
+    Math.max(0, SCATTER_LABEL_SAFE_BOUNDS.left - rect.left) +
+    Math.max(0, rect.right - SCATTER_LABEL_SAFE_BOUNDS.right) +
+    Math.max(0, SCATTER_LABEL_SAFE_BOUNDS.top - rect.top) +
+    Math.max(0, rect.bottom - SCATTER_LABEL_SAFE_BOUNDS.bottom);
+
+  score += overflow * 80;
+
+  points.forEach((other) => {
+    if (other.pointId === point.pointId) return;
+
+    const otherX = normalizeScatterCoord(other.x, bounds.xMin, bounds.xMax);
+    const otherY = 1 - normalizeScatterCoord(other.y, bounds.yMin, bounds.yMax);
+    const bubblePad = 0.03 + ((other.bubbleSize || 0) / 100) * 0.04;
+    const bubbleRect = {
+      left: otherX - bubblePad,
+      right: otherX + bubblePad,
+      top: otherY - bubblePad,
+      bottom: otherY + bubblePad,
+    };
+
+    if (rectsOverlap(rect, bubbleRect)) {
+      score += 60;
+    }
+
+    const connectorRect = {
+      left: Math.min(xNorm, rect.centerX) - 0.03,
+      right: Math.max(xNorm, rect.centerX) + 0.03,
+      top: Math.min(yNorm, rect.centerY) - 0.03,
+      bottom: Math.max(yNorm, rect.centerY) + 0.03,
+    };
+
+    if (rectsOverlap(connectorRect, bubbleRect)) {
+      score += 12;
+    }
+
+    const dx = otherX - rect.centerX;
+    const dy = otherY - rect.centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < 0.16) {
+      score += (0.16 - distance) * 80;
+    }
+  });
+
+  reservedRects.forEach((reserved) => {
+    if (rectsOverlap(rect, reserved)) {
+      score += 100;
+    }
+  });
+
+  return { score, rect };
+};
+
+const chooseScatterPlacement = (point, points, bounds, reservedRects = [], placements) => {
+  if (!point) return null;
+
+  let best = null;
+
+  (placements || SCATTER_LABEL_PLACEMENTS).forEach((placement) => {
+    const candidate = scoreScatterPlacement(point, placement, points, bounds, reservedRects);
+    if (!best || candidate.score < best.score) {
+      best = { ...candidate, placement };
+    }
+  });
+
+  return best;
+};
+
+const buildPinnedScatterFund = (fund, placement) => {
+  if (!fund) return null;
+
+  return {
+    ...fund,
+    pinLabel: formatPinnedFundLabel(fund.fundname),
+    ...(placement || SCATTER_LABEL_PLACEMENTS[0]),
+  };
 };
 
 const formatRating = (value) => {
@@ -165,6 +490,103 @@ const buildRatingDistribution = (funds) => {
   };
 };
 
+const pickScatterStandouts = (points) => {
+  const ratioPoints = points.filter(
+    (point) => point.mer > 0 && Number.isFinite(point.return1yr / point.mer),
+  );
+
+  if (!ratioPoints.length) return { highest: null, lowest: null };
+
+  const sorted = [...ratioPoints].sort((left, right) => {
+    const leftRatio = left.return1yr / left.mer;
+    const rightRatio = right.return1yr / right.mer;
+
+    if (rightRatio !== leftRatio) return rightRatio - leftRatio;
+    if (right.return1yr !== left.return1yr) return right.return1yr - left.return1yr;
+    if (left.mer !== right.mer) return left.mer - right.mer;
+    return right.aum - left.aum;
+  });
+
+  const highest = sorted[0] || null;
+  const lowest = sorted[sorted.length - 1] || null;
+  const uniqueLowest =
+    lowest &&
+    (!highest || `${lowest.ticker}-${lowest.fundname}` !== `${highest.ticker}-${highest.fundname}`)
+      ? lowest
+      : null;
+  const bounds = {
+    xMin: Math.min(...points.map((point) => point.x)),
+    xMax: Math.max(...points.map((point) => point.x)),
+    yMin: Math.min(...points.map((point) => point.y)),
+    yMax: Math.max(...points.map((point) => point.y)),
+  };
+  const reservedRects = [];
+  const highestPlacement = chooseScatterPlacement(highest, points, bounds, reservedRects);
+
+  if (highestPlacement?.rect) reservedRects.push(highestPlacement.rect);
+  const lowestPlacementChoices = SCATTER_LABEL_PLACEMENTS.filter((placement) =>
+    [
+      'outerLowerLeft',
+      'outerLowerRight',
+      'farLowerLeft',
+      'farLowerRight',
+      'lowerLeft',
+      'lowerRight',
+    ].includes(placement.name),
+  );
+  const lowestPlacement = uniqueLowest
+    ? chooseScatterPlacement(uniqueLowest, points, bounds, reservedRects, lowestPlacementChoices)
+    : null;
+
+  return {
+    highest: buildPinnedScatterFund(highest, highestPlacement?.placement),
+    lowest: uniqueLowest
+      ? {
+          ...buildPinnedScatterFund(uniqueLowest, lowestPlacement?.placement),
+          forceBelowBubble: true,
+        }
+      : null,
+  };
+};
+
+const buildScatterData = (funds) => {
+  const basePoints = funds
+    .filter((fund) => fund.fees?.mer != null && fund.performance?.return1yr != null)
+    .map((fund) => {
+      const aum = fund.assets?.fundnetassets != null ? Number(fund.assets.fundnetassets) : 0;
+      const mer = Number(fund.fees.mer);
+      const return1yr = Number(fund.performance.return1yr);
+      const ratio = mer > 0 ? return1yr / mer : null;
+
+      return {
+        pointId: `${fund.ticker || '--'}-${fund.fundname || 'Unknown fund'}`,
+        x: mer,
+        y: return1yr,
+        aum,
+        mer,
+        return1yr,
+        ratio,
+        fundname: fund.fundname || 'Unknown fund',
+        ticker: fund.ticker || '--',
+        rating: fund.ratings?.ratingoverall != null ? Number(fund.ratings.ratingoverall) : null,
+      };
+    });
+
+  const ratioValues = basePoints.map((point) => point.ratio).filter((value) => value != null);
+  const ratioMin = ratioValues.length ? Math.min(...ratioValues) : null;
+  const ratioMax = ratioValues.length ? Math.max(...ratioValues) : null;
+
+  return basePoints.map((point) => {
+    const ratioScore = normalizeRange(point.ratio, ratioMin, ratioMax, 0.5);
+    return {
+      ...point,
+      bubbleSize: point.aum,
+      ratioScore,
+      color: ratioToColor(ratioScore),
+    };
+  });
+};
+
 const formatBucketSample = (count, noun) => {
   if (!count) return `No ${noun.toLowerCase()} disclosures`;
   return `${formatNumber(count)} ${noun.toLowerCase()} disclosures`;
@@ -175,6 +597,12 @@ const CategoryOverview = () => {
   const navigate = useNavigate();
   const category = decodeURIComponent(name || '');
   const [asofDate, setAsofDate] = useState('');
+  const { data: categories = [] } = useCategories();
+  const categoryOptions = useMemo(() => {
+    const next = new Set(categories.filter(Boolean));
+    if (category) next.add(category);
+    return [...next].sort((left, right) => left.localeCompare(right));
+  }, [categories, category]);
 
   const handleOpenScreener = () => {
     const params = new URLSearchParams();
@@ -182,6 +610,11 @@ const CategoryOverview = () => {
     if (asofDate) params.set('asofDate', asofDate);
     const query = params.toString();
     navigate(query ? `/screener?${query}` : '/screener');
+  };
+
+  const handleCategorySwitch = (nextCategory) => {
+    if (!nextCategory || nextCategory === category) return;
+    navigate(`/categories/${encodeURIComponent(nextCategory)}`);
   };
 
   const { data, isLoading, isError, error } = useCategoryConstituents(category, asofDate);
@@ -240,22 +673,7 @@ const CategoryOverview = () => {
     const aumDistribution = buildRangeDistribution(aumValues, AUM_BUCKETS);
     const ratingDistribution = buildRatingDistribution(funds);
 
-    const scatterData = funds
-      .filter((fund) => fund.fees?.mer != null && fund.performance?.return1yr != null)
-      .map((fund) => {
-        const aum = fund.assets?.fundnetassets != null ? Number(fund.assets.fundnetassets) : 0;
-        return {
-          x: Number(fund.fees.mer),
-          y: Number(fund.performance.return1yr),
-          z: Math.max(70, Math.log10(Math.max(aum, 1)) * 52),
-          aum,
-          mer: Number(fund.fees.mer),
-          return1yr: Number(fund.performance.return1yr),
-          fundname: fund.fundname || 'Unknown fund',
-          ticker: fund.ticker || '--',
-          rating: fund.ratings?.ratingoverall != null ? Number(fund.ratings.ratingoverall) : null,
-        };
-      });
+    const scatterData = buildScatterData(funds);
 
     const dominantMerBand = [...feeDistribution.buckets].sort(
       (left, right) => right.count - left.count,
@@ -263,12 +681,15 @@ const CategoryOverview = () => {
     const dominantReturnBand = [...returnDistribution.buckets].sort(
       (left, right) => right.count - left.count,
     )[0];
+    const medianMer = median(merValues);
+    const medianReturn1yr = median(return1yrValues);
+    const standoutScatterFunds = pickScatterStandouts(scatterData);
 
     return {
       avgMer: average(merValues),
-      medianMer: median(merValues),
+      medianMer,
       avgReturn1yr: average(return1yrValues),
-      medianReturn1yr: median(return1yrValues),
+      medianReturn1yr,
       avgReturn3yr: average(return3yrValues),
       avgRating: average(ratingValues),
       totalAum,
@@ -285,6 +706,7 @@ const CategoryOverview = () => {
       lowestMer,
       largestFunds,
       scatterData,
+      standoutScatterFunds,
       dominantMerBand,
       dominantReturnBand,
       returnSample: return1yrValues.length,
@@ -361,7 +783,7 @@ const CategoryOverview = () => {
             position: 'relative',
             zIndex: 1,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 320px' },
+            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 296px' },
             gap: '20px',
             alignItems: 'start',
           }}
@@ -401,6 +823,52 @@ const CategoryOverview = () => {
               }}
             >
               {category}
+            </Box>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gap: '6px',
+                maxWidth: '320px',
+                mb: '18px',
+              }}
+            >
+              <Box
+                sx={{
+                  fontSize: '11px',
+                  color: 'var(--text-4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontWeight: 700,
+                }}
+              >
+                Switch category
+              </Box>
+              <Box
+                component="select"
+                aria-label="Switch category"
+                value={category}
+                onChange={(e) => handleCategorySwitch(e.target.value)}
+                sx={{
+                  ...selectStyle,
+                  minHeight: '42px',
+                  '&:hover': {
+                    borderColor: 'var(--border-hover)',
+                    background: 'var(--bg-surface-hover)',
+                    color: 'var(--text-1)',
+                  },
+                  '&:focus': {
+                    borderColor: 'var(--accent)',
+                    boxShadow: '0 0 0 2px var(--accent-soft)',
+                  },
+                }}
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Box>
             </Box>
 
             <Box
@@ -497,6 +965,9 @@ const CategoryOverview = () => {
               background: 'rgba(255,255,255,0.03)',
               display: 'grid',
               gap: '14px',
+              width: '100%',
+              maxWidth: { xs: 'min(100%, 560px)', lg: 'none' },
+              justifySelf: { xs: 'start', lg: 'stretch' },
             }}
           >
             <Box
@@ -527,34 +998,42 @@ const CategoryOverview = () => {
               <AsOfDateSelector value={asofDate} onChange={setAsofDate} compact />
             </Box>
 
-            <HighlightRow
-              label="Most common MER band"
-              value={analytics.dominantMerBand?.label || '--'}
-              detail={formatBucketSample(analytics.merSample, 'MER')}
-            />
-            <HighlightRow
-              label="Most common 1Y band"
-              value={analytics.dominantReturnBand?.label || '--'}
-              detail={formatBucketSample(analytics.returnSample, 'return')}
-            />
-            <HighlightRow
-              label="Net flow posture"
-              value={formatMoneyCompact(analytics.netFlow1m, { signed: true })}
-              detail={
-                analytics.inflowShare != null
-                  ? `${formatPercent(analytics.inflowShare, { digits: 0 })} of disclosed funds were in inflow`
-                  : 'Flow data unavailable'
-              }
-            />
-            <HighlightRow
-              label="Top-10 capital share"
-              value={formatPercent(analytics.top10AumShare, { digits: 0 })}
-              detail={
-                analytics.totalAum
-                  ? `${formatMoneyCompact(analytics.totalAum)} aggregate AUM in category`
-                  : 'AUM disclosures unavailable'
-              }
-            />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: '1fr' },
+                gap: '12px',
+              }}
+            >
+              <SnapshotStat
+                label="MER band"
+                value={analytics.dominantMerBand?.label || '--'}
+                detail={formatBucketSample(analytics.merSample, 'MER')}
+              />
+              <SnapshotStat
+                label="1Y band"
+                value={analytics.dominantReturnBand?.label || '--'}
+                detail={formatBucketSample(analytics.returnSample, 'return')}
+              />
+              <SnapshotStat
+                label="Net flow"
+                value={formatMoneyCompact(analytics.netFlow1m, { signed: true })}
+                detail={
+                  analytics.inflowShare != null
+                    ? `${formatPercent(analytics.inflowShare, { digits: 0 })} in inflow`
+                    : 'Flow data unavailable'
+                }
+              />
+              <SnapshotStat
+                label="Top-10 share"
+                value={formatPercent(analytics.top10AumShare, { digits: 0 })}
+                detail={
+                  analytics.totalAum
+                    ? `${formatMoneyCompact(analytics.totalAum)} category AUM`
+                    : 'AUM disclosures unavailable'
+                }
+              />
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -599,11 +1078,7 @@ const CategoryOverview = () => {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                xl: 'repeat(4, minmax(0, 1fr))',
-              },
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
               gap: '16px',
               mb: '24px',
             }}
@@ -627,7 +1102,7 @@ const CategoryOverview = () => {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' },
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
               gap: '20px',
               mb: '24px',
             }}
@@ -649,7 +1124,7 @@ const CategoryOverview = () => {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1.45fr) minmax(320px, 0.85fr)' },
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
               gap: '20px',
               mb: '24px',
             }}
@@ -658,6 +1133,7 @@ const CategoryOverview = () => {
               data={analytics.scatterData}
               merMedian={analytics.medianMer}
               returnMedian={analytics.medianReturn1yr}
+              standoutFunds={analytics.standoutScatterFunds}
             />
             <Box sx={{ display: 'grid', gap: '20px' }}>
               <DistributionCard
@@ -678,7 +1154,7 @@ const CategoryOverview = () => {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, minmax(0, 1fr))' },
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
               gap: '20px',
             }}
           >
@@ -738,38 +1214,34 @@ const InsightPill = ({ label, value }) => (
   </Box>
 );
 
-const HighlightRow = ({ label, value, detail }) => (
+const SnapshotStat = ({ label, value, detail }) => (
   <Box
     sx={{
       p: '14px',
       borderRadius: '18px',
       background: 'var(--bg-surface)',
       border: '1px solid var(--border)',
+      minWidth: 0,
     }}
   >
+    <Box sx={{ fontSize: '11px', color: 'var(--text-4)', textTransform: 'uppercase', mb: '6px' }}>
+      {label}
+    </Box>
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        mb: '4px',
+        fontFamily: 'var(--font-head)',
+        fontSize: { xs: '18px', lg: '20px' },
+        fontWeight: 800,
+        letterSpacing: '-0.04em',
+        color: 'var(--text-1)',
+        lineHeight: 1.05,
+        mb: '6px',
+        overflowWrap: 'anywhere',
       }}
     >
-      <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>{label}</Box>
-      <Box
-        sx={{
-          fontFamily: 'var(--font-head)',
-          fontSize: '20px',
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: 'var(--text-1)',
-        }}
-      >
-        {value}
-      </Box>
+      {value}
     </Box>
-    <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>{detail}</Box>
+    <Box sx={{ fontSize: '11px', color: 'var(--text-4)', lineHeight: 1.5 }}>{detail}</Box>
   </Box>
 );
 
@@ -810,22 +1282,28 @@ const DistributionCard = ({ title, subtitle, items, accent }) => (
               {formatNumber(item.count)} | {formatPercent(item.share, { digits: 0 })}
             </Box>
           </Box>
-          <Box
-            sx={{
-              height: '10px',
-              borderRadius: '999px',
-              background: 'var(--bar-track)',
-              overflow: 'hidden',
-            }}
-          >
+          <Box sx={{ py: '2px' }}>
             <Box
               sx={{
-                height: '100%',
-                width: `${item.share}%`,
+                height: '10px',
                 borderRadius: '999px',
-                background: `linear-gradient(90deg, ${accent}, rgba(255,255,255,0.18))`,
+                background:
+                  'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
+                border: '1px solid rgba(255,255,255,0.06)',
+                overflow: 'hidden',
               }}
-            />
+            >
+              <Box
+                sx={{
+                  height: '100%',
+                  width: `${item.share}%`,
+                  minWidth: item.count > 0 ? '10px' : 0,
+                  borderRadius: '999px',
+                  background: `linear-gradient(90deg, rgba(255,255,255,0.22), ${accent})`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px ${accent}`,
+                }}
+              />
+            </Box>
           </Box>
         </Box>
       ))}
@@ -833,7 +1311,7 @@ const DistributionCard = ({ title, subtitle, items, accent }) => (
   </Box>
 );
 
-const ScatterPanel = ({ data, merMedian, returnMedian }) => (
+const ScatterPanel = ({ data, merMedian, returnMedian, standoutFunds }) => (
   <Box sx={{ ...PANEL_SX, p: '22px' }}>
     <Box
       sx={{
@@ -859,8 +1337,9 @@ const ScatterPanel = ({ data, merMedian, returnMedian }) => (
           MER vs 1Y return
         </Box>
         <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
-          Bubble size maps to fund net assets. Lower left is cheaper but weaker, upper left is the
-          efficient quadrant.
+          Read left-to-right as MER and bottom-to-top as 1Y return. Larger bubbles mean larger AUM,
+          while greener color means a higher 1Y-return-to-MER ratio and redder color means a lower
+          ratio. The dashed lines mark the category median MER and median 1Y return.
         </Box>
       </Box>
 
@@ -872,38 +1351,106 @@ const ScatterPanel = ({ data, merMedian, returnMedian }) => (
 
     {data.length > 0 ? (
       <ResponsiveContainer width="100%" height={360}>
-        <ScatterChart margin={{ top: 16, right: 8, bottom: 6, left: 0 }}>
+        <ScatterChart margin={{ top: 36, right: 104, bottom: 54, left: 112 }}>
           <CartesianGrid {...chartGridStyle} />
           <XAxis
             type="number"
             dataKey="x"
             name="MER"
             tick={axisStyle}
-            tickFormatter={(value) => `${value}%`}
+            tickFormatter={(value) => formatAxisPercent(value)}
             domain={['dataMin - 0.15', 'dataMax + 0.15']}
+            allowDecimals
+            label={{
+              value: 'MER (%)',
+              position: 'insideBottom',
+              offset: -8,
+              fill: 'var(--text-3)',
+              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+            }}
           />
           <YAxis
             type="number"
             dataKey="y"
             name="1Y Return"
             tick={axisStyle}
-            tickFormatter={(value) => `${value}%`}
-            width={56}
+            tickFormatter={(value) => formatAxisPercent(value)}
+            width={72}
             domain={['dataMin - 2', 'dataMax + 2']}
+            allowDecimals
+            label={{
+              value: '1Y Return (%)',
+              angle: -90,
+              position: 'insideLeft',
+              fill: 'var(--text-3)',
+              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+            }}
           />
-          <ZAxis type="number" dataKey="z" range={[70, 460]} />
+          {merMedian != null && (
+            <ReferenceLine
+              x={merMedian}
+              stroke="var(--accent-strong)"
+              strokeDasharray="6 6"
+              strokeWidth={1.25}
+              label={{
+                value: `Median MER ${formatAxisPercent(merMedian)}`,
+                position: 'insideTopRight',
+                fill: 'var(--text-3)',
+                fontSize: 11,
+              }}
+            />
+          )}
+          {returnMedian != null && (
+            <ReferenceLine
+              y={returnMedian}
+              stroke="var(--emerald)"
+              strokeDasharray="6 6"
+              strokeWidth={1.25}
+              label={{
+                value: `Median 1Y ${formatAxisPercent(returnMedian)}`,
+                position: 'insideBottomRight',
+                fill: 'var(--text-3)',
+                fontSize: 11,
+              }}
+            />
+          )}
+          <ZAxis type="number" dataKey="bubbleSize" range={[70, 520]} />
           <Tooltip cursor={{ stroke: 'var(--border)' }} content={<ScatterTooltip />} />
           <Scatter data={data}>
             {data.map((point) => (
               <Cell
                 key={`${point.ticker}-${point.fundname}`}
-                fill={point.y >= 0 ? 'var(--emerald)' : 'var(--red)'}
-                fillOpacity={0.72}
+                fill={point.color}
+                fillOpacity={0.78}
                 stroke="rgba(255,255,255,0.35)"
                 strokeWidth={1}
               />
             ))}
           </Scatter>
+          {standoutFunds?.highest && (
+            <Scatter data={[standoutFunds.highest]}>
+              <Cell
+                key={`pin-high-${standoutFunds.highest.ticker}-${standoutFunds.highest.fundname}`}
+                fill="rgba(255,255,255,0.12)"
+                stroke={standoutFunds.highest.color}
+                strokeWidth={2.2}
+              />
+              <LabelList dataKey="pinLabel" content={<PinnedScatterLabel />} />
+            </Scatter>
+          )}
+          {standoutFunds?.lowest && (
+            <Scatter data={[standoutFunds.lowest]}>
+              <Cell
+                key={`pin-low-${standoutFunds.lowest.ticker}-${standoutFunds.lowest.fundname}`}
+                fill="rgba(255,255,255,0.12)"
+                stroke={standoutFunds.lowest.color}
+                strokeWidth={2.2}
+              />
+              <LabelList dataKey="pinLabel" content={<PinnedScatterLabel />} />
+            </Scatter>
+          )}
         </ScatterChart>
       </ResponsiveContainer>
     ) : (
@@ -911,6 +1458,54 @@ const ScatterPanel = ({ data, merMedian, returnMedian }) => (
     )}
   </Box>
 );
+
+const PinnedScatterLabel = ({ x, y, width, height, value, payload }) => {
+  if (value == null) return null;
+
+  const cx = x + width / 2;
+  const cy = y + height / 2;
+  const bubbleRadius = Math.max(width, height) / 2;
+  const labelDx = payload?.labelDx ?? 24;
+  const labelDy = payload?.labelDy ?? -32;
+  const textAnchor = payload?.textAnchor || 'start';
+  const boxWidth = payload?.boxWidth ?? 156;
+  const boxHeight = 24;
+  const labelX = cx + labelDx;
+  const boxX = textAnchor === 'start' ? labelX - 8 : labelX - boxWidth + 8;
+  const elbowX = cx + labelDx * 0.42;
+  const textX = textAnchor === 'start' ? boxX + 10 : boxX + boxWidth - 10;
+  const forcedBelow = Boolean(payload?.forceBelowBubble);
+  const defaultLabelY = cy + labelDy;
+  const defaultBoxY = defaultLabelY - boxHeight / 2;
+  const forcedBoxY = cy + bubbleRadius + 12;
+  const boxY = forcedBelow ? Math.max(defaultBoxY, forcedBoxY) : defaultBoxY;
+  const labelY = boxY + boxHeight / 2;
+  const elbowY = forcedBelow ? cy + bubbleRadius + 4 : cy + labelDy * 0.42;
+  const connectorEndX = textAnchor === 'start' ? boxX : boxX + boxWidth;
+
+  return (
+    <g>
+      <path
+        d={`M ${cx} ${cy} L ${elbowX} ${elbowY} L ${connectorEndX} ${labelY}`}
+        fill="none"
+        stroke={payload?.color || 'var(--text-3)'}
+        strokeWidth={1.2}
+        strokeDasharray="4 3"
+        opacity={0.95}
+      />
+      <text
+        x={textX}
+        y={labelY + 3.5}
+        textAnchor={textAnchor}
+        fill="var(--text-2)"
+        fontSize="11"
+        fontFamily="var(--font-mono)"
+      >
+        {value}
+      </text>
+    </g>
+  );
+};
 
 const MiniLegend = ({ label, value }) => (
   <Box
@@ -951,6 +1546,14 @@ const ScatterTooltip = ({ active, payload }) => {
       <Box sx={{ fontSize: '11px', color: 'var(--text-4)', mb: '10px' }}>{point.ticker}</Box>
       <TooltipMetric label="MER" value={formatPercent(point.mer)} />
       <TooltipMetric label="1Y Return" value={formatPercent(point.return1yr, { signed: true })} />
+      <TooltipMetric
+        label="Return / MER"
+        value={
+          point.ratio != null && Number.isFinite(point.ratio)
+            ? point.ratio.toFixed(2)
+            : 'Unavailable'
+        }
+      />
       <TooltipMetric label="AUM" value={formatMoneyCompact(point.aum)} />
       <TooltipMetric
         label="Rating"

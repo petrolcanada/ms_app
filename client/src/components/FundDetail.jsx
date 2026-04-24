@@ -4,7 +4,12 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useFundDetail } from '../hooks/useFundDetail';
 import { useDomains } from '../hooks/useDomains';
-import { usePerformanceHistory, useFlowHistory, useAssetsHistory } from '../hooks/useHistory';
+import {
+  usePerformanceHistory,
+  useFlowHistory,
+  useAssetsHistory,
+  useCategoryPerformanceHistory,
+} from '../hooks/useHistory';
 import useWatchlist from '../hooks/useWatchlist';
 import { useAuth } from '../context/AuthContext';
 import KpiCard from './KpiCard';
@@ -61,6 +66,8 @@ const FundDetail = () => {
     asofDate: asofDate || undefined,
   });
   const { data: perfHistory, isLoading: perfHistoryLoading } = usePerformanceHistory(id);
+  const { data: categoryPerfHistory, isLoading: categoryPerfHistoryLoading } =
+    useCategoryPerformanceHistory(id);
   const { data: flowHistory, isLoading: flowHistoryLoading } = useFlowHistory(id);
   const { data: assetsHistory, isLoading: assetsHistoryLoading } = useAssetsHistory(id);
   const { user } = useAuth();
@@ -181,7 +188,16 @@ const FundDetail = () => {
               valColor={valColor}
             />
             <Box sx={{ mt: '20px' }}>
-              <PerformanceHistoryChart data={perfHistory} isLoading={perfHistoryLoading} />
+              <PerformanceHistoryChart
+                data={perfHistory}
+                comparisonData={categoryPerfHistory}
+                comparisonLabel={
+                  catPerf?.categoryname
+                    ? `Category Avg (${catPerf.categoryname})`
+                    : 'Category Average'
+                }
+                isLoading={perfHistoryLoading || categoryPerfHistoryLoading}
+              />
             </Box>
           </>
         );
@@ -310,7 +326,7 @@ const FundDetail = () => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' },
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
           gap: '16px',
           mb: '32px',
         }}
