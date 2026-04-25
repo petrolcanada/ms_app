@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import CssBaseline from '@mui/material/CssBaseline';
 import createAppTheme from './theme';
+import { getSemanticPalette } from './design/tokens';
 import './styles/global.css';
 import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -27,8 +28,8 @@ import NotFound from './components/NotFound';
 
 const THEME_STORAGE_KEY = 'fundlens_theme_mode';
 const THEME_COLORS = {
-  dark: '#090711',
-  light: '#F4F6FB',
+  dark: getSemanticPalette('dark').metaThemeColor,
+  light: getSemanticPalette('light').metaThemeColor,
 };
 
 const resolveInitialThemeMode = () => {

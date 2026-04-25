@@ -1,17 +1,14 @@
 import React from 'react';
 import Box from '@mui/material/Box';
+import AppCard from './ui/AppCard';
 
 const StatCard = ({ label, value, change, changeDirection, valueColor }) => {
   return (
-    <Box
+    <AppCard
+      variant="stat"
       sx={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
-        border: '1px solid var(--border)',
-        borderRadius: '24px',
         padding: '22px 24px',
-        position: 'relative',
         overflow: 'hidden',
-        boxShadow: 'var(--shadow-panel)',
         transition:
           'border-color var(--transition), transform var(--transition), box-shadow var(--transition)',
         '&:hover': {
@@ -89,7 +86,7 @@ const StatCard = ({ label, value, change, changeDirection, valueColor }) => {
           {changeDirection === 'up' ? '\u2191' : '\u2193'} {change}
         </Box>
       )}
-    </Box>
+    </AppCard>
   );
 };
 

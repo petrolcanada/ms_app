@@ -1,6 +1,4 @@
 import React from 'react';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import {
   ResponsiveContainer,
   LineChart,
@@ -16,26 +14,15 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-
-const COLORS = {
-  emerald: '#10B981',
-  blue: '#3B82F6',
-  amber: '#F59E0B',
-  red: '#EF4444',
-  purple: '#8B5CF6',
-};
-
-const PERFORMANCE_SERIES_STYLES = {
-  fund: {
-    stroke: 'var(--accent-strong)',
-    strokeWidth: 4,
-  },
-  category: {
-    stroke: 'var(--amber)',
-    strokeWidth: 2,
-    opacity: 0.9,
-  },
-};
+import { ChartCard, ChartEmpty, ChartLoading } from './charts/ChartCard';
+import ChartTooltip from './charts/ChartTooltip';
+import {
+  axisStyle,
+  chartGridStyle,
+  chartTheme,
+  defaultChartMargin,
+  performanceSeriesStyles,
+} from './charts/rechartsTheme';
 
 const formatDateTick = (dateStr) => {
   if (!dateStr) return '';
@@ -56,41 +43,7 @@ const formatMoney = (v) => {
   return `${sign}$${abs.toFixed(0)}`;
 };
 
-const CustomTooltip = ({ active, payload, label, format = 'pct' }) => {
-  if (!active || !payload?.length) return null;
-  const fmt = format === 'money' ? formatMoney : formatPct;
-  return (
-    <Box
-      sx={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        padding: '10px 14px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-        fontSize: '12px',
-      }}
-    >
-      <Box sx={{ color: 'var(--text-3)', mb: '6px', fontFamily: 'var(--font-mono)' }}>
-        {formatDateTick(label)}
-      </Box>
-      {payload.map((entry) => (
-        <Box
-          key={entry.dataKey}
-          sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '2px' }}
-        >
-          <Box sx={{ width: '8px', height: '8px', borderRadius: '2px', background: entry.color }} />
-          <Box sx={{ color: 'var(--text-2)', flex: 1 }}>{entry.name}</Box>
-          <Box sx={{ color: entry.color, fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
-            {fmt(entry.value)}
-          </Box>
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
-const chartGridStyle = { stroke: 'var(--border)', strokeDasharray: '3 3', opacity: 0.5 };
-const axisStyle = { fontSize: 11, fill: 'var(--text-4)', fontFamily: 'var(--font-mono)' };
+const getTooltipFormatter = (format) => (format === 'money' ? formatMoney : formatPct);
 
 const toNumberOrNull = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -205,9 +158,9 @@ export const PerformanceHistoryChart = ({
   const chartData = Array.from(pointsByDate.values()).sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <ChartWrapper title="Cumulative Return History (Normalized)">
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+    <ChartCard title="Cumulative Return History (Normalized)">
+      <ResponsiveContainer width="100%" height={chartTheme.height}>
+        <LineChart data={chartData} margin={defaultChartMargin}>
           <CartesianGrid {...chartGridStyle} />
           <XAxis
             dataKey="date"
@@ -216,13 +169,20 @@ export const PerformanceHistoryChart = ({
             interval="preserveStartEnd"
           />
           <YAxis tick={axisStyle} tickFormatter={(v) => `${v}%`} width={55} />
-          <Tooltip content={<CustomTooltip format="pct" />} />
-          <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--text-3)' }} />
+          <Tooltip
+            content={
+              <ChartTooltip
+                labelFormatter={formatDateTick}
+                valueFormatter={getTooltipFormatter('pct')}
+              />
+            }
+          />
+          <Legend wrapperStyle={chartTheme.legend} />
           <Line
             type="monotone"
             dataKey="Fund"
-            stroke={PERFORMANCE_SERIES_STYLES.fund.stroke}
-            strokeWidth={PERFORMANCE_SERIES_STYLES.fund.strokeWidth}
+            stroke={performanceSeriesStyles.fund.stroke}
+            strokeWidth={performanceSeriesStyles.fund.strokeWidth}
             strokeLinecap="round"
             dot={false}
           />
@@ -230,16 +190,16 @@ export const PerformanceHistoryChart = ({
             <Line
               type="monotone"
               dataKey={comparisonLabel}
-              stroke={PERFORMANCE_SERIES_STYLES.category.stroke}
-              strokeWidth={PERFORMANCE_SERIES_STYLES.category.strokeWidth}
+              stroke={performanceSeriesStyles.category.stroke}
+              strokeWidth={performanceSeriesStyles.category.strokeWidth}
               strokeLinecap="round"
-              opacity={PERFORMANCE_SERIES_STYLES.category.opacity}
+              opacity={performanceSeriesStyles.category.opacity}
               dot={false}
             />
           )}
         </LineChart>
       </ResponsiveContainer>
-    </ChartWrapper>
+    </ChartCard>
   );
 };
 
@@ -254,9 +214,9 @@ export const FlowHistoryChart = ({ data, isLoading }) => {
   }));
 
   return (
-    <ChartWrapper title="Fund-Level Net Flows (Monthly)">
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+    <ChartCard title="Fund-Level Net Flows (Monthly)">
+      <ResponsiveContainer width="100%" height={chartTheme.height}>
+        <BarChart data={chartData} margin={defaultChartMargin}>
           <CartesianGrid {...chartGridStyle} />
           <XAxis
             dataKey="date"
@@ -265,18 +225,29 @@ export const FlowHistoryChart = ({ data, isLoading }) => {
             interval="preserveStartEnd"
           />
           <YAxis tick={axisStyle} tickFormatter={formatMoney} width={65} />
-          <Tooltip content={<CustomTooltip format="money" />} />
+          <Tooltip
+            content={
+              <ChartTooltip
+                labelFormatter={formatDateTick}
+                valueFormatter={getTooltipFormatter('money')}
+              />
+            }
+          />
           <Bar dataKey="Net Flow (1M)" maxBarSize={24} shape={<FlowBarShape />}>
             {chartData.map((entry, index) => (
               <Cell
                 key={`flow-cell-${entry.date}-${index}`}
-                fill={entry['Net Flow (1M)'] >= 0 ? COLORS.emerald : COLORS.red}
+                fill={
+                  entry['Net Flow (1M)'] >= 0
+                    ? chartTheme.colors.positive
+                    : chartTheme.colors.negative
+                }
               />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </ChartWrapper>
+    </ChartCard>
   );
 };
 
@@ -290,13 +261,13 @@ export const AssetsHistoryChart = ({ data, isLoading }) => {
   }));
 
   return (
-    <ChartWrapper title="Fund Net Assets Over Time">
-      <ResponsiveContainer width="100%" height={320}>
-        <AreaChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+    <ChartCard title="Fund Net Assets Over Time">
+      <ResponsiveContainer width="100%" height={chartTheme.height}>
+        <AreaChart data={chartData} margin={defaultChartMargin}>
           <defs>
             <linearGradient id="assetsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={COLORS.blue} stopOpacity={0} />
+              <stop offset="5%" stopColor={chartTheme.colors.assets} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={chartTheme.colors.assets} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid {...chartGridStyle} />
@@ -307,75 +278,23 @@ export const AssetsHistoryChart = ({ data, isLoading }) => {
             interval="preserveStartEnd"
           />
           <YAxis tick={axisStyle} tickFormatter={formatMoney} width={65} />
-          <Tooltip content={<CustomTooltip format="money" />} />
+          <Tooltip
+            content={
+              <ChartTooltip
+                labelFormatter={formatDateTick}
+                valueFormatter={getTooltipFormatter('money')}
+              />
+            }
+          />
           <Area
             type="monotone"
             dataKey="Net Assets"
-            stroke={COLORS.blue}
+            stroke={chartTheme.colors.assets}
             strokeWidth={2}
             fill="url(#assetsGrad)"
           />
         </AreaChart>
       </ResponsiveContainer>
-    </ChartWrapper>
+    </ChartCard>
   );
 };
-
-const ChartWrapper = ({ title, children }) => (
-  <Box
-    sx={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '20px',
-      mb: '16px',
-    }}
-  >
-    <Box
-      sx={{
-        fontFamily: 'var(--font-head)',
-        fontSize: '14px',
-        fontWeight: 600,
-        color: 'var(--text-2)',
-        letterSpacing: '-0.01em',
-        mb: '16px',
-      }}
-    >
-      {title}
-    </Box>
-    {children}
-  </Box>
-);
-
-const ChartLoading = () => (
-  <Box
-    sx={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '20px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '300px',
-    }}
-  >
-    <CircularProgress size={28} sx={{ color: 'var(--emerald)' }} />
-  </Box>
-);
-
-const ChartEmpty = ({ label }) => (
-  <Box
-    sx={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '40px 20px',
-      textAlign: 'center',
-      color: 'var(--text-4)',
-      fontSize: '13px',
-    }}
-  >
-    {label}
-  </Box>
-);

@@ -1,34 +1,23 @@
 import React from 'react';
 import Box from '@mui/material/Box';
+import AppCard from './ui/AppCard';
+import { designTokens } from '../design/tokens';
+
+const { cssVars } = designTokens;
 
 const DomainCard = ({ title, children, fullWidth = false }) => (
-  <Box
+  <AppCard
+    title={title}
+    fullWidth={fullWidth}
+    variant="surface"
     sx={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
       padding: '24px',
       transition: 'border-color var(--transition)',
-      gridColumn: fullWidth ? '1 / -1' : 'auto',
-      '&:hover': { borderColor: 'var(--border-hover)' },
+      '&:hover': { borderColor: cssVars.color.borderHover },
     }}
   >
-    {title && (
-      <Box
-        sx={{
-          fontFamily: 'var(--font-head)',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: 'var(--text-2)',
-          letterSpacing: '-0.01em',
-          mb: '20px',
-        }}
-      >
-        {title}
-      </Box>
-    )}
     {children}
-  </Box>
+  </AppCard>
 );
 
 const DomainGrid = ({ children }) => (

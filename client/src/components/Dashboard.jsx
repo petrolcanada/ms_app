@@ -6,6 +6,7 @@ import useDashboard from '../hooks/useDashboard';
 import useAvailableDates from '../hooks/useAvailableDates';
 import SEO from './SEO';
 import OnboardingTour from './OnboardingTour';
+import AppCard from './ui/AppCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -437,14 +438,11 @@ const Dashboard = () => {
 };
 
 const DashboardGroup = ({ eyebrow, title, description, children }) => (
-  <Box
+  <AppCard
+    variant="panel"
     sx={{
       mb: '24px',
       p: { xs: '18px', md: '22px' },
-      borderRadius: '28px',
-      border: '1px solid var(--border)',
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-      boxShadow: 'var(--shadow-panel)',
     }}
   >
     <Box sx={{ mb: '18px' }}>
@@ -491,14 +489,14 @@ const DashboardGroup = ({ eyebrow, title, description, children }) => (
     >
       {children}
     </Box>
-  </Box>
+  </AppCard>
 );
 
 const SectionCard = ({ title, subtitle, children }) => (
-  <Box
+  <AppCard
+    variant="surface"
     sx={{
       background: 'rgba(255,255,255,0.03)',
-      border: '1px solid var(--border)',
       borderRadius: '26px',
       overflow: 'hidden',
       boxShadow: 'var(--shadow-panel)',
@@ -530,7 +528,7 @@ const SectionCard = ({ title, subtitle, children }) => (
       </Box>
     </Box>
     <Box sx={{ padding: '6px 0' }}>{children}</Box>
-  </Box>
+  </AppCard>
 );
 
 const CategoryRow = ({ rank, category, metric, metricColor, sublabel, onClick }) => (

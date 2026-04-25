@@ -18,16 +18,15 @@ import {
 import AsOfDateSelector from './AsOfDateSelector';
 import SEO from './SEO';
 import StatCard from './StatCard';
+import { designTokens } from '../design/tokens';
+import { axisStyle, chartGridStyle } from './charts/rechartsTheme';
 import useCategories from '../hooks/useCategories';
 import useCategoryConstituents from '../hooks/useCategoryConstituents';
 
 const PANEL_SX = {
+  ...designTokens.card.panel,
   position: 'relative',
   overflow: 'hidden',
-  borderRadius: '28px',
-  border: '1px solid var(--border)',
-  background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
-  boxShadow: 'var(--shadow-panel)',
 };
 
 const MER_BUCKETS = [
@@ -56,18 +55,6 @@ const AUM_BUCKETS = [
 
 const RATING_BUCKETS = ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star', 'Unrated'];
 const EMPTY_FUNDS = [];
-
-const chartGridStyle = {
-  stroke: 'var(--border)',
-  strokeDasharray: '3 3',
-  opacity: 0.55,
-};
-
-const axisStyle = {
-  fontSize: 11,
-  fill: 'var(--text-4)',
-  fontFamily: 'var(--font-mono)',
-};
 
 const selectStyle = {
   background: 'var(--bg-surface)',
