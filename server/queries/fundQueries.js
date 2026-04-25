@@ -142,6 +142,7 @@ const buildFilterClause = ({ search, type, category }, startParam = 1) => {
       fundname ILIKE $${p}
       OR legalname ILIKE $${p}
       OR ticker ILIKE $${p}
+      OR _id ILIKE $${p}
       OR _name ILIKE $${p}
     )`;
     params.push(`%${search}%`);
@@ -186,7 +187,11 @@ const buildSourceExpr = (asofDate, params) => {
 const queryFundList = async ({ search, type, category, limit, offset, asofDate }) => {
   const sourceParams = [];
   const { cte, source, startParam } = buildSourceExpr(asofDate, sourceParams);
-  const { clause, params: filterParams, nextParam } = buildFilterClause({ search, type, category }, startParam);
+  const {
+    clause,
+    params: filterParams,
+    nextParam,
+  } = buildFilterClause({ search, type, category }, startParam);
 
   const allParams = [...sourceParams, ...filterParams];
 
@@ -206,7 +211,10 @@ const queryFundList = async ({ search, type, category, limit, offset, asofDate }
 const queryFundCount = async ({ search, type, category, asofDate }) => {
   const sourceParams = [];
   const { cte, source, startParam } = buildSourceExpr(asofDate, sourceParams);
-  const { clause, params: filterParams } = buildFilterClause({ search, type, category }, startParam);
+  const { clause, params: filterParams } = buildFilterClause(
+    { search, type, category },
+    startParam,
+  );
 
   const allParams = [...sourceParams, ...filterParams];
 

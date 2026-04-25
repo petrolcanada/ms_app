@@ -3,9 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Popover from '@mui/material/Popover';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import useScreener from '../hooks/useScreener';
 import useCategories from '../hooks/useCategories';
+import useAssetManagers from '../hooks/useAssetManagers';
 import useAvailableDates from '../hooks/useAvailableDates';
+import useCompareList from '../hooks/useCompareList';
+import useWatchlist from '../hooks/useWatchlist';
+import { useAuth } from '../context/AuthContext';
 import SignalBadge from './SignalBadge';
 import SearchBar from './SearchBar';
 import StarRating from './StarRating';
@@ -24,6 +31,9 @@ const getByPath = (obj, path) => {
 };
 
 const SCREENER_METRICS_STORAGE_KEY = 'ms_screener_metric_keys';
+const FREE_COMPARE_MAX_FUNDS = 2;
+const PRO_COMPARE_MAX_FUNDS = 4;
+const FREE_WATCHLIST_MAX_FUNDS = 5;
 
 const loadStoredMetricKeys = () => {
   try {
@@ -107,10 +117,16 @@ const formatRankPct = (val) => (val == null ? '—' : Number(val).toFixed(1));
 
 const formatAum = (val) => {
   if (val == null) return '—';
-  const m = Number(val) / 1e6;
-  if (m >= 1) return `$${m.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-  if (Number(val) >= 1e3) return `$${(Number(val) / 1e3).toFixed(0)}K`;
-  return `$${Number(val).toFixed(0)}`;
+  const n = Number(val);
+  if (!Number.isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) {
+    return `${sign}$${(abs / 1e6).toLocaleString(undefined, { maximumFractionDigits: 0 })}M`;
+  }
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
 };
 
 const formatDateLabel = (iso) => {
@@ -123,11 +139,23 @@ const formatDateLabel = (iso) => {
 const Screener = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const { data: categories } = useCategories();
+  const { data: assetManagers } = useAssetManagers();
   const { data: availableDates, isLoading: datesLoading } = useAvailableDates();
+  const compareMaxFunds = user?.plan === 'pro' ? PRO_COMPARE_MAX_FUNDS : FREE_COMPARE_MAX_FUNDS;
+  const watchlistMaxFunds = user?.plan === 'pro' ? Infinity : FREE_WATCHLIST_MAX_FUNDS;
+  const {
+    ids: compareIds,
+    isCompared,
+    add: addToCompare,
+    remove: removeFromCompare,
+  } = useCompareList(compareMaxFunds);
+  const { items: watchlistItems, isWatched, toggle: toggleWatchlist } = useWatchlist(user);
 
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
+  const assetManager = searchParams.get('assetManager') || '';
   const type = searchParams.get('type') || '';
   const asofDate = searchParams.get('asofDate') || '';
   const [searchInput, setSearchInput] = useState(search);
@@ -251,7 +279,7 @@ const Screener = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [search, category, type, asofDate]);
+  }, [search, category, assetManager, type, asofDate]);
 
   const {
     data,
@@ -266,6 +294,7 @@ const Screener = () => {
   } = useScreener({
     search,
     category,
+    assetManager,
     type,
     asofDate,
     sortBy: sortKeyToApi[sortKey] || 'return1yr',
@@ -315,6 +344,32 @@ const Screener = () => {
       navigate(`/funds/${fundId}${params}`);
     },
     [navigate, asofDate],
+  );
+
+  const handleCompareToggle = useCallback(
+    (event, fund) => {
+      event.stopPropagation();
+      if (isCompared(fund._id)) {
+        removeFromCompare(fund._id);
+        return;
+      }
+      addToCompare(fund._id);
+    },
+    [addToCompare, isCompared, removeFromCompare],
+  );
+
+  const handleWatchlistToggle = useCallback(
+    (event, fund) => {
+      event.stopPropagation();
+      toggleWatchlist({
+        _id: fund._id,
+        fundname: fund.fundname || fund._name,
+        ticker: fund.ticker,
+        categoryname: fund.categoryname || fund.globalcategoryname,
+        securitytype: fund.securitytype,
+      });
+    },
+    [toggleWatchlist],
   );
 
   const sortLabel =
@@ -420,6 +475,22 @@ const Screener = () => {
             {(categories || []).map((c) => (
               <option key={c} value={c}>
                 {c}
+              </option>
+            ))}
+          </StyledSelect>
+        </ControlGroup>
+
+        <ControlGroup label="Asset Manager">
+          <StyledSelect
+            value={assetManager}
+            onChange={(e) => {
+              updateFilters({ assetManager: e.target.value });
+            }}
+          >
+            <option value="">All Managers</option>
+            {(assetManagers || []).map((manager) => (
+              <option key={manager} value={manager}>
+                {manager}
               </option>
             ))}
           </StyledSelect>
@@ -727,6 +798,14 @@ const Screener = () => {
               <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
                 {category || 'All Categories'}
               </strong>
+              {assetManager && (
+                <>
+                  {' managed by '}
+                  <strong style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+                    {assetManager}
+                  </strong>
+                </>
+              )}
             </Box>
             <Box
               sx={{
@@ -815,13 +894,14 @@ const Screener = () => {
             <Box sx={{ overflowX: 'auto' }}>
               <Box
                 component="table"
-                sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}
+                sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '1180px' }}
               >
                 <Box component="thead">
                   <Box component="tr">
                     <TH sx={{ width: '50px' }}>#</TH>
                     <TH>Signal</TH>
-                    <TH>Fund Name</TH>
+                    <TH sx={{ width: '1%', minWidth: '370px' }}>Fund Name</TH>
+                    <TH sx={{ minWidth: '124px', textAlign: 'center' }}>Actions</TH>
                     {activeColumns.map((col) => (
                       <TH
                         key={col.key}
@@ -845,7 +925,7 @@ const Screener = () => {
                     <Box component="tr">
                       <Box
                         component="td"
-                        colSpan={activeColumns.length + 3}
+                        colSpan={activeColumns.length + 4}
                         sx={{
                           textAlign: 'center',
                           padding: '48px 16px',
@@ -862,6 +942,11 @@ const Screener = () => {
                       const rankPct = totalFunds > 1 ? (globalRank - 1) / (totalFunds - 1) : 0;
                       const signal = getSignal(rankPct);
                       const tier = getRankTier(globalRank, totalFunds);
+                      const compared = isCompared(fund._id);
+                      const compareDisabled = !compared && compareIds.length >= compareMaxFunds;
+                      const watched = isWatched(fund._id);
+                      const watchlistDisabled =
+                        !watched && watchlistItems.length >= watchlistMaxFunds;
 
                       return (
                         <Box
@@ -895,8 +980,9 @@ const Screener = () => {
                             sx={{
                               color: 'var(--text-1)',
                               fontWeight: 500,
-                              maxWidth: '320px',
-                              minWidth: '260px',
+                              width: '1%',
+                              maxWidth: '430px',
+                              minWidth: '370px',
                               whiteSpace: 'normal',
                               transition: 'color var(--transition)',
                             }}
@@ -913,7 +999,15 @@ const Screener = () => {
                               >
                                 {fund.fundname || fund._name || 'N/A'}
                               </Box>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  flexWrap: 'nowrap',
+                                  gap: '6px',
+                                  minWidth: 0,
+                                  overflow: 'hidden',
+                                }}
+                              >
                                 {fund.ticker && <MetaChip mono>{fund.ticker}</MetaChip>}
                                 {fund.securitytype && <MetaChip>{fund.securitytype}</MetaChip>}
                                 {(fund.categoryname || fund.globalcategoryname) && (
@@ -921,7 +1015,63 @@ const Screener = () => {
                                     {fund.categoryname || fund.globalcategoryname}
                                   </MetaChip>
                                 )}
+                                {fund.brandingname && <MetaChip>{fund.brandingname}</MetaChip>}
                               </Box>
+                            </Box>
+                          </TD>
+
+                          <TD sx={{ textAlign: 'center' }}>
+                            <Box
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <RowActionButton
+                                aria-label={
+                                  compared
+                                    ? `Remove ${fund.fundname || fund._name || fund._id} from compare`
+                                    : `Add ${fund.fundname || fund._name || fund._id} to compare`
+                                }
+                                title={
+                                  compareDisabled
+                                    ? `Compare limit is ${compareMaxFunds} funds`
+                                    : compared
+                                      ? 'Remove from compare'
+                                      : 'Add to compare'
+                                }
+                                active={compared}
+                                disabled={compareDisabled}
+                                onClick={(event) => handleCompareToggle(event, fund)}
+                              >
+                                <CompareArrowsIcon sx={{ fontSize: 15 }} />
+                              </RowActionButton>
+                              <RowActionButton
+                                aria-label={
+                                  watched
+                                    ? `Remove ${fund.fundname || fund._name || fund._id} from watchlist`
+                                    : `Add ${fund.fundname || fund._name || fund._id} to watchlist`
+                                }
+                                title={
+                                  watchlistDisabled
+                                    ? `Watchlist limit is ${watchlistMaxFunds} funds`
+                                    : watched
+                                      ? 'Remove from watchlist'
+                                      : 'Add to watchlist'
+                                }
+                                active={watched}
+                                disabled={watchlistDisabled}
+                                onClick={(event) => handleWatchlistToggle(event, fund)}
+                              >
+                                {watched ? (
+                                  <StarIcon sx={{ fontSize: 15 }} />
+                                ) : (
+                                  <StarBorderIcon sx={{ fontSize: 15 }} />
+                                )}
+                              </RowActionButton>
                             </Box>
                           </TD>
 
@@ -1311,7 +1461,8 @@ const MetaChip = ({ children, mono = false }) => (
       display: 'inline-flex',
       alignItems: 'center',
       minWidth: 0,
-      maxWidth: '100%',
+      maxWidth: mono ? '86px' : '140px',
+      flex: mono ? '0 0 auto' : '0 1 auto',
       px: '8px',
       py: '4px',
       borderRadius: '999px',
@@ -1325,6 +1476,44 @@ const MetaChip = ({ children, mono = false }) => (
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+    }}
+  >
+    {children}
+  </Box>
+);
+
+const RowActionButton = ({ children, active, disabled, sx: sxOverride, ...props }) => (
+  <Box
+    component="button"
+    type="button"
+    disabled={disabled}
+    {...props}
+    sx={{
+      width: '28px',
+      height: '28px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '999px',
+      border: active ? '1px solid var(--accent-ring)' : '1px solid var(--border)',
+      background: active ? 'var(--accent-soft)' : 'var(--bg-surface)',
+      color: active ? 'var(--accent-strong)' : 'var(--text-3)',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.45 : 1,
+      transition:
+        'color var(--transition), border-color var(--transition), background var(--transition), opacity var(--transition)',
+      '&:hover': disabled
+        ? {}
+        : {
+            background: active ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+            borderColor: active ? 'var(--accent-ring)' : 'var(--border-hover)',
+            color: active ? 'var(--accent-strong)' : 'var(--text-1)',
+          },
+      '&:focus-visible': {
+        outline: '2px solid var(--accent-ring)',
+        outlineOffset: '2px',
+      },
+      ...sxOverride,
     }}
   >
     {children}

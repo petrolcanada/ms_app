@@ -10,7 +10,7 @@ const { AppError } = require('./errorHandler');
  */
 const validatePagination = (req, res, next) => {
   const { page, limit } = req.query;
-  
+
   // Validate page parameter
   if (page !== undefined) {
     const pageNum = parseInt(page);
@@ -20,7 +20,7 @@ const validatePagination = (req, res, next) => {
       return next(error);
     }
   }
-  
+
   // Validate limit parameter
   if (limit !== undefined) {
     const limitNum = parseInt(limit);
@@ -29,7 +29,7 @@ const validatePagination = (req, res, next) => {
       error.details = 'Invalid pagination parameter';
       return next(error);
     }
-    
+
     // Optional: Set maximum limit to prevent excessive data retrieval
     if (limitNum > 100) {
       const error = new AppError('Limit cannot exceed 100', 400);
@@ -37,7 +37,7 @@ const validatePagination = (req, res, next) => {
       return next(error);
     }
   }
-  
+
   next();
 };
 
@@ -46,29 +46,35 @@ const validatePagination = (req, res, next) => {
  * Ensures filter values are non-empty strings
  */
 const validateFilters = (req, res, next) => {
-  const { search, type, category } = req.query;
-  
+  const { search, type, category, assetManager } = req.query;
+
   // Validate search parameter
   if (search !== undefined && typeof search !== 'string') {
     const error = new AppError('Search must be a string', 400);
     error.details = 'Invalid filter parameter';
     return next(error);
   }
-  
+
   // Validate type parameter
   if (type !== undefined && typeof type !== 'string') {
     const error = new AppError('Type must be a string', 400);
     error.details = 'Invalid filter parameter';
     return next(error);
   }
-  
+
   // Validate category parameter
   if (category !== undefined && typeof category !== 'string') {
     const error = new AppError('Category must be a string', 400);
     error.details = 'Invalid filter parameter';
     return next(error);
   }
-  
+
+  if (assetManager !== undefined && typeof assetManager !== 'string') {
+    const error = new AppError('Asset manager must be a string', 400);
+    error.details = 'Invalid filter parameter';
+    return next(error);
+  }
+
   next();
 };
 
@@ -78,13 +84,13 @@ const validateFilters = (req, res, next) => {
  */
 const validateFundId = (req, res, next) => {
   const { id } = req.params;
-  
+
   if (!id || typeof id !== 'string' || id.trim() === '') {
     const error = new AppError('Fund ID must be a non-empty string', 400);
     error.details = 'Invalid fund ID';
     return next(error);
   }
-  
+
   next();
 };
 
@@ -94,26 +100,26 @@ const validateFundId = (req, res, next) => {
  */
 const validateFundIdsBody = (req, res, next) => {
   const { fundIds } = req.body;
-  
+
   if (!Array.isArray(fundIds) || fundIds.length === 0) {
     const error = new AppError('fundIds must be a non-empty array', 400);
     error.details = 'Invalid fundIds';
     return next(error);
   }
-  
-  const invalidId = fundIds.find(id => typeof id !== 'string' || id.trim() === '');
+
+  const invalidId = fundIds.find((id) => typeof id !== 'string' || id.trim() === '');
   if (invalidId !== undefined) {
     const error = new AppError('fundIds must contain non-empty strings', 400);
     error.details = 'Invalid fundIds';
     return next(error);
   }
-  
+
   if (fundIds.length > 100) {
     const error = new AppError('fundIds cannot exceed 100 items', 400);
     error.details = 'Invalid fundIds';
     return next(error);
   }
-  
+
   next();
 };
 
@@ -124,24 +130,24 @@ const validateFundIdsBody = (req, res, next) => {
  */
 const validateAsofDateBody = (req, res, next) => {
   const { asofDate } = req.body;
-  
+
   if (!asofDate) {
     return next();
   }
-  
+
   if (typeof asofDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(asofDate)) {
     const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
     error.details = 'Invalid asofDate';
     return next(error);
   }
-  
+
   const parsed = new Date(`${asofDate}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     const error = new AppError('asofDate must be a valid date (YYYY-MM-DD)', 400);
     error.details = 'Invalid asofDate';
     return next(error);
   }
-  
+
   const [year, month, day] = asofDate.split('-').map(Number);
   if (
     parsed.getUTCFullYear() !== year ||
@@ -152,7 +158,7 @@ const validateAsofDateBody = (req, res, next) => {
     error.details = 'Invalid asofDate';
     return next(error);
   }
-  
+
   req.asofDate = asofDate;
   next();
 };
@@ -162,13 +168,13 @@ const validateAsofDateBody = (req, res, next) => {
  */
 const validateDomainsBody = (req, res, next) => {
   const { domains } = req.body;
-  
+
   if (!Array.isArray(domains) || domains.length === 0) {
     const error = new AppError('domains must be a non-empty array', 400);
     error.details = 'Invalid domains';
     return next(error);
   }
-  
+
   const allowed = new Set([
     'basicInfo',
     'performance',
@@ -180,13 +186,16 @@ const validateDomainsBody = (req, res, next) => {
     'assets',
     'categoryPerformance',
   ]);
-  const invalid = domains.find(domain => !allowed.has(domain));
+  const invalid = domains.find((domain) => !allowed.has(domain));
   if (invalid) {
-    const error = new AppError('domains must include only basicInfo, performance, rankings, fees, ratings, risk, flows, assets, or categoryPerformance', 400);
+    const error = new AppError(
+      'domains must include only basicInfo, performance, rankings, fees, ratings, risk, flows, assets, or categoryPerformance',
+      400,
+    );
     error.details = 'Invalid domains';
     return next(error);
   }
-  
+
   next();
 };
 

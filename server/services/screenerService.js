@@ -3,12 +3,23 @@ const { queryScreener } = require('../queries/screenerQueries');
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const cache = new Map();
 
-const cacheKey = ({ search, category, type, asofDate, sortBy, sortDir, limit, offset }) =>
-  `${search || ''}|${category || ''}|${type || ''}|${asofDate || ''}|${sortBy || ''}|${sortDir || ''}|${limit}|${offset}`;
+const cacheKey = ({
+  search,
+  category,
+  assetManager,
+  type,
+  asofDate,
+  sortBy,
+  sortDir,
+  limit,
+  offset,
+}) =>
+  `${search || ''}|${category || ''}|${assetManager || ''}|${type || ''}|${asofDate || ''}|${sortBy || ''}|${sortDir || ''}|${limit}|${offset}`;
 
 const getScreenerData = async ({
   search,
   category,
+  assetManager,
   type,
   asofDate,
   sortBy,
@@ -16,7 +27,17 @@ const getScreenerData = async ({
   limit,
   offset,
 }) => {
-  const key = cacheKey({ search, category, type, asofDate, sortBy, sortDir, limit, offset });
+  const key = cacheKey({
+    search,
+    category,
+    assetManager,
+    type,
+    asofDate,
+    sortBy,
+    sortDir,
+    limit,
+    offset,
+  });
   const cached = cache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return cached.value;
@@ -25,6 +46,7 @@ const getScreenerData = async ({
   const { rows, total } = await queryScreener({
     search,
     category,
+    assetManager,
     type,
     asofDate,
     sortBy,

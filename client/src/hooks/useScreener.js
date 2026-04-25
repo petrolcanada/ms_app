@@ -13,6 +13,7 @@ import { mapScreenerRow } from '../config/screenerMetrics';
 export const useScreener = ({
   search,
   category,
+  assetManager,
   type,
   asofDate,
   sortBy,
@@ -21,11 +22,15 @@ export const useScreener = ({
   limit = 25,
 } = {}) => {
   const query = useQuery({
-    queryKey: ['screener', { search, category, type, asofDate, sortBy, sortDir, page, limit }],
+    queryKey: [
+      'screener',
+      { search, category, assetManager, type, asofDate, sortBy, sortDir, page, limit },
+    ],
     queryFn: async () => {
       const params = {};
       if (search) params.search = search;
       if (category) params.category = category;
+      if (assetManager) params.assetManager = assetManager;
       if (type) params.type = type;
       if (asofDate) params.asofDate = asofDate;
       if (sortBy) params.sortBy = sortBy;

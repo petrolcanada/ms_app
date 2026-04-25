@@ -177,6 +177,8 @@ export function mapScreenerRow(row) {
     fundname: row.fundname,
     ticker: row.ticker,
     categoryname: row.categoryname,
+    categorycode: row.categorycode,
+    brandingname: row.brandingname,
     securitytype: row.securitytype,
     metrics: row,
     performance: {

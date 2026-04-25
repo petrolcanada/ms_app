@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Popover from '@mui/material/Popover';
 import { useFundDetail } from '../hooks/useFundDetail';
 import { useDomains } from '../hooks/useDomains';
+import useFunds from '../hooks/useFunds';
+import ActionPill, { PillSeparator as Separator } from './ui/ActionPill';
 import {
   usePerformanceHistory,
   useFlowHistory,
@@ -30,6 +33,8 @@ const TABS = [
   { key: 'assets', label: 'Assets' },
   { key: 'basic', label: 'Basic Info' },
 ];
+
+const FUND_PICKER_LIMIT = 100;
 
 const FundDetail = () => {
   const { id } = useParams();
@@ -74,6 +79,21 @@ const FundDetail = () => {
   const { isWatched, toggle: toggleWatchlist } = useWatchlist(user);
 
   const fund = fundResp?.data || fundResp;
+
+  const buildFundPath = (fundId) => {
+    const params = asofDate ? `?asof=${encodeURIComponent(asofDate)}` : '';
+    return `/funds/${fundId}${params}`;
+  };
+
+  const handleFundChange = (nextFundId) => {
+    if (!nextFundId || nextFundId === id) return;
+    navigate(buildFundPath(nextFundId));
+  };
+
+  const handleOpenExplorer = () => {
+    const params = asofDate ? `?asofDate=${encodeURIComponent(asofDate)}` : '';
+    navigate(`/screener${params}`);
+  };
 
   if (fundLoading) {
     return (
@@ -125,6 +145,8 @@ const FundDetail = () => {
   const assets = domainData?.assets || {};
   const basicInfo = domainData?.basicInfo || {};
   const catPerf = domainData?.categoryPerformance || {};
+  const categoryName = fund.categoryname || fund.globalcategoryname;
+  const assetManagerName = fund.brandingname || basicInfo.brandingname;
 
   const fmt = (v, suffix = '') => {
     if (v === null || v === undefined || v === '') return '—';
@@ -273,7 +295,17 @@ const FundDetail = () => {
           >
             <FundBadge type={fund.securitytype || fund.legalstructure} />
             <Separator />
-            <span>{fund.categoryname || fund.globalcategoryname || '—'}</span>
+            <CategoryLink category={categoryName} />
+            {assetManagerName && (
+              <>
+                <Separator />
+                <AssetManagerLink assetManager={assetManagerName} />
+              </>
+            )}
+            <Separator />
+            <FundPicker currentFund={fund} asofDate={asofDate} onSelectFund={handleFundChange} />
+            <Separator />
+            <ExplorerLink onClick={handleOpenExplorer} />
             <Separator />
             <span>
               Inception:{' '}
@@ -281,7 +313,16 @@ const FundDetail = () => {
             </span>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            gap: '12px',
+            flexWrap: 'wrap',
+            maxWidth: { xs: '100%', lg: '560px' },
+          }}
+        >
           <Box
             component="button"
             aria-label={isWatched(id) ? 'Remove from watchlist' : 'Add to watchlist'}
@@ -437,6 +478,212 @@ const BackLink = ({ onClick }) => (
   </Box>
 );
 
+const getFundLabel = (fund) => {
+  const name = fund.fundname || fund._name || fund.legalname || 'Unnamed fund';
+  return fund.ticker ? `${name} (${fund.ticker})` : name;
+};
+
+const ExplorerLink = ({ onClick }) => (
+  <ActionPill tone="neutral" value="All funds" action="Explorer" onClick={onClick} />
+);
+
+const FundPicker = ({ currentFund, asofDate, onSelectFund }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const isOpen = Boolean(anchorEl);
+  const { data, isLoading, isError } = useFunds({
+    page: 1,
+    limit: FUND_PICKER_LIMIT,
+    search: debouncedSearch.trim(),
+    asofDate,
+  });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  const options = useMemo(() => {
+    const funds = data?.data || [];
+    if (!currentFund?._id) return funds;
+
+    const containsCurrentFund = funds.some((fund) => fund._id === currentFund._id);
+    return containsCurrentFund ? funds : [currentFund, ...funds];
+  }, [currentFund, data?.data]);
+
+  const handleOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSelect = (fundId) => {
+    handleClose();
+    onSelectFund(fundId);
+  };
+
+  return (
+    <>
+      <ActionPill
+        onClick={handleOpen}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        value={currentFund ? getFundLabel(currentFund) : 'Select fund'}
+        action="Switch fund"
+        chevron="down"
+      />
+
+      <Popover
+        open={isOpen}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        PaperProps={{
+          sx: {
+            mt: '8px',
+            width: { xs: 'calc(100vw - 32px)', sm: '460px' },
+            maxWidth: 'calc(100vw - 32px)',
+            border: '1px solid var(--border)',
+            borderRadius: '18px',
+            background: 'var(--glass-nav-strong)',
+            backdropFilter: 'blur(22px)',
+            WebkitBackdropFilter: 'blur(22px)',
+            boxShadow: 'var(--shadow-panel)',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Box sx={{ p: '14px', borderBottom: '1px solid var(--border)' }}>
+          <Box
+            component="input"
+            autoFocus
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search fund name, ticker, or ID"
+            sx={{
+              width: '100%',
+              minHeight: '40px',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-1)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              px: '12px',
+              outline: 'none',
+              '&:focus': {
+                borderColor: 'var(--accent)',
+                boxShadow: '0 0 0 2px var(--accent-soft)',
+              },
+              '&::placeholder': {
+                color: 'var(--text-4)',
+              },
+            }}
+          />
+          <Box sx={{ mt: '8px', fontSize: '11px', color: 'var(--text-4)' }}>
+            Search runs across the fund universe. Showing up to {FUND_PICKER_LIMIT} matches.
+          </Box>
+        </Box>
+
+        <Box sx={{ maxHeight: '360px', overflowY: 'auto', py: '6px' }}>
+          {isLoading && (
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: '10px', px: '14px', py: '18px' }}
+            >
+              <CircularProgress size={18} sx={{ color: 'var(--accent)' }} />
+              <Box sx={{ fontSize: '13px', color: 'var(--text-3)' }}>Loading funds...</Box>
+            </Box>
+          )}
+
+          {!isLoading && isError && (
+            <Box sx={{ px: '14px', py: '18px', color: 'var(--red)', fontSize: '13px' }}>
+              Failed to load fund list.
+            </Box>
+          )}
+
+          {!isLoading && !isError && options.length === 0 && (
+            <Box sx={{ px: '14px', py: '18px', color: 'var(--text-4)', fontSize: '13px' }}>
+              No funds match this search.
+            </Box>
+          )}
+
+          {!isLoading &&
+            !isError &&
+            options.map((fund) => {
+              const isCurrent = fund._id === currentFund?._id;
+
+              return (
+                <Box
+                  key={fund._id}
+                  component="button"
+                  type="button"
+                  onClick={() => handleSelect(fund._id)}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 1fr) auto',
+                    alignItems: 'center',
+                    gap: '12px',
+                    width: '100%',
+                    border: 'none',
+                    background: isCurrent ? 'var(--accent-soft)' : 'transparent',
+                    color: 'var(--text-1)',
+                    textAlign: 'left',
+                    px: '14px',
+                    py: '10px',
+                    cursor: isCurrent ? 'default' : 'pointer',
+                    transition: 'background var(--transition)',
+                    '&:hover': {
+                      background: isCurrent ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+                    },
+                  }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {fund.fundname || fund._name || fund.legalname || 'Unnamed fund'}
+                    </Box>
+                    <Box
+                      sx={{
+                        mt: '3px',
+                        fontSize: '11px',
+                        color: 'var(--text-4)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {fund.ticker || '--'}
+                      {fund.categoryname ? ` | ${fund.categoryname}` : ''}
+                    </Box>
+                  </Box>
+                  {isCurrent && (
+                    <Box sx={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-strong)' }}>
+                      Current
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+        </Box>
+      </Popover>
+    </>
+  );
+};
+
 const FundBadge = ({ type }) => {
   if (!type) return null;
   return (
@@ -458,7 +705,34 @@ const FundBadge = ({ type }) => {
   );
 };
 
-const Separator = () => <span style={{ color: 'var(--text-4)' }}>&middot;</span>;
+const CategoryLink = ({ category }) => {
+  if (!category) return <span>—</span>;
+
+  return (
+    <ActionPill
+      component={Link}
+      to={`/categories/${encodeURIComponent(category)}`}
+      aria-label={`View ${category} category overview`}
+      value={category}
+      action="View category"
+    />
+  );
+};
+
+const AssetManagerLink = ({ assetManager }) => {
+  if (!assetManager) return <span>—</span>;
+
+  return (
+    <ActionPill
+      component={Link}
+      to={`/asset-managers/${encodeURIComponent(assetManager)}`}
+      aria-label={`View ${assetManager} asset manager overview`}
+      tone="emerald"
+      value={assetManager}
+      action="View manager"
+    />
+  );
+};
 
 /* ── Tab panels ─────────────────────────── */
 
@@ -858,8 +1132,13 @@ const BasicInfoTab = ({ fund, basicInfo }) => {
           />
           <MetricRow label="Fund Family" value={info.providercompanyname || '—'} useBodyFont />
           <MetricRow
+            label="Asset Manager"
+            value={<AssetManagerLink assetManager={info.brandingname} />}
+            useBodyFont
+          />
+          <MetricRow
             label="Morningstar Category"
-            value={info.categoryname || info.globalcategoryname || '—'}
+            value={<CategoryLink category={info.categoryname || info.globalcategoryname} />}
             useBodyFont
           />
           <MetricRow

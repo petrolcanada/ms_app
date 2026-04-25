@@ -44,12 +44,13 @@ test('resets error state on Try Again click', () => {
   );
   expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByText('Try Again'));
-
   rerender(
     <ErrorBoundary>
       <GoodChild />
     </ErrorBoundary>,
   );
+
+  fireEvent.click(screen.getByText('Try Again'));
+
   expect(screen.getByText('All good')).toBeInTheDocument();
 });

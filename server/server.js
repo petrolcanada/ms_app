@@ -86,6 +86,7 @@ app.get('/ready', async (req, res) => {
 // ---------------------------------------------------------------------------
 const fundsRouter = require('./routes/funds');
 const categoriesRouter = require('./routes/categories');
+const assetManagersRouter = require('./routes/assetManagers');
 const dashboardRouter = require('./routes/dashboard');
 const publicRouter = require('./routes/public');
 const authRouter = require('./routes/auth');
@@ -98,6 +99,7 @@ app.use('/api/auth', authLimiter);
 
 app.use('/api/funds', fundsRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/asset-managers', assetManagersRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);

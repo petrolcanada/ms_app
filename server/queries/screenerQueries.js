@@ -13,6 +13,7 @@ const SORTABLE_COLUMNS = Object.fromEntries(ALL_SCREENER_SORT_KEYS.map((k) => [k
 const queryScreener = async ({
   search,
   category,
+  assetManager,
   type,
   asofDate,
   sortBy,
@@ -27,6 +28,11 @@ const queryScreener = async ({
   if (category) {
     args.push(`p_category := $${idx}`);
     params.push(category);
+    idx++;
+  }
+  if (assetManager) {
+    args.push(`p_asset_manager := $${idx}`);
+    params.push(assetManager);
     idx++;
   }
   if (type) {

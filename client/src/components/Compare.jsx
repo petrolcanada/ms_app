@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -9,6 +9,7 @@ import StarRating from './StarRating';
 import AsOfDateSelector from './AsOfDateSelector';
 import UpgradePrompt from './UpgradePrompt';
 import { useAuth } from '../context/AuthContext';
+import useCompareList from '../hooks/useCompareList';
 
 const PRO_MAX_FUNDS = 4;
 const FREE_MAX_FUNDS = 2;
@@ -30,11 +31,22 @@ const Compare = () => {
   const { user } = useAuth();
   const MAX_FUNDS = user?.plan === 'pro' ? PRO_MAX_FUNDS : FREE_MAX_FUNDS;
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialIds = searchParams.get('ids')?.split(',').filter(Boolean) || [];
+  const initialIds = useMemo(
+    () => searchParams.get('ids')?.split(',').filter(Boolean) || [],
+    [searchParams],
+  );
 
-  const [fundIds, setFundIds] = useState(initialIds);
+  const {
+    ids: fundIds,
+    add: addCompareFund,
+    remove: removeCompareFund,
+  } = useCompareList(MAX_FUNDS, initialIds);
   const [asofDate, setAsofDate] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+
+  useEffect(() => {
+    setSearchParams(fundIds.length ? { ids: fundIds.join(',') } : {}, { replace: true });
+  }, [fundIds, setSearchParams]);
 
   const handleSearch = useCallback(async (term) => {
     if (!term || term.length < 2) {
@@ -51,27 +63,14 @@ const Compare = () => {
 
   const addFund = useCallback(
     (fund) => {
-      setFundIds((prev) => {
-        if (prev.includes(fund._id) || prev.length >= MAX_FUNDS) return prev;
-        const next = [...prev, fund._id];
-        setSearchParams({ ids: next.join(',') }, { replace: true });
-        return next;
-      });
-      setSearchResults([]);
+      if (addCompareFund(fund._id)) {
+        setSearchResults([]);
+      }
     },
-    [setSearchParams, MAX_FUNDS],
+    [addCompareFund],
   );
 
-  const removeFund = useCallback(
-    (id) => {
-      setFundIds((prev) => {
-        const next = prev.filter((fid) => fid !== id);
-        setSearchParams(next.length ? { ids: next.join(',') } : {}, { replace: true });
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
+  const removeFund = useCallback((id) => removeCompareFund(id), [removeCompareFund]);
 
   const { data: domainsData, isLoading } = useQuery({
     queryKey: ['compare-domains', fundIds, asofDate],

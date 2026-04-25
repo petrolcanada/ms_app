@@ -9,17 +9,21 @@
 -- =====================================================
 
 DROP FUNCTION IF EXISTS ms.fn_get_screener_at_date(TEXT, TEXT, DATE);
+DROP FUNCTION IF EXISTS ms.fn_get_screener_at_date(TEXT, TEXT, DATE, TEXT);
 
 CREATE OR REPLACE FUNCTION ms.fn_get_screener_at_date(
     p_category TEXT DEFAULT NULL,
     p_type     TEXT DEFAULT NULL,
-    p_asof_date DATE DEFAULT NULL
+    p_asof_date DATE DEFAULT NULL,
+    p_asset_manager TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     _id            TEXT,
     fundname       TEXT,
     ticker         TEXT,
     categoryname   TEXT,
+    brandingname   TEXT,
+    categorycode   TEXT,
     securitytype   TEXT,
     return1mth     NUMERIC,
     return2mth     NUMERIC,
@@ -185,6 +189,8 @@ BEGIN
             bf.fundname,
             bf.ticker,
             bf.categoryname,
+            bf.brandingname,
+            bf.categorycode,
             bf.securitytype,
             perf.return1mth::NUMERIC,
             perf.return2mth::NUMERIC,
@@ -348,6 +354,7 @@ BEGIN
         LEFT JOIN ms.fund_level_net_assets_ca_openend assets
             ON assets._id = bf._id AND assets.monthenddate = v_asof_date::TEXT
         WHERE (p_category IS NULL OR bf.categoryname = p_category)
+          AND (p_asset_manager IS NULL OR bf.brandingname = p_asset_manager)
           AND (p_type IS NULL OR bf.securitytype = p_type);
     ELSE
         RETURN QUERY
@@ -356,6 +363,8 @@ BEGIN
             bf.fundname,
             bf.ticker,
             bf.categoryname,
+            bf.brandingname,
+            bf.categorycode,
             CASE bf.securitytype
                 WHEN 'FO' THEN 'Mutual Fund'
                 WHEN 'FE' THEN 'ETF'
@@ -524,6 +533,7 @@ BEGIN
             ON assets._id = bf._id AND assets.monthenddate = v_asof_date::TEXT
         WHERE bf.monthenddate = v_asof_date::TEXT
           AND (p_category IS NULL OR bf.categoryname = p_category)
+          AND (p_asset_manager IS NULL OR bf.brandingname = p_asset_manager)
           AND (p_type IS NULL OR
                CASE bf.securitytype
                    WHEN 'FO' THEN 'Mutual Fund'

@@ -10,6 +10,7 @@ const getScreener = async (req, res, next) => {
   try {
     const search = req.query.search || '';
     const category = req.query.category || '';
+    const assetManager = req.query.assetManager || '';
     const type = req.query.type || '';
     const asofDate = req.asofDate || req.query.asofDate || '';
 
@@ -35,6 +36,7 @@ const getScreener = async (req, res, next) => {
     const result = await getScreenerData({
       search: search || undefined,
       category: category || undefined,
+      assetManager: assetManager || undefined,
       type: type || undefined,
       asofDate: asofDate || undefined,
       sortBy,

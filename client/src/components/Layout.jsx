@@ -5,10 +5,29 @@ import { useAuth } from '../context/AuthContext';
 import { usePageView } from '../hooks/useAnalytics';
 
 const NAV_LINKS = [
-  { to: '/dashboard', label: 'Dashboard', end: true },
-  { to: '/screener', label: 'Screener' },
-  { to: '/compare', label: 'Compare' },
-  { to: '/watchlist', label: 'Watchlist' },
+  {
+    to: '/dashboard',
+    label: 'Dashboard',
+    isActive: ({ pathname }) => pathname === '/dashboard',
+  },
+  {
+    to: '/categories',
+    label: 'Categories',
+    isActive: ({ pathname }) => pathname.startsWith('/categories'),
+  },
+  {
+    to: '/funds',
+    label: 'Funds',
+    isActive: ({ pathname }) => pathname.startsWith('/funds'),
+  },
+  {
+    to: '/asset-managers',
+    label: 'Managers',
+    isActive: ({ pathname }) => pathname.startsWith('/asset-managers'),
+  },
+  { to: '/screener', label: 'Screener', isActive: ({ pathname }) => pathname === '/screener' },
+  { to: '/compare', label: 'Compare', isActive: ({ pathname }) => pathname === '/compare' },
+  { to: '/watchlist', label: 'Watchlist', isActive: ({ pathname }) => pathname === '/watchlist' },
 ];
 
 const navLinkStyle = ({ isActive }) => ({
@@ -251,8 +270,7 @@ const Layout = ({ themeMode, onToggleTheme }) => {
                 <NavLink
                   key={link.to}
                   to={link.to}
-                  end={link.end || undefined}
-                  style={navLinkStyle}
+                  style={() => navLinkStyle({ isActive: link.isActive(location) })}
                 >
                   {link.label}
                 </NavLink>
@@ -384,8 +402,7 @@ const Layout = ({ themeMode, onToggleTheme }) => {
                 <NavLink
                   key={link.to}
                   to={link.to}
-                  end={link.end || undefined}
-                  style={mobileNavLinkStyle}
+                  style={() => mobileNavLinkStyle({ isActive: link.isActive(location) })}
                 >
                   {link.label}
                 </NavLink>

@@ -18,7 +18,10 @@ import Dashboard from './components/Dashboard';
 import FundDetail from './components/FundDetail';
 import Screener from './components/Screener';
 import Compare from './components/Compare';
+import CategoryOverall from './components/CategoryOverall';
 import CategoryOverview from './components/CategoryOverview';
+import FundOverall from './components/FundOverall';
+import AssetManagerOverview from './components/AssetManagerOverview';
 import Watchlist from './components/Watchlist';
 import Settings from './components/Settings';
 import Pricing from './components/Pricing';
@@ -106,10 +109,14 @@ function App() {
                     >
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/explorer" element={<Navigate to="/screener" replace />} />
+                      <Route path="/funds" element={<FundOverall />} />
                       <Route path="/funds/:id" element={<FundDetail />} />
                       <Route path="/screener" element={<Screener />} />
                       <Route path="/compare" element={<Compare />} />
+                      <Route path="/categories" element={<CategoryOverall />} />
                       <Route path="/categories/:name" element={<CategoryOverview />} />
+                      <Route path="/asset-managers" element={<AssetManagerOverview />} />
+                      <Route path="/asset-managers/:name" element={<AssetManagerOverview />} />
                       <Route path="/watchlist" element={<Watchlist />} />
                       <Route path="/settings" element={<Settings />} />
                     </Route>

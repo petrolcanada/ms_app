@@ -147,6 +147,15 @@ export const dashboardService = {
   },
 };
 
+export const assetManagerService = {
+  getAssetManagers: () => {
+    return api.get('/api/asset-managers');
+  },
+  getAssetManagerOverview: (assetManager, params = {}) => {
+    return api.get(`/api/asset-managers/${encodeURIComponent(assetManager)}/overview`, { params });
+  },
+};
+
 export const publicApiService = {
   getDashboard: () => {
     return api.get('/api/public/dashboard');

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Popover from '@mui/material/Popover';
 import {
   CartesianGrid,
   Cell,
@@ -22,6 +23,7 @@ import { designTokens } from '../design/tokens';
 import { axisStyle, chartGridStyle } from './charts/rechartsTheme';
 import useCategories from '../hooks/useCategories';
 import useCategoryConstituents from '../hooks/useCategoryConstituents';
+import ActionPill, { PillSeparator as Separator } from './ui/ActionPill';
 
 const PANEL_SX = {
   ...designTokens.card.panel,
@@ -55,26 +57,6 @@ const AUM_BUCKETS = [
 
 const RATING_BUCKETS = ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star', 'Unrated'];
 const EMPTY_FUNDS = [];
-
-const selectStyle = {
-  background: 'var(--bg-surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius)',
-  color: 'var(--text-2)',
-  fontFamily: 'var(--font-body)',
-  fontSize: '13px',
-  padding: '10px 16px',
-  cursor: 'pointer',
-  outline: 'none',
-  transition: 'all 180ms ease',
-  appearance: 'none',
-  WebkitAppearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 12px center',
-  paddingRight: '32px',
-  whiteSpace: 'nowrap',
-};
 
 const formatDateLabel = (iso) => {
   if (!iso) return '--';
@@ -814,48 +796,20 @@ const CategoryOverview = () => {
 
             <Box
               sx={{
-                display: 'grid',
-                gap: '6px',
-                maxWidth: '320px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '12px',
                 mb: '18px',
               }}
             >
-              <Box
-                sx={{
-                  fontSize: '11px',
-                  color: 'var(--text-4)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  fontWeight: 700,
-                }}
-              >
-                Switch category
-              </Box>
-              <Box
-                component="select"
-                aria-label="Switch category"
-                value={category}
-                onChange={(e) => handleCategorySwitch(e.target.value)}
-                sx={{
-                  ...selectStyle,
-                  minHeight: '42px',
-                  '&:hover': {
-                    borderColor: 'var(--border-hover)',
-                    background: 'var(--bg-surface-hover)',
-                    color: 'var(--text-1)',
-                  },
-                  '&:focus': {
-                    borderColor: 'var(--accent)',
-                    boxShadow: '0 0 0 2px var(--accent-soft)',
-                  },
-                }}
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Box>
+              <CategoryPicker
+                currentCategory={category}
+                categories={categoryOptions}
+                onSelectCategory={handleCategorySwitch}
+              />
+              <Separator />
+              <ExplorerLink category={category} onClick={handleOpenScreener} />
             </Box>
 
             <Box
@@ -884,42 +838,6 @@ const CategoryOverview = () => {
                 label="4-5 star share"
                 value={formatPercent(analytics.highlyRatedShare, { digits: 0 })}
               />
-            </Box>
-
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '20px' }}>
-              <Box
-                component="button"
-                onClick={handleOpenScreener}
-                sx={{
-                  px: '16px',
-                  py: '10px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
-                  color: '#fff',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 18px 34px rgba(111, 76, 245, 0.24)',
-                }}
-              >
-                View Funds In Screener
-              </Box>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  px: '14px',
-                  py: '10px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1px solid var(--border)',
-                  background: 'rgba(255,255,255,0.03)',
-                  color: 'var(--text-3)',
-                  fontSize: '12px',
-                }}
-              >
-                Drill into the full fund list with the same category and date context.
-              </Box>
             </Box>
 
             {limited && (
@@ -1200,6 +1118,165 @@ const InsightPill = ({ label, value }) => (
     <Box sx={{ color: 'var(--text-1)', fontFamily: 'var(--font-mono)' }}>{value}</Box>
   </Box>
 );
+
+const ExplorerLink = ({ category, onClick }) => (
+  <ActionPill
+    tone="neutral"
+    value={category || 'Category funds'}
+    action="Explore funds"
+    onClick={onClick}
+  />
+);
+
+const CategoryPicker = ({ currentCategory, categories, onSelectCategory }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [search, setSearch] = useState('');
+  const isOpen = Boolean(anchorEl);
+  const options = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    const categorySet = new Set((categories || []).filter(Boolean));
+    if (currentCategory) categorySet.add(currentCategory);
+
+    const sorted = [...categorySet].sort((left, right) => left.localeCompare(right));
+    if (!normalizedSearch) return sorted;
+
+    return sorted.filter((category) => category.toLowerCase().includes(normalizedSearch));
+  }, [categories, currentCategory, search]);
+
+  const handleOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSelect = (category) => {
+    handleClose();
+    onSelectCategory(category);
+  };
+
+  return (
+    <>
+      <ActionPill
+        onClick={handleOpen}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        value={currentCategory || 'Select category'}
+        action="Switch category"
+        chevron="down"
+      />
+
+      <Popover
+        open={isOpen}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        PaperProps={{
+          sx: {
+            mt: '8px',
+            width: { xs: 'calc(100vw - 32px)', sm: '420px' },
+            maxWidth: 'calc(100vw - 32px)',
+            border: '1px solid var(--border)',
+            borderRadius: '18px',
+            background: 'var(--glass-nav-strong)',
+            backdropFilter: 'blur(22px)',
+            WebkitBackdropFilter: 'blur(22px)',
+            boxShadow: 'var(--shadow-panel)',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Box sx={{ p: '14px', borderBottom: '1px solid var(--border)' }}>
+          <Box
+            component="input"
+            autoFocus
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search category"
+            sx={{
+              width: '100%',
+              minHeight: '40px',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-1)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              px: '12px',
+              outline: 'none',
+              '&:focus': {
+                borderColor: 'var(--accent)',
+                boxShadow: '0 0 0 2px var(--accent-soft)',
+              },
+              '&::placeholder': {
+                color: 'var(--text-4)',
+              },
+            }}
+          />
+        </Box>
+
+        <Box sx={{ maxHeight: '340px', overflowY: 'auto', py: '6px' }}>
+          {options.length === 0 && (
+            <Box sx={{ px: '14px', py: '18px', color: 'var(--text-4)', fontSize: '13px' }}>
+              No categories match this search.
+            </Box>
+          )}
+
+          {options.map((category) => {
+            const isCurrent = category === currentCategory;
+
+            return (
+              <Box
+                key={category}
+                component="button"
+                type="button"
+                onClick={() => handleSelect(category)}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  border: 'none',
+                  background: isCurrent ? 'var(--accent-soft)' : 'transparent',
+                  color: 'var(--text-1)',
+                  textAlign: 'left',
+                  px: '14px',
+                  py: '11px',
+                  cursor: isCurrent ? 'default' : 'pointer',
+                  transition: 'background var(--transition)',
+                  '&:hover': {
+                    background: isCurrent ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {category}
+                </Box>
+                {isCurrent && (
+                  <Box sx={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-strong)' }}>
+                    Current
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      </Popover>
+    </>
+  );
+};
 
 const SnapshotStat = ({ label, value, detail }) => (
   <Box
