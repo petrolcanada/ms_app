@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Popover from '@mui/material/Popover';
 import AsOfDateSelector from './AsOfDateSelector';
 import SEO from './SEO';
-import StatCard from './StatCard';
+import KpiCard from './KpiCard';
 import { designTokens } from '../design/tokens';
 import useAssetManagers from '../hooks/useAssetManagers';
 import useAssetManagerOverview from '../hooks/useAssetManagerOverview';
@@ -14,6 +14,11 @@ import HorizontalBarChartPanel from './charts/HorizontalBarChartPanel';
 
 const PANEL_SX = {
   ...designTokens.card.panel,
+  position: 'relative',
+  overflow: 'hidden',
+};
+const SURFACE_CARD_SX = {
+  ...designTokens.card.surface,
   position: 'relative',
   overflow: 'hidden',
 };
@@ -259,22 +264,15 @@ const AssetManagerOverview = () => {
 
       <Box
         sx={{
-          ...PANEL_SX,
-          mb: '24px',
-          px: { xs: '20px', md: '28px' },
-          py: { xs: '22px', md: '28px' },
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          mb: '32px',
+          gap: '24px',
+          flexWrap: 'wrap',
         }}
       >
-        <Box
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 318px' },
-            gap: '22px',
-            alignItems: 'start',
-          }}
-        >
+        <Box sx={{ minWidth: 0, flex: '1 1 620px' }}>
           <Box>
             <Box
               sx={{
@@ -335,7 +333,7 @@ const AssetManagerOverview = () => {
               relative returns, rank quality, assets, and flows.
             </Box>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mb: '20px' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               <InsightPill label="Funds" value={formatNumber(totals.fundCount)} />
               <InsightPill label="Categories" value={formatNumber(totals.categoryCount)} />
               <InsightPill
@@ -348,9 +346,39 @@ const AssetManagerOverview = () => {
               />
             </Box>
           </Box>
+        </Box>
 
-          <Box sx={{ ...PANEL_SX, p: '18px', display: 'grid', gap: '14px' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: '12px',
+            width: '100%',
+            maxWidth: { xs: '100%', lg: '360px' },
+            justifyItems: { xs: 'start', lg: 'stretch' },
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: { xs: 'flex-start', lg: 'flex-end' },
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <AsOfDateSelector value={asofDate} onChange={setAsofDate} />
+          </Box>
+
+          <Box sx={{ display: 'grid', gap: '10px', width: '100%' }}>
+            <Box
+              sx={{
+                px: '14px',
+                py: '12px',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-surface)',
+              }}
+            >
               <Box>
                 <Box
                   sx={{
@@ -367,14 +395,13 @@ const AssetManagerOverview = () => {
                   As of {formatDateLabel(resolvedDate)}
                 </Box>
               </Box>
-              <AsOfDateSelector value={asofDate} onChange={setAsofDate} compact />
             </Box>
 
             <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                gap: '12px',
+                gap: '10px',
               }}
             >
               <SnapshotStat label="Total AUM" value={formatMoney(totals.totalAum)} />
@@ -428,18 +455,18 @@ const AssetManagerOverview = () => {
               mb: '24px',
             }}
           >
-            <StatCard label="Total AUM" value={formatMoney(totals.totalAum)} />
-            <StatCard
+            <KpiCard label="Total AUM" value={formatMoney(totals.totalAum)} />
+            <KpiCard
               label="Avg 1Y Return"
               value={formatPercent(totals.avgReturn1yr, { signed: true })}
               valueColor={valueColor(totals.avgReturn1yr)}
             />
-            <StatCard
+            <KpiCard
               label="1Y vs Category"
               value={formatPercent(relativeQuality.avgExcessReturn1yr, { signed: true })}
               valueColor={valueColor(relativeQuality.avgExcessReturn1yr)}
             />
-            <StatCard label="Avg Rating" value={formatRating(totals.avgRating)} />
+            <KpiCard label="Avg Rating" value={formatRating(totals.avgRating)} />
           </Box>
 
           <Box
@@ -488,10 +515,10 @@ const AssetManagerOverview = () => {
               mb: '24px',
             }}
           >
-            <StatCard label="1M Flow" value={formatMoney(totals.flow1m, { signed: true })} />
-            <StatCard label="YTD Flow" value={formatMoney(totals.flowYtd, { signed: true })} />
-            <StatCard label="1Y Flow" value={formatMoney(totals.flow1yr, { signed: true })} />
-            <StatCard label="Median MER" value={formatPercent(totals.medianMer)} />
+            <KpiCard label="1M Flow" value={formatMoney(totals.flow1m, { signed: true })} />
+            <KpiCard label="YTD Flow" value={formatMoney(totals.flowYtd, { signed: true })} />
+            <KpiCard label="1Y Flow" value={formatMoney(totals.flow1yr, { signed: true })} />
+            <KpiCard label="Median MER" value={formatPercent(totals.medianMer)} />
           </Box>
 
           <CategoryFootprintTable categories={categories} />
@@ -586,6 +613,9 @@ const ExplorerLink = ({ assetManager, onClick }) => (
 const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [search, setSearch] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const optionRefs = useRef([]);
+  const inputRef = useRef(null);
   const isOpen = Boolean(anchorEl);
   const options = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -604,11 +634,76 @@ const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
 
   const handleClose = () => {
     setAnchorEl(null);
+    setSearch('');
+    setHighlightedIndex(-1);
   };
 
   const handleSelect = (manager) => {
     handleClose();
     onSelectManager(manager);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const currentIndex = options.findIndex((manager) => manager === currentManager);
+    setHighlightedIndex(options.length ? Math.max(currentIndex, 0) : -1);
+  }, [isOpen, options, currentManager]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select?.();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || highlightedIndex < 0) return;
+
+    optionRefs.current[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex, isOpen]);
+
+  const handleInputKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      handleClose();
+      return;
+    }
+
+    if (!options.length) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setHighlightedIndex((current) => (current + 1) % options.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setHighlightedIndex((current) => (current <= 0 ? options.length - 1 : current - 1));
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      setHighlightedIndex(0);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      setHighlightedIndex(options.length - 1);
+      return;
+    }
+
+    if (event.key === 'Enter' && highlightedIndex >= 0) {
+      event.preventDefault();
+      handleSelect(options[highlightedIndex]);
+    }
   };
 
   return (
@@ -646,9 +741,10 @@ const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
         <Box sx={{ p: '14px', borderBottom: '1px solid var(--border)' }}>
           <Box
             component="input"
-            autoFocus
+            ref={inputRef}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder="Search manager"
             sx={{
               width: '100%',
@@ -679,15 +775,20 @@ const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
             </Box>
           )}
 
-          {options.map((manager) => {
+          {options.map((manager, index) => {
             const isCurrent = manager === currentManager;
+            const isHighlighted = highlightedIndex === index;
 
             return (
               <Box
                 key={manager}
+                ref={(element) => {
+                  optionRefs.current[index] = element;
+                }}
                 component="button"
                 type="button"
                 onClick={() => handleSelect(manager)}
+                onMouseEnter={() => setHighlightedIndex(index)}
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: 'minmax(0, 1fr) auto',
@@ -695,7 +796,7 @@ const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
                   gap: '12px',
                   width: '100%',
                   border: 'none',
-                  background: isCurrent ? 'var(--accent-soft)' : 'transparent',
+                  background: isHighlighted || isCurrent ? 'var(--accent-soft)' : 'transparent',
                   color: 'var(--text-1)',
                   textAlign: 'left',
                   px: '14px',
@@ -703,7 +804,8 @@ const ManagerPicker = ({ currentManager, managers, onSelectManager }) => {
                   cursor: isCurrent ? 'default' : 'pointer',
                   transition: 'background var(--transition)',
                   '&:hover': {
-                    background: isCurrent ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
+                    background:
+                      isHighlighted || isCurrent ? 'var(--accent-soft)' : 'var(--bg-surface-hover)',
                   },
                 }}
               >
@@ -789,7 +891,7 @@ const CategoryFootprintTable = ({ categories }) => {
   };
 
   return (
-    <Box sx={{ ...PANEL_SX, p: { xs: '18px', md: '22px' }, mb: '24px' }}>
+    <Box sx={{ ...SURFACE_CARD_SX, p: { xs: '18px', md: '22px' }, mb: '24px' }}>
       <Box sx={{ mb: '16px' }}>
         <Box
           sx={{
@@ -925,7 +1027,7 @@ const TableCell = ({ children, align = 'right', color = 'var(--text-2)' }) => (
 );
 
 const LeaderCard = ({ title, subtitle, funds = [], metric, metricColor, onFundClick }) => (
-  <Box sx={{ ...PANEL_SX, p: '20px' }}>
+  <Box sx={{ ...SURFACE_CARD_SX, p: '20px' }}>
     <Box sx={{ mb: '16px' }}>
       <Box
         sx={{
@@ -949,6 +1051,7 @@ const LeaderCard = ({ title, subtitle, funds = [], metric, metricColor, onFundCl
         <Box
           key={`${fund._id}-${index}`}
           component="button"
+          type="button"
           onClick={() => onFundClick(fund._id)}
           sx={{
             display: 'grid',
@@ -957,13 +1060,14 @@ const LeaderCard = ({ title, subtitle, funds = [], metric, metricColor, onFundCl
             gap: '10px',
             width: '100%',
             textAlign: 'left',
-            border: '1px solid var(--border)',
-            background: 'var(--bg-surface)',
-            borderRadius: '14px',
+            border: 'none',
+            background: 'transparent',
             p: '12px',
             cursor: 'pointer',
+            '& + &': {
+              borderTop: '1px solid var(--border)',
+            },
             '&:hover': {
-              borderColor: 'var(--border-hover)',
               background: 'var(--bg-surface-hover)',
             },
           }}
@@ -1006,7 +1110,7 @@ const LeaderCard = ({ title, subtitle, funds = [], metric, metricColor, onFundCl
 );
 
 const CategoryLeaderCard = ({ categories = [] }) => (
-  <Box sx={{ ...PANEL_SX, p: '20px' }}>
+  <Box sx={{ ...SURFACE_CARD_SX, p: '20px' }}>
     <Box sx={{ mb: '16px' }}>
       <Box
         sx={{
@@ -1036,10 +1140,10 @@ const CategoryLeaderCard = ({ categories = [] }) => (
             gridTemplateColumns: '28px minmax(0, 1fr) auto',
             gap: '10px',
             alignItems: 'center',
-            border: '1px solid var(--border)',
-            background: 'var(--bg-surface)',
-            borderRadius: '14px',
             p: '12px',
+            '& + &': {
+              borderTop: '1px solid var(--border)',
+            },
           }}
         >
           <Box sx={{ color: 'var(--text-4)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>

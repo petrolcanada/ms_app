@@ -1,54 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import useDashboard from '../hooks/useDashboard';
-import useAvailableDates from '../hooks/useAvailableDates';
+import AsOfDateSelector from './AsOfDateSelector';
 import SEO from './SEO';
 import OnboardingTour from './OnboardingTour';
+import KpiCard from './KpiCard';
+import useDashboard from '../hooks/useDashboard';
+import ActionPill, { PillSeparator as Separator } from './ui/ActionPill';
 import AppCard from './ui/AppCard';
+
+const EMPTY_LIST = [];
+
+const toNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const formatNumber = (value) => {
+  const numeric = toNumber(value);
+  return numeric === null ? '--' : numeric.toLocaleString();
+};
+
+const formatPercent = (value, { signed = false, digits = 2 } = {}) => {
+  const numeric = toNumber(value);
+  if (numeric === null) return '--';
+  const sign = signed && numeric > 0 ? '+' : '';
+  return `${sign}${numeric.toFixed(digits)}%`;
+};
+
+const formatMoney = (value, { signed = false } = {}) => {
+  const numeric = toNumber(value);
+  if (numeric === null) return '--';
+
+  const abs = Math.abs(numeric);
+  const sign = signed && numeric > 0 ? '+' : numeric < 0 ? '-' : '';
+
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
+};
+
+const formatRating = (value) => {
+  const numeric = toNumber(value);
+  return numeric === null ? '--' : numeric.toFixed(1);
+};
+
+const formatDateLabel = (iso) => {
+  if (!iso) return '--';
+  const date = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatFundCount = (value) => {
+  const numeric = toNumber(value);
+  if (numeric === null) return 'Fund count unavailable';
+  return `${numeric.toLocaleString()} funds`;
+};
+
+const valueColor = (value) => {
+  const numeric = toNumber(value);
+  if (numeric === null) return 'var(--text-1)';
+  return numeric >= 0 ? 'var(--emerald)' : 'var(--red)';
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { data: dates } = useAvailableDates();
-  const latestDate = dates?.[0];
-  const { data, isLoading, isError } = useDashboard();
-
-  const formatDateLabel = (iso) => {
-    if (!iso) return '--';
-    const date = new Date(`${iso}T00:00:00`);
-    return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
-
-  const formatReturn = (value) => {
-    if (value == null) return '--';
-    const number = Number(value);
-    return `${number >= 0 ? '+' : ''}${number.toFixed(2)}%`;
-  };
-
-  const formatMoney = (value) => {
-    if (value == null) return '--';
-    const number = Number(value);
-    const abs = Math.abs(number);
-    const sign = number >= 0 ? '+' : '-';
-    if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(0)}M`;
-    return `${sign}$${abs.toLocaleString()}`;
-  };
-
-  const formatAum = (value) => {
-    if (value == null) return '--';
-    const number = Math.abs(Number(value));
-    if (number >= 1e12) return `$${(number / 1e12).toFixed(1)}T`;
-    if (number >= 1e9) return `$${(number / 1e9).toFixed(1)}B`;
-    if (number >= 1e6) return `$${(number / 1e6).toFixed(0)}M`;
-    return `$${number.toLocaleString()}`;
-  };
-
-  const formatFundCount = (value) => {
-    if (value == null) return 'Pool size unavailable';
-    return `${Number(value).toLocaleString()} funds`;
-  };
+  const [asofDate, setAsofDate] = useState('');
+  const { data, isLoading, isError } = useDashboard(asofDate);
 
   if (isLoading) {
     return (
@@ -78,27 +101,33 @@ const Dashboard = () => {
     );
   }
 
-  const {
-    stats,
-    topPerformers,
-    bottomPerformers,
-    topCategories,
-    bottomCategories,
-    largestFlows,
-    largestFlowCategories,
-  } = data;
-  const categoryInflows =
-    largestFlowCategories?.filter((category) => category.direction === 'inflow') || [];
-  const categoryOutflows =
-    largestFlowCategories?.filter((category) => category.direction === 'outflow') || [];
-  const fundInflows = largestFlows?.filter((fund) => fund.direction === 'inflow') || [];
-  const fundOutflows = largestFlows?.filter((fund) => fund.direction === 'outflow') || [];
-  const asOfDate = formatDateLabel(stats?.latest_date || latestDate);
-  const topCategoriesAsOfDate = topCategories?.[0]?.dayenddate
-    ? formatDateLabel(topCategories[0].dayenddate)
-    : '';
-  const avgReturnPositive =
-    stats?.avg_return_1yr != null ? Number(stats.avg_return_1yr) >= 0 : undefined;
+  const stats = data.stats || {};
+  const topPerformers = data.topPerformers || EMPTY_LIST;
+  const bottomPerformers = data.bottomPerformers || EMPTY_LIST;
+  const topCategories = data.topCategories || EMPTY_LIST;
+  const bottomCategories = data.bottomCategories || EMPTY_LIST;
+  const largestFlows = data.largestFlows || EMPTY_LIST;
+  const largestFlowCategories = data.largestFlowCategories || EMPTY_LIST;
+
+  const categoryInflows = largestFlowCategories.filter(
+    (category) => category.direction === 'inflow',
+  );
+  const categoryOutflows = largestFlowCategories.filter(
+    (category) => category.direction === 'outflow',
+  );
+  const fundInflows = largestFlows.filter((fund) => fund.direction === 'inflow');
+  const fundOutflows = largestFlows.filter((fund) => fund.direction === 'outflow');
+
+  const topCategory = topCategories[0] || null;
+  const topFund = topPerformers[0] || null;
+  const topFlowCategory = categoryInflows[0] || null;
+  const resolvedDate = stats.latest_date || topCategory?.dayenddate || asofDate || '';
+  const hasData = Boolean(
+    toNumber(stats.total_funds) ||
+    topCategories.length ||
+    topPerformers.length ||
+    largestFlows.length,
+  );
 
   return (
     <Box>
@@ -107,40 +136,15 @@ const Dashboard = () => {
 
       <Box
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '30px',
-          border: '1px solid var(--border)',
-          background:
-            'linear-gradient(180deg, rgba(111, 76, 245, 0.12), rgba(255,255,255,0.02) 32%, rgba(255,255,255,0.02) 100%)',
-          boxShadow: 'var(--shadow-panel)',
-          p: { xs: '22px', md: '30px' },
-          mb: '26px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          mb: '32px',
+          gap: '24px',
+          flexWrap: 'wrap',
         }}
       >
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: '-40% auto auto 62%',
-            width: '260px',
-            height: '260px',
-            borderRadius: '50%',
-            background: 'rgba(111, 76, 245, 0.18)',
-            filter: 'blur(70px)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <Box
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 320px' },
-            gap: '18px',
-            alignItems: 'start',
-          }}
-        >
+        <Box sx={{ minWidth: 0, flex: '1 1 620px' }}>
           <Box>
             <Box
               sx={{
@@ -155,296 +159,438 @@ const Dashboard = () => {
                 color: 'var(--accent-strong)',
                 fontSize: '11px',
                 fontWeight: 700,
-                letterSpacing: '0.06em',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                mb: '16px',
+                mb: '14px',
               }}
             >
-              Market overview
+              Dashboard
             </Box>
 
             <Box
               component="h1"
               sx={{
                 fontFamily: 'var(--font-head)',
-                fontSize: { xs: '34px', md: '44px' },
+                fontSize: { xs: '30px', md: '42px' },
                 fontWeight: 800,
-                letterSpacing: '-0.06em',
-                lineHeight: 0.96,
-                mb: '10px',
-                maxWidth: '720px',
+                letterSpacing: '-0.05em',
+                lineHeight: 0.98,
+                mb: '14px',
+                maxWidth: '760px',
               }}
             >
-              A cleaner desk for fund intelligence.
+              Market leadership, with the same cleaner reading surface as Funds.
             </Box>
 
-            <Box sx={{ color: 'var(--text-3)', lineHeight: 1.75, maxWidth: '700px', mb: '20px' }}>
-              The dashboard now leans on Kraken-style restraint: darker analysis panels, stronger
-              hierarchy, and a light mode that stays cool instead of warm.
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '12px',
+                mb: '18px',
+              }}
+            >
+              <ActionPill
+                tone="neutral"
+                value="Dashboard"
+                action="Open screener"
+                onClick={() => navigate('/screener')}
+              />
+              <Separator />
+              <ActionPill
+                tone="accent"
+                value={topCategory?.categoryname || 'Categories'}
+                action="Top category"
+                onClick={() =>
+                  navigate(
+                    topCategory?.categoryname
+                      ? `/categories/${encodeURIComponent(topCategory.categoryname)}`
+                      : '/categories',
+                  )
+                }
+              />
+              <Separator />
+              <ActionPill
+                tone="emerald"
+                value={topFund?.ticker || 'Top fund'}
+                action="Open detail"
+                onClick={() => navigate(topFund?._id ? `/funds/${topFund._id}` : '/funds')}
+              />
+            </Box>
+
+            <Box sx={{ color: 'var(--text-3)', lineHeight: 1.75, maxWidth: '760px', mb: '20px' }}>
+              Scan category leadership, fund winners and losers, and flow pressure from one quieter
+              research surface. This follows the funds page more directly: no boxed hero, lighter
+              cards, and the emphasis stays on the rankings.
             </Box>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  px: '14px',
-                  py: '10px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1px solid var(--border)',
-                  background: 'rgba(255,255,255,0.03)',
-                  color: 'var(--text-2)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}
-              >
-                As of {asOfDate}
-              </Box>
-              <Box
-                component="button"
-                onClick={() => navigate('/screener')}
-                sx={{
-                  px: '16px',
-                  py: '10px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
-                  color: '#fff',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 18px 34px rgba(111, 76, 245, 0.24)',
-                }}
-              >
-                Open screener
-              </Box>
+              <InsightPill label="Funds tracked" value={formatNumber(stats.total_funds)} />
+              <InsightPill
+                label="Avg 1Y return"
+                value={formatPercent(stats.avg_return_1yr, { signed: true })}
+              />
+              <InsightPill label="Avg MER" value={formatPercent(stats.avg_mer)} />
+              <InsightPill label="Avg rating" value={formatRating(stats.avg_rating)} />
             </Box>
           </Box>
+        </Box>
 
+        <Box
+          sx={{
+            display: 'grid',
+            gap: '12px',
+            width: '100%',
+            maxWidth: { xs: '100%', lg: '360px' },
+            justifyItems: { xs: 'start', lg: 'stretch' },
+          }}
+        >
           <Box
             sx={{
-              p: '18px',
-              borderRadius: '24px',
-              border: '1px solid var(--border)',
-              background: 'rgba(255,255,255,0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: { xs: 'flex-start', lg: 'flex-end' },
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <AsOfDateSelector value={asofDate} onChange={setAsofDate} />
+          </Box>
+          <Box
+            sx={{
               display: 'grid',
-              gap: '14px',
+              gap: '10px',
+              width: '100%',
             }}
           >
             <Box
               sx={{
-                fontSize: '12px',
-                color: 'var(--text-4)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                px: '14px',
+                py: '12px',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-surface)',
               }}
             >
-              Desk focus
-            </Box>
-            {[
-              {
-                label: 'Funds covered',
-                value: stats?.total_funds ? Number(stats.total_funds).toLocaleString() : '--',
-              },
-              {
-                label: 'Total AUM',
-                value: formatAum(stats?.total_aum),
-              },
-              {
-                label: 'Average 1Y return',
-                value: formatReturn(stats?.avg_return_1yr),
-                positive: avgReturnPositive,
-              },
-            ].map((item) => (
-              <Box
-                key={item.label}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: '12px 14px',
-                  borderRadius: '16px',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <Box sx={{ fontSize: '12px', color: 'var(--text-3)' }}>{item.label}</Box>
+              <Box>
                 <Box
                   sx={{
-                    fontFamily: 'var(--font-head)',
-                    fontSize: '20px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.04em',
-                    color:
-                      typeof item.positive === 'boolean'
-                        ? item.positive
-                          ? 'var(--emerald)'
-                          : 'var(--red)'
-                        : 'var(--text-1)',
+                    fontSize: '11px',
+                    color: 'var(--text-4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    mb: '4px',
                   }}
                 >
-                  {item.value}
+                  Snapshot
+                </Box>
+                <Box sx={{ fontSize: '13px', color: 'var(--text-2)' }}>
+                  As of {formatDateLabel(resolvedDate)}
                 </Box>
               </Box>
-            ))}
+            </Box>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: '10px',
+              }}
+            >
+              <SnapshotStat
+                label="Total AUM"
+                value={formatMoney(stats.total_aum)}
+                detail={formatFundCount(stats.total_funds)}
+              />
+              <SnapshotStat
+                label="Top category"
+                value={topCategory?.categoryname || '--'}
+                detail={
+                  topCategory
+                    ? `${formatPercent(topCategory.return1yr, { signed: true })} 1Y return`
+                    : 'Category return unavailable'
+                }
+              />
+              <SnapshotStat
+                label="Top fund"
+                value={topFund?.ticker || topFund?.fundname || '--'}
+                detail={
+                  topFund
+                    ? `${formatPercent(topFund.return1yr, { signed: true })} | ${
+                        topFund.categoryname || 'Uncategorized'
+                      }`
+                    : 'Fund return unavailable'
+                }
+              />
+              <SnapshotStat
+                label="1M flow leader"
+                value={topFlowCategory?.categoryname || '--'}
+                detail={
+                  topFlowCategory
+                    ? `${formatMoney(topFlowCategory.flow_1m, { signed: true })} net flow`
+                    : 'Flow data unavailable'
+                }
+              />
+            </Box>
           </Box>
         </Box>
       </Box>
 
-      <DashboardGroup
-        eyebrow="Category specific"
-        title="Category leaders and laggards"
-        description="Return and flow cards grouped around category-level moves."
-      >
-        <SectionCard
-          title="Top Performers"
-          subtitle={
-            topCategoriesAsOfDate
-              ? `Category 1Y return | ${topCategoriesAsOfDate}`
-              : 'Category 1Y return'
-          }
+      {!hasData && (
+        <Box
+          sx={{
+            px: '24px',
+            py: '40px',
+            textAlign: 'center',
+            color: 'var(--text-3)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--bg-surface)',
+          }}
         >
-          {(topCategories || []).slice(0, 10).map((category, index) => (
-            <CategoryRow
-              key={`${category.categorycode || category.categoryname}-top-${index}`}
-              rank={index + 1}
-              category={category}
-              metric={formatReturn(category.return1yr)}
-              metricColor={Number(category.return1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
-              sublabel={formatFundCount(category.fund_count)}
-              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
-            />
-          ))}
-          {(!topCategories || topCategories.length === 0) && <EmptyState />}
-        </SectionCard>
+          No dashboard data is available for this date.
+        </Box>
+      )}
 
-        <SectionCard
-          title="Bottom Performers"
-          subtitle={
-            topCategoriesAsOfDate
-              ? `Category 1Y return | ${topCategoriesAsOfDate}`
-              : 'Category 1Y return'
-          }
-        >
-          {(bottomCategories || []).slice(0, 10).map((category, index) => (
-            <CategoryRow
-              key={`${category.categorycode || category.categoryname}-bottom-${index}`}
-              rank={index + 1}
-              category={category}
-              metric={formatReturn(category.return1yr)}
-              metricColor={Number(category.return1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
-              sublabel={formatFundCount(category.fund_count)}
-              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
+      {hasData && (
+        <>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+              gap: '16px',
+              mb: '24px',
+            }}
+          >
+            <KpiCard label="Total AUM" value={formatMoney(stats.total_aum)} />
+            <KpiCard
+              label="Avg 1Y Return"
+              value={formatPercent(stats.avg_return_1yr, { signed: true })}
+              valueColor={valueColor(stats.avg_return_1yr)}
             />
-          ))}
-          {(!bottomCategories || bottomCategories.length === 0) && <EmptyState />}
-        </SectionCard>
+            <KpiCard label="Avg MER" value={formatPercent(stats.avg_mer)} />
+            <KpiCard label="Avg Rating" value={formatRating(stats.avg_rating)} />
+          </Box>
 
-        <SectionCard title="Largest Inflows" subtitle="Summed 1-month category flows">
-          {categoryInflows.map((category, index) => (
-            <CategoryRow
-              key={`${category.categoryname}-inflow-${index}`}
-              rank={index + 1}
-              category={category}
-              metric={formatMoney(category.flow_1m)}
-              metricColor="var(--emerald)"
-              sublabel={formatFundCount(category.fund_count)}
-              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
-            />
-          ))}
-          {categoryInflows.length === 0 && <EmptyState />}
-        </SectionCard>
+          <SectionPanel
+            eyebrow="Category tape"
+            title="Category returns and flow pressure"
+            description="Start with the category stack before drilling into single-fund moves."
+          >
+            <RankedListCard
+              title="Top performers"
+              subtitle={`Category 1Y return${resolvedDate ? ` | ${formatDateLabel(resolvedDate)}` : ''}`}
+            >
+              {topCategories.map((category, index) => (
+                <RankedRow
+                  key={`${category.categorycode || category.categoryname}-top-${index}`}
+                  rank={index + 1}
+                  title={category.categoryname || 'Uncategorized'}
+                  subtitle={formatFundCount(category.fund_count)}
+                  metric={formatPercent(category.return1yr, { signed: true })}
+                  metricColor={valueColor(category.return1yr)}
+                  onClick={() =>
+                    navigate(`/categories/${encodeURIComponent(category.categoryname)}`)
+                  }
+                />
+              ))}
+              {topCategories.length === 0 && <EmptyState />}
+            </RankedListCard>
 
-        <SectionCard title="Largest Outflows" subtitle="Summed 1-month category flows">
-          {categoryOutflows.map((category, index) => (
-            <CategoryRow
-              key={`${category.categoryname}-outflow-${index}`}
-              rank={index + 1}
-              category={category}
-              metric={formatMoney(category.flow_1m)}
-              metricColor="var(--red)"
-              sublabel={formatFundCount(category.fund_count)}
-              onClick={() => navigate(`/categories/${encodeURIComponent(category.categoryname)}`)}
-            />
-          ))}
-          {categoryOutflows.length === 0 && <EmptyState />}
-        </SectionCard>
-      </DashboardGroup>
+            <RankedListCard
+              title="Bottom performers"
+              subtitle={`Category 1Y return${resolvedDate ? ` | ${formatDateLabel(resolvedDate)}` : ''}`}
+            >
+              {bottomCategories.map((category, index) => (
+                <RankedRow
+                  key={`${category.categorycode || category.categoryname}-bottom-${index}`}
+                  rank={index + 1}
+                  title={category.categoryname || 'Uncategorized'}
+                  subtitle={formatFundCount(category.fund_count)}
+                  metric={formatPercent(category.return1yr, { signed: true })}
+                  metricColor={valueColor(category.return1yr)}
+                  onClick={() =>
+                    navigate(`/categories/${encodeURIComponent(category.categoryname)}`)
+                  }
+                />
+              ))}
+              {bottomCategories.length === 0 && <EmptyState />}
+            </RankedListCard>
 
-      <DashboardGroup
-        eyebrow="Fund specific"
-        title="Fund winners, losers, and flow extremes"
-        description="Direct fund rankings separated from the category summaries."
-      >
-        <SectionCard title="Top Performers" subtitle="Fund 1Y return">
-          {(topPerformers || []).slice(0, 10).map((fund, index) => (
-            <FundRow
-              key={`${fund._id}-top-${index}`}
-              rank={index + 1}
-              fund={fund}
-              metric={formatReturn(fund.return1yr)}
-              metricColor={Number(fund.return1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
-              onClick={() => navigate(`/funds/${fund._id}`)}
-            />
-          ))}
-          {(!topPerformers || topPerformers.length === 0) && <EmptyState />}
-        </SectionCard>
+            <RankedListCard title="Largest inflows" subtitle="Summed 1-month category net flow">
+              {categoryInflows.map((category, index) => (
+                <RankedRow
+                  key={`${category.categoryname}-inflow-${index}`}
+                  rank={index + 1}
+                  title={category.categoryname || 'Uncategorized'}
+                  subtitle={formatFundCount(category.fund_count)}
+                  metric={formatMoney(category.flow_1m, { signed: true })}
+                  metricColor="var(--emerald)"
+                  onClick={() =>
+                    navigate(`/categories/${encodeURIComponent(category.categoryname)}`)
+                  }
+                />
+              ))}
+              {categoryInflows.length === 0 && <EmptyState />}
+            </RankedListCard>
 
-        <SectionCard title="Bottom Performers" subtitle="Fund 1Y return">
-          {(bottomPerformers || []).slice(0, 10).map((fund, index) => (
-            <FundRow
-              key={`${fund._id}-bottom-${index}`}
-              rank={index + 1}
-              fund={fund}
-              metric={formatReturn(fund.return1yr)}
-              metricColor={Number(fund.return1yr) >= 0 ? 'var(--emerald)' : 'var(--red)'}
-              onClick={() => navigate(`/funds/${fund._id}`)}
-            />
-          ))}
-          {(!bottomPerformers || bottomPerformers.length === 0) && <EmptyState />}
-        </SectionCard>
+            <RankedListCard title="Largest outflows" subtitle="Summed 1-month category net flow">
+              {categoryOutflows.map((category, index) => (
+                <RankedRow
+                  key={`${category.categoryname}-outflow-${index}`}
+                  rank={index + 1}
+                  title={category.categoryname || 'Uncategorized'}
+                  subtitle={formatFundCount(category.fund_count)}
+                  metric={formatMoney(category.flow_1m, { signed: true })}
+                  metricColor="var(--red)"
+                  onClick={() =>
+                    navigate(`/categories/${encodeURIComponent(category.categoryname)}`)
+                  }
+                />
+              ))}
+              {categoryOutflows.length === 0 && <EmptyState />}
+            </RankedListCard>
+          </SectionPanel>
 
-        <SectionCard title="Largest Inflows" subtitle="Fund 1-month net flows">
-          {fundInflows.map((fund, index) => (
-            <FundRow
-              key={`${fund._id}-inflow-${index}`}
-              rank={index + 1}
-              fund={fund}
-              metric={formatMoney(fund.flow_1m)}
-              metricColor="var(--emerald)"
-              onClick={() => navigate(`/funds/${fund._id}`)}
-            />
-          ))}
-          {fundInflows.length === 0 && <EmptyState />}
-        </SectionCard>
+          <SectionPanel
+            eyebrow="Fund tape"
+            title="Fund winners, losers, and flow extremes"
+            description="The same dashboard, but drilled down to product-level leadership and pressure."
+          >
+            <RankedListCard
+              title="Top performers"
+              subtitle={`Fund 1Y return${resolvedDate ? ` | ${formatDateLabel(resolvedDate)}` : ''}`}
+            >
+              {topPerformers.map((fund, index) => (
+                <RankedRow
+                  key={`${fund._id}-top-${index}`}
+                  rank={index + 1}
+                  title={fund.fundname || fund._id || 'Unnamed fund'}
+                  subtitle={`${fund.ticker || '--'} | ${fund.categoryname || 'Uncategorized'}`}
+                  metric={formatPercent(fund.return1yr, { signed: true })}
+                  metricColor={valueColor(fund.return1yr)}
+                  onClick={() => navigate(`/funds/${fund._id}`)}
+                />
+              ))}
+              {topPerformers.length === 0 && <EmptyState />}
+            </RankedListCard>
 
-        <SectionCard title="Largest Outflows" subtitle="Fund 1-month net flows">
-          {fundOutflows.map((fund, index) => (
-            <FundRow
-              key={`${fund._id}-outflow-${index}`}
-              rank={index + 1}
-              fund={fund}
-              metric={formatMoney(fund.flow_1m)}
-              metricColor="var(--red)"
-              onClick={() => navigate(`/funds/${fund._id}`)}
-            />
-          ))}
-          {fundOutflows.length === 0 && <EmptyState />}
-        </SectionCard>
-      </DashboardGroup>
+            <RankedListCard
+              title="Bottom performers"
+              subtitle={`Fund 1Y return${resolvedDate ? ` | ${formatDateLabel(resolvedDate)}` : ''}`}
+            >
+              {bottomPerformers.map((fund, index) => (
+                <RankedRow
+                  key={`${fund._id}-bottom-${index}`}
+                  rank={index + 1}
+                  title={fund.fundname || fund._id || 'Unnamed fund'}
+                  subtitle={`${fund.ticker || '--'} | ${fund.categoryname || 'Uncategorized'}`}
+                  metric={formatPercent(fund.return1yr, { signed: true })}
+                  metricColor={valueColor(fund.return1yr)}
+                  onClick={() => navigate(`/funds/${fund._id}`)}
+                />
+              ))}
+              {bottomPerformers.length === 0 && <EmptyState />}
+            </RankedListCard>
+
+            <RankedListCard title="Largest inflows" subtitle="Fund 1-month net flow">
+              {fundInflows.map((fund, index) => (
+                <RankedRow
+                  key={`${fund._id}-inflow-${index}`}
+                  rank={index + 1}
+                  title={fund.fundname || fund._id || 'Unnamed fund'}
+                  subtitle={`${fund.ticker || '--'} | ${fund.categoryname || 'Uncategorized'}`}
+                  metric={formatMoney(fund.flow_1m, { signed: true })}
+                  metricColor="var(--emerald)"
+                  onClick={() => navigate(`/funds/${fund._id}`)}
+                />
+              ))}
+              {fundInflows.length === 0 && <EmptyState />}
+            </RankedListCard>
+
+            <RankedListCard title="Largest outflows" subtitle="Fund 1-month net flow">
+              {fundOutflows.map((fund, index) => (
+                <RankedRow
+                  key={`${fund._id}-outflow-${index}`}
+                  rank={index + 1}
+                  title={fund.fundname || fund._id || 'Unnamed fund'}
+                  subtitle={`${fund.ticker || '--'} | ${fund.categoryname || 'Uncategorized'}`}
+                  metric={formatMoney(fund.flow_1m, { signed: true })}
+                  metricColor="var(--red)"
+                  onClick={() => navigate(`/funds/${fund._id}`)}
+                />
+              ))}
+              {fundOutflows.length === 0 && <EmptyState />}
+            </RankedListCard>
+          </SectionPanel>
+        </>
+      )}
     </Box>
   );
 };
 
-const DashboardGroup = ({ eyebrow, title, description, children }) => (
-  <AppCard
-    variant="panel"
+const InsightPill = ({ label, value }) => (
+  <Box
     sx={{
-      mb: '24px',
-      p: { xs: '18px', md: '22px' },
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      px: '12px',
+      py: '8px',
+      borderRadius: 'var(--radius-pill)',
+      border: '1px solid var(--border)',
+      background: 'rgba(255,255,255,0.03)',
+      color: 'var(--text-2)',
+      fontSize: '12px',
     }}
   >
+    <Box sx={{ color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+      {label}
+    </Box>
+    <Box sx={{ color: 'var(--text-1)', fontWeight: 700 }}>{value}</Box>
+  </Box>
+);
+
+const SnapshotStat = ({ label, value, detail }) => (
+  <Box
+    sx={{
+      p: '14px',
+      borderRadius: '18px',
+      border: '1px solid var(--border)',
+      background: 'var(--bg-surface)',
+    }}
+  >
+    <Box
+      sx={{
+        fontSize: '11px',
+        color: 'var(--text-4)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        mb: '8px',
+      }}
+    >
+      {label}
+    </Box>
+    <Box
+      sx={{
+        color: 'var(--text-1)',
+        fontSize: '15px',
+        fontWeight: 700,
+        lineHeight: 1.35,
+        mb: detail ? '6px' : 0,
+      }}
+    >
+      {value}
+    </Box>
+    {detail && (
+      <Box sx={{ color: 'var(--text-4)', fontSize: '11px', lineHeight: 1.45 }}>{detail}</Box>
+    )}
+  </Box>
+);
+
+const SectionPanel = ({ eyebrow, title, description, children }) => (
+  <Box sx={{ mb: '24px' }}>
     <Box sx={{ mb: '18px' }}>
       <Box
         sx={{
@@ -454,7 +600,7 @@ const DashboardGroup = ({ eyebrow, title, description, children }) => (
           py: '6px',
           borderRadius: 'var(--radius-pill)',
           border: '1px solid var(--border)',
-          background: 'rgba(255,255,255,0.03)',
+          background: 'transparent',
           color: 'var(--text-3)',
           fontSize: '11px',
           fontWeight: 700,
@@ -483,164 +629,115 @@ const DashboardGroup = ({ eyebrow, title, description, children }) => (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
-        gap: '20px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: '18px',
       }}
     >
       {children}
     </Box>
-  </AppCard>
-);
-
-const SectionCard = ({ title, subtitle, children }) => (
-  <AppCard
-    variant="surface"
-    sx={{
-      background: 'rgba(255,255,255,0.03)',
-      borderRadius: '26px',
-      overflow: 'hidden',
-      boxShadow: 'var(--shadow-panel)',
-    }}
-  >
-    <Box
-      sx={{
-        padding: '18px 22px',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        gap: '16px',
-      }}
-    >
-      <Box>
-        <Box
-          sx={{
-            fontFamily: 'var(--font-head)',
-            fontSize: '24px',
-            fontWeight: 800,
-            letterSpacing: '-0.04em',
-            color: 'var(--text-1)',
-          }}
-        >
-          {title}
-        </Box>
-        <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>{subtitle}</Box>
-      </Box>
-    </Box>
-    <Box sx={{ padding: '6px 0' }}>{children}</Box>
-  </AppCard>
-);
-
-const CategoryRow = ({ rank, category, metric, metricColor, sublabel, onClick }) => (
-  <Box
-    onClick={onClick}
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      padding: '12px 22px',
-      cursor: 'pointer',
-      transition: 'background var(--transition)',
-      '&:hover': { background: 'var(--bg-surface-hover)' },
-      '&:hover .category-name': { color: 'var(--accent-strong)' },
-    }}
-  >
-    <Box
-      sx={{
-        width: '28px',
-        textAlign: 'right',
-        fontFamily: 'var(--font-mono)',
-        fontSize: '12px',
-        color: 'var(--text-4)',
-        flexShrink: 0,
-      }}
-    >
-      {rank}
-    </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Box
-        className="category-name"
-        sx={{
-          fontSize: '13px',
-          fontWeight: 600,
-          color: 'var(--text-1)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          transition: 'color var(--transition)',
-        }}
-      >
-        {category.categoryname || 'Uncategorized'}
-      </Box>
-      <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>{sublabel}</Box>
-    </Box>
-    <Box
-      sx={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: '13px',
-        fontWeight: 600,
-        color: metricColor || 'var(--text-2)',
-        flexShrink: 0,
-      }}
-    >
-      {metric}
-    </Box>
   </Box>
 );
 
-const FundRow = ({ rank, fund, metric, metricColor, onClick }) => (
+const RankedListCard = ({ title, subtitle, children }) => (
+  <AppCard variant="surface" sx={{ p: 0, overflow: 'hidden' }}>
+    <Box
+      sx={{
+        px: '20px',
+        py: '18px',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      <Box
+        sx={{
+          fontFamily: 'var(--font-head)',
+          fontSize: '22px',
+          fontWeight: 800,
+          letterSpacing: '-0.04em',
+          color: 'var(--text-1)',
+          mb: '4px',
+        }}
+      >
+        {title}
+      </Box>
+      <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>{subtitle}</Box>
+    </Box>
+    <Box sx={{ display: 'grid' }}>{children}</Box>
+  </AppCard>
+);
+
+const RankedRow = ({ rank, title, subtitle, metric, metricColor, onClick }) => (
   <Box
+    component="button"
+    type="button"
     onClick={onClick}
     sx={{
-      display: 'flex',
+      display: 'grid',
+      gridTemplateColumns: '28px minmax(0, 1fr) auto',
       alignItems: 'center',
       gap: '12px',
-      padding: '12px 22px',
+      width: '100%',
+      border: 'none',
+      background: 'transparent',
+      textAlign: 'left',
+      px: '20px',
+      py: '13px',
       cursor: 'pointer',
       transition: 'background var(--transition)',
-      '&:hover': { background: 'var(--bg-surface-hover)' },
-      '&:hover .fund-name': { color: 'var(--accent-strong)' },
+      '& + &': {
+        borderTop: '1px solid var(--border)',
+      },
+      '&:hover': {
+        background: 'var(--bg-surface-hover)',
+      },
+      '&:hover .ranked-row-title': {
+        color: 'var(--accent-strong)',
+      },
     }}
   >
     <Box
       sx={{
-        width: '28px',
-        textAlign: 'right',
+        color: 'var(--text-4)',
         fontFamily: 'var(--font-mono)',
         fontSize: '12px',
-        color: 'var(--text-4)',
-        flexShrink: 0,
       }}
     >
       {rank}
     </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
+    <Box sx={{ minWidth: 0 }}>
       <Box
-        className="fund-name"
+        className="ranked-row-title"
         sx={{
-          fontSize: '13px',
-          fontWeight: 600,
           color: 'var(--text-1)',
-          whiteSpace: 'nowrap',
+          fontSize: '13px',
+          fontWeight: 650,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
           transition: 'color var(--transition)',
         }}
       >
-        {fund.fundname || fund._name || 'N/A'}
+        {title}
       </Box>
-      <Box sx={{ fontSize: '11px', color: 'var(--text-4)' }}>
-        {fund.ticker || '--'}
-        {fund.categoryname ? ` | ${fund.categoryname}` : ''}
+      <Box
+        sx={{
+          color: 'var(--text-4)',
+          fontSize: '11px',
+          mt: '3px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {subtitle}
       </Box>
     </Box>
     <Box
       sx={{
+        color: metricColor || 'var(--text-2)',
         fontFamily: 'var(--font-mono)',
         fontSize: '13px',
-        fontWeight: 600,
-        color: metricColor || 'var(--text-2)',
-        flexShrink: 0,
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
       }}
     >
       {metric}
@@ -649,7 +746,9 @@ const FundRow = ({ rank, fund, metric, metricColor, onClick }) => (
 );
 
 const EmptyState = () => (
-  <Box sx={{ padding: '28px 22px', textAlign: 'center', color: 'var(--text-4)', fontSize: '13px' }}>
+  <Box
+    sx={{ px: '20px', py: '28px', color: 'var(--text-4)', fontSize: '13px', textAlign: 'center' }}
+  >
     No data available.
   </Box>
 );

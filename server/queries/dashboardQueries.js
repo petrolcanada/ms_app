@@ -13,7 +13,7 @@ const queryDashboardStats = async (asofDate) => {
     `SELECT
        (SELECT COUNT(*) FROM ms.mv_fund_share_class_basic_info_ca_openend_latest) AS total_funds,
        (
-         SELECT ROUND(SUM(latest_assets.fundnetassets)::NUMERIC, 0)
+         SELECT ROUND(SUM(DISTINCT latest_assets.fundnetassets)::NUMERIC, 0)
          FROM (
            SELECT DISTINCT ON (a._id)
              a._id,
@@ -245,8 +245,8 @@ const queryLargestFlowCategories = async (asofDate, limit = 10) => {
        SELECT
          b.categoryname,
          COUNT(DISTINCT f._id) AS fund_count,
-         SUM(f.estfundlevelnetflow1momoend::NUMERIC) AS flow_1m,
-         SUM(f.estfundlevelnetflow1yrmoend::NUMERIC) AS flow_1yr
+         SUM(DISTINCT f.estfundlevelnetflow1momoend::NUMERIC) AS flow_1m,
+         SUM(DISTINCT f.estfundlevelnetflow1yrmoend::NUMERIC) AS flow_1yr
        FROM ms.fund_flow_details_ca_openend f
        JOIN ms.mv_fund_share_class_basic_info_ca_openend_latest b ON b._id = f._id
        WHERE f.estfundlevelnetflow1momoend IS NOT NULL

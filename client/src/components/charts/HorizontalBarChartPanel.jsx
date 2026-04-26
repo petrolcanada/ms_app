@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import { designTokens } from '../../design/tokens';
 
 const PANEL_SX = {
-  ...designTokens.card.panel,
+  ...designTokens.card.surface,
   position: 'relative',
   overflow: 'hidden',
 };
@@ -25,25 +25,6 @@ const truncateLabel = (value, maxLength) => {
 const resolveHeight = (value) => {
   if (value == null) return undefined;
   return typeof value === 'number' ? `${value}px` : value;
-};
-
-const buildGlow = (color, { subtle = false } = {}) =>
-  subtle
-    ? `inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(255,255,255,0.12)`
-    : `inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px ${
-        color === 'var(--red)' ? 'rgba(255, 98, 122, 0.32)' : color
-      }`;
-
-const buildBarGradient = (color, { diverging = false, negative = false } = {}) => {
-  const tintedEdge = `color-mix(in srgb, ${color} 52%, white)`;
-
-  if (!diverging) {
-    return `linear-gradient(90deg, ${tintedEdge}, ${color})`;
-  }
-
-  return negative
-    ? `linear-gradient(90deg, ${color}, ${tintedEdge})`
-    : `linear-gradient(90deg, ${tintedEdge}, ${color})`;
 };
 
 const HorizontalBarChartPanel = ({
@@ -109,11 +90,6 @@ const HorizontalBarChartPanel = ({
                 : 'var(--text-4)';
             const barColor =
               variant === 'diverging' && value != null && value < 0 ? negativeFill : fill;
-            const barGlow = buildGlow(barColor, { subtle: variant === 'diverging' });
-            const barBackground = buildBarGradient(barColor, {
-              diverging: variant === 'diverging',
-              negative: variant === 'diverging' && value != null && value < 0,
-            });
             const normalized =
               variant === 'diverging'
                 ? clamp((Math.abs(value ?? 0) / Math.max(maxAbsValue, 1)) * 50, 0, 50)
@@ -164,9 +140,7 @@ const HorizontalBarChartPanel = ({
                       position: 'relative',
                       height: '10px',
                       borderRadius: '999px',
-                      background:
-                        'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--bar-track)',
                       overflow: 'hidden',
                     }}
                   >
@@ -195,14 +169,13 @@ const HorizontalBarChartPanel = ({
                             ? {
                                 right: '50%',
                                 borderRadius: '999px 0 0 999px',
-                                background: barBackground,
+                                background: barColor,
                               }
                             : {
                                 left: '50%',
                                 borderRadius: '0 999px 999px 0',
-                                background: barBackground,
+                                background: barColor,
                               }),
-                          boxShadow: barGlow,
                         }}
                       />
                     ) : (
@@ -211,8 +184,7 @@ const HorizontalBarChartPanel = ({
                           height: '100%',
                           width: hasValue ? `max(${normalized}%, ${minBarWidth})` : 0,
                           borderRadius: '999px',
-                          background: barBackground,
-                          boxShadow: barGlow,
+                          background: barColor,
                         }}
                       />
                     )}

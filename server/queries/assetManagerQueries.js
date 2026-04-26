@@ -12,6 +12,9 @@ const sum = (values) =>
     return numeric === null ? total : total + numeric;
   }, 0);
 
+const sumDistinct = (values) =>
+  sum([...new Set(values.map(toNumber).filter((value) => value !== null))]);
+
 const average = (values) => {
   const numericValues = values.map(toNumber).filter((value) => value !== null);
   if (numericValues.length === 0) return null;
@@ -131,7 +134,7 @@ const topBy = (rows, selector, direction = 'desc', limit = 8) =>
 const queryAssetManagerOverview = async (assetManager, asofDate) => {
   const rows = await queryAssetManagerRows(assetManager, asofDate);
   const asof = rows[0]?.asof_date || asofDate || null;
-  const totalAum = sum(rows.map((row) => row.fundnetassets));
+  const totalAum = sumDistinct(rows.map((row) => row.fundnetassets));
   const categoryGroups = new Map();
 
   rows.forEach((row) => {
@@ -145,7 +148,7 @@ const queryAssetManagerOverview = async (assetManager, asofDate) => {
   const categories = [...categoryGroups.values()]
     .map((groupRows) => {
       const first = groupRows[0] || {};
-      const categoryAum = sum(groupRows.map((row) => row.fundnetassets));
+      const categoryAum = sumDistinct(groupRows.map((row) => row.fundnetassets));
       const topQuartileCount = groupRows.filter((row) => {
         const rank = toNumber(row.rank1yr);
         return rank !== null && rank <= 25;
@@ -177,9 +180,9 @@ const queryAssetManagerOverview = async (assetManager, asofDate) => {
         topQuartileShare: groupRows.length
           ? round((topQuartileCount / groupRows.length) * 100, 1)
           : null,
-        flow1m: round(sum(groupRows.map((row) => row.estfundlevelnetflow1momoend)), 0),
-        flowYtd: round(sum(groupRows.map((row) => row.estfundlevelnetflowytdmoend)), 0),
-        flow1yr: round(sum(groupRows.map((row) => row.estfundlevelnetflow1yrmoend)), 0),
+        flow1m: round(sumDistinct(groupRows.map((row) => row.estfundlevelnetflow1momoend)), 0),
+        flowYtd: round(sumDistinct(groupRows.map((row) => row.estfundlevelnetflowytdmoend)), 0),
+        flow1yr: round(sumDistinct(groupRows.map((row) => row.estfundlevelnetflow1yrmoend)), 0),
       };
     })
     .sort(
@@ -205,9 +208,9 @@ const queryAssetManagerOverview = async (assetManager, asofDate) => {
       avgReturn3yr: round(average(rows.map((row) => row.return3yr))),
       avgReturn5yr: round(average(rows.map((row) => row.return5yr))),
       avgRating: round(average(rows.map((row) => row.ratingoverall)), 1),
-      flow1m: round(sum(rows.map((row) => row.estfundlevelnetflow1momoend)), 0),
-      flowYtd: round(sum(rows.map((row) => row.estfundlevelnetflowytdmoend)), 0),
-      flow1yr: round(sum(rows.map((row) => row.estfundlevelnetflow1yrmoend)), 0),
+      flow1m: round(sumDistinct(rows.map((row) => row.estfundlevelnetflow1momoend)), 0),
+      flowYtd: round(sumDistinct(rows.map((row) => row.estfundlevelnetflowytdmoend)), 0),
+      flow1yr: round(sumDistinct(rows.map((row) => row.estfundlevelnetflow1yrmoend)), 0),
     },
     relativeQuality: {
       avgExcessReturn1yr: round(
