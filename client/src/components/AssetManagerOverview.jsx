@@ -3,24 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Popover from '@mui/material/Popover';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import AsOfDateSelector from './AsOfDateSelector';
 import SEO from './SEO';
 import StatCard from './StatCard';
-import { axisStyle, chartGridStyle } from './charts/rechartsTheme';
 import { designTokens } from '../design/tokens';
 import useAssetManagers from '../hooks/useAssetManagers';
 import useAssetManagerOverview from '../hooks/useAssetManagerOverview';
 import ActionPill, { PillSeparator as Separator } from './ui/ActionPill';
+import HorizontalBarChartPanel from './charts/HorizontalBarChartPanel';
 
 const PANEL_SX = {
   ...designTokens.card.panel,
@@ -100,12 +90,8 @@ const AssetManagerOverview = () => {
 
   const topCategoryChart = useMemo(
     () =>
-      categories.slice(0, 8).map((category) => ({
+      categories.slice(0, 10).map((category) => ({
         name: category.categoryname,
-        shortName:
-          category.categoryname.length > 18
-            ? `${category.categoryname.slice(0, 18)}...`
-            : category.categoryname,
         aumShare: category.aumShare,
         totalAum: category.totalAum,
       })),
@@ -120,10 +106,6 @@ const AssetManagerOverview = () => {
         .slice(0, 10)
         .map((category) => ({
           name: category.categoryname,
-          shortName:
-            category.categoryname.length > 18
-              ? `${category.categoryname.slice(0, 18)}...`
-              : category.categoryname,
           excessReturn1yr: category.excessReturn1yr,
         })),
     [categories],
@@ -398,22 +380,33 @@ const AssetManagerOverview = () => {
               mb: '24px',
             }}
           >
-            <ChartPanel
+            <HorizontalBarChartPanel
               title="Category AUM footprint"
               subtitle="Largest categories by share of manager AUM"
               data={topCategoryChart}
-              dataKey="aumShare"
-              formatter={(value) => formatPercent(value)}
+              valueKey="aumShare"
+              labelKey="name"
+              valueFormatter={(value) => formatPercent(value)}
+              detailFormatter={(item) =>
+                `${formatMoney(item.totalAum)} | ${formatPercent(item.aumShare)}`
+              }
               fill="var(--accent)"
+              maxValue={100}
+              labelMaxLength={null}
             />
-            <ChartPanel
+            <HorizontalBarChartPanel
               title="1Y category relative return"
               subtitle="Fund average return minus category average"
               data={relativeChart}
-              dataKey="excessReturn1yr"
-              formatter={(value) => formatPercent(value, { signed: true })}
+              valueKey="excessReturn1yr"
+              labelKey="name"
+              valueFormatter={(value) => formatPercent(value, { signed: true })}
+              detailFormatter={(item) => formatPercent(item.excessReturn1yr, { signed: true })}
+              detailColorFormatter={(item) => valueColor(item.excessReturn1yr)}
               fill="var(--emerald)"
-              withZeroLine
+              negativeFill="var(--red)"
+              variant="diverging"
+              labelMaxLength={null}
             />
           </Box>
 
@@ -694,56 +687,6 @@ const SnapshotStat = ({ label, value }) => (
       }}
     >
       {value}
-    </Box>
-  </Box>
-);
-
-const ChartPanel = ({ title, subtitle, data, dataKey, formatter, fill, withZeroLine = false }) => (
-  <Box sx={{ ...PANEL_SX, p: '22px', minHeight: '380px' }}>
-    <Box sx={{ mb: '16px' }}>
-      <Box
-        sx={{
-          fontFamily: 'var(--font-head)',
-          fontSize: '24px',
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: 'var(--text-1)',
-          mb: '4px',
-        }}
-      >
-        {title}
-      </Box>
-      <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>{subtitle}</Box>
-    </Box>
-    <Box sx={{ height: '290px' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 6, right: 18, left: 8, bottom: 6 }}>
-          <CartesianGrid {...chartGridStyle} horizontal={false} />
-          <XAxis type="number" tickFormatter={formatter} {...axisStyle} />
-          <YAxis
-            type="category"
-            dataKey="shortName"
-            width={126}
-            tick={{ ...axisStyle.tick, fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            formatter={(value) => formatter(value)}
-            labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
-            contentStyle={{
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              color: 'var(--text-1)',
-            }}
-          />
-          {withZeroLine && (
-            <ReferenceLine x={0} stroke="var(--border-hover)" strokeDasharray="4 4" />
-          )}
-          <Bar dataKey={dataKey} fill={fill} radius={[0, 8, 8, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
     </Box>
   </Box>
 );

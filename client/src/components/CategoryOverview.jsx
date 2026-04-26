@@ -21,6 +21,7 @@ import SEO from './SEO';
 import StatCard from './StatCard';
 import { designTokens } from '../design/tokens';
 import { axisStyle, chartGridStyle } from './charts/rechartsTheme';
+import HorizontalBarChartPanel from './charts/HorizontalBarChartPanel';
 import useCategories from '../hooks/useCategories';
 import useCategoryConstituents from '../hooks/useCategoryConstituents';
 import ActionPill, { PillSeparator as Separator } from './ui/ActionPill';
@@ -408,6 +409,10 @@ const average = (values) => {
 
 const sum = (values) => values.reduce((total, value) => total + value, 0);
 
+const sumDistinct = (values) => sum([...new Set(values)]);
+
+const getFlow1m = (fund) => fund.flows?.estfundlevelnetflow1momoend;
+
 const median = (values) => {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);
@@ -599,13 +604,13 @@ const CategoryOverview = () => {
     const return3yrValues = numericValues(funds, (fund) => fund.performance?.return3yr);
     const ratingValues = numericValues(funds, (fund) => fund.ratings?.ratingoverall);
     const aumValues = numericValues(funds, (fund) => fund.assets?.fundnetassets);
-    const flow1mValues = numericValues(funds, (fund) => fund.flows?.estfundlevelnetflow1momoend);
+    const flow1mValues = numericValues(funds, getFlow1m);
 
-    const totalAum = sum(aumValues);
+    const totalAum = sumDistinct(aumValues);
     const positiveReturnCount = return1yrValues.filter((value) => value > 0).length;
     const highlyRatedCount = ratingValues.filter((value) => value >= 4).length;
     const inflowCount = flow1mValues.filter((value) => value > 0).length;
-    const netFlow1m = sum(flow1mValues);
+    const netFlow1m = sumDistinct(flow1mValues);
 
     const topPerformers = [...funds]
       .filter((fund) => fund.performance?.return1yr != null)
@@ -624,8 +629,23 @@ const CategoryOverview = () => {
       .sort((left, right) => Number(right.assets.fundnetassets) - Number(left.assets.fundnetassets))
       .slice(0, 6);
 
+    const flowFunds = funds.filter((fund) => {
+      const flow = Number(getFlow1m(fund));
+      return Number.isFinite(flow);
+    });
+
+    const largestInflows = flowFunds
+      .filter((fund) => Number(getFlow1m(fund)) > 0)
+      .sort((left, right) => Number(getFlow1m(right)) - Number(getFlow1m(left)))
+      .slice(0, 6);
+
+    const largestOutflows = flowFunds
+      .filter((fund) => Number(getFlow1m(fund)) < 0)
+      .sort((left, right) => Number(getFlow1m(left)) - Number(getFlow1m(right)))
+      .slice(0, 6);
+
     const top10AumShare = share(
-      sum(
+      sumDistinct(
         [...funds]
           .filter((fund) => fund.assets?.fundnetassets != null)
           .sort(
@@ -674,6 +694,8 @@ const CategoryOverview = () => {
       topPerformers,
       lowestMer,
       largestFunds,
+      largestInflows,
+      largestOutflows,
       scatterData,
       standoutScatterFunds,
       dominantMerBand,
@@ -682,6 +704,7 @@ const CategoryOverview = () => {
       merSample: merValues.length,
       ratingSample: ratingValues.length,
       aumSample: aumValues.length,
+      flowSample: flow1mValues.length,
     };
   }, [funds]);
 
@@ -1002,6 +1025,21 @@ const CategoryOverview = () => {
             />
             <StatCard label="Median MER" value={formatPercent(analytics.medianMer)} />
             <StatCard label="Avg Rating" value={formatRating(analytics.avgRating)} />
+            <StatCard
+              label="1M Net Flow"
+              value={formatMoneyCompact(analytics.netFlow1m, { signed: true })}
+              valueColor={
+                analytics.netFlow1m == null
+                  ? undefined
+                  : analytics.netFlow1m >= 0
+                    ? 'var(--emerald)'
+                    : 'var(--red)'
+              }
+            />
+            <StatCard
+              label="Inflow Share"
+              value={formatPercent(analytics.inflowShare, { digits: 0 })}
+            />
           </Box>
 
           <Box
@@ -1012,17 +1050,31 @@ const CategoryOverview = () => {
               mb: '24px',
             }}
           >
-            <DistributionCard
+            <HorizontalBarChartPanel
               title="MER distribution"
               subtitle={formatBucketSample(analytics.merSample, 'MER')}
-              items={analytics.feeDistribution.buckets}
-              accent="var(--accent)"
+              data={analytics.feeDistribution.buckets}
+              valueKey="share"
+              labelKey="label"
+              valueFormatter={(value) => formatPercent(value, { digits: 0 })}
+              detailFormatter={(item) =>
+                `${formatNumber(item.count)} | ${formatPercent(item.share, { digits: 0 })}`
+              }
+              fill="var(--accent)"
+              maxValue={100}
             />
-            <DistributionCard
+            <HorizontalBarChartPanel
               title="1Y return distribution"
               subtitle={formatBucketSample(analytics.returnSample, 'return')}
-              items={analytics.returnDistribution.buckets}
-              accent="var(--emerald)"
+              data={analytics.returnDistribution.buckets}
+              valueKey="share"
+              labelKey="label"
+              valueFormatter={(value) => formatPercent(value, { digits: 0 })}
+              detailFormatter={(item) =>
+                `${formatNumber(item.count)} | ${formatPercent(item.share, { digits: 0 })}`
+              }
+              fill="var(--emerald)"
+              maxValue={100}
             />
           </Box>
 
@@ -1041,17 +1093,35 @@ const CategoryOverview = () => {
               standoutFunds={analytics.standoutScatterFunds}
             />
             <Box sx={{ display: 'grid', gap: '20px' }}>
-              <DistributionCard
+              <HorizontalBarChartPanel
                 title="Rating mix"
                 subtitle={`${formatNumber(totalFunds)} funds in category`}
-                items={analytics.ratingDistribution.buckets}
-                accent="var(--amber)"
+                data={analytics.ratingDistribution.buckets}
+                valueKey="share"
+                labelKey="label"
+                valueFormatter={(value) => formatPercent(value, { digits: 0 })}
+                detailFormatter={(item) =>
+                  `${formatNumber(item.count)} | ${formatPercent(item.share, { digits: 0 })}`
+                }
+                fill="var(--amber)"
+                minHeight="unset"
+                chartHeight={230}
+                maxValue={100}
               />
-              <DistributionCard
+              <HorizontalBarChartPanel
                 title="AUM size buckets"
                 subtitle={formatBucketSample(analytics.aumSample, 'AUM')}
-                items={analytics.aumDistribution.buckets}
-                accent="var(--blue)"
+                data={analytics.aumDistribution.buckets}
+                valueKey="share"
+                labelKey="label"
+                valueFormatter={(value) => formatPercent(value, { digits: 0 })}
+                detailFormatter={(item) =>
+                  `${formatNumber(item.count)} | ${formatPercent(item.share, { digits: 0 })}`
+                }
+                fill="var(--blue)"
+                minHeight="unset"
+                chartHeight={230}
+                maxValue={100}
               />
             </Box>
           </Box>
@@ -1063,6 +1133,22 @@ const CategoryOverview = () => {
               gap: '20px',
             }}
           >
+            <RankedFundsCard
+              title="Largest inflows"
+              subtitle={`${formatBucketSample(analytics.flowSample, 'flow')} | highest 1-month net flow`}
+              funds={analytics.largestInflows}
+              metric={(fund) => formatMoneyCompact(getFlow1m(fund), { signed: true })}
+              metricColor={() => 'var(--emerald)'}
+              onFundClick={(id) => navigate(`/funds/${id}`)}
+            />
+            <RankedFundsCard
+              title="Largest outflows"
+              subtitle={`${formatBucketSample(analytics.flowSample, 'flow')} | lowest 1-month net flow`}
+              funds={analytics.largestOutflows}
+              metric={(fund) => formatMoneyCompact(getFlow1m(fund), { signed: true })}
+              metricColor={() => 'var(--red)'}
+              onFundClick={(id) => navigate(`/funds/${id}`)}
+            />
             <RankedFundsCard
               title="Best 1Y performers"
               subtitle="Highest trailing 1-year return"
@@ -1306,72 +1392,6 @@ const SnapshotStat = ({ label, value, detail }) => (
       {value}
     </Box>
     <Box sx={{ fontSize: '11px', color: 'var(--text-4)', lineHeight: 1.5 }}>{detail}</Box>
-  </Box>
-);
-
-const DistributionCard = ({ title, subtitle, items, accent }) => (
-  <Box sx={{ ...PANEL_SX, p: '22px' }}>
-    <Box sx={{ mb: '18px' }}>
-      <Box
-        sx={{
-          fontFamily: 'var(--font-head)',
-          fontSize: '24px',
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: 'var(--text-1)',
-          mb: '4px',
-        }}
-      >
-        {title}
-      </Box>
-      <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>{subtitle}</Box>
-    </Box>
-
-    <Box sx={{ display: 'grid', gap: '12px' }}>
-      {items.map((item) => (
-        <Box key={item.label}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              mb: '6px',
-            }}
-          >
-            <Box sx={{ fontSize: '13px', color: 'var(--text-2)', fontWeight: 600 }}>
-              {item.label}
-            </Box>
-            <Box sx={{ fontSize: '12px', color: 'var(--text-4)', fontFamily: 'var(--font-mono)' }}>
-              {formatNumber(item.count)} | {formatPercent(item.share, { digits: 0 })}
-            </Box>
-          </Box>
-          <Box sx={{ py: '2px' }}>
-            <Box
-              sx={{
-                height: '10px',
-                borderRadius: '999px',
-                background:
-                  'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
-                border: '1px solid rgba(255,255,255,0.06)',
-                overflow: 'hidden',
-              }}
-            >
-              <Box
-                sx={{
-                  height: '100%',
-                  width: `${item.share}%`,
-                  minWidth: item.count > 0 ? '10px' : 0,
-                  borderRadius: '999px',
-                  background: `linear-gradient(90deg, rgba(255,255,255,0.22), ${accent})`,
-                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px ${accent}`,
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-      ))}
-    </Box>
   </Box>
 );
 

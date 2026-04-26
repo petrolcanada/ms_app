@@ -8,6 +8,12 @@ import useAssetManagerOverview from '../hooks/useAssetManagerOverview';
 jest.mock('../hooks/useAssetManagers', () => jest.fn());
 jest.mock('../hooks/useAssetManagerOverview', () => jest.fn());
 jest.mock('./SEO', () => () => null);
+jest.mock('./charts/HorizontalBarChartPanel', () => ({ title, subtitle }) => (
+  <div>
+    <span>{title}</span>
+    <span>{subtitle}</span>
+  </div>
+));
 jest.mock('./AsOfDateSelector', () => ({ value, onChange }) => (
   <select aria-label="As of" value={value} onChange={(event) => onChange(event.target.value)}>
     <option value="">Latest</option>
@@ -20,16 +26,6 @@ jest.mock('./StatCard', () => ({ label, value }) => (
     <span>{value}</span>
   </div>
 ));
-jest.mock('recharts', () => ({
-  Bar: () => null,
-  BarChart: ({ children }) => <div>{children}</div>,
-  CartesianGrid: () => null,
-  ReferenceLine: () => null,
-  ResponsiveContainer: ({ children }) => <div>{children}</div>,
-  Tooltip: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-}));
 
 const renderPage = () =>
   render(
