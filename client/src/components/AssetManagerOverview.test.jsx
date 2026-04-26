@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AssetManagerOverview from './AssetManagerOverview';
 import useAssetManagers from '../hooks/useAssetManagers';
@@ -124,4 +124,81 @@ test('renders overview metrics and category footprint', () => {
   expect(screen.getAllByText('Canadian Equity')[0]).toBeInTheDocument();
   expect(screen.getByText('RBC Canadian Equity Fund')).toBeInTheDocument();
   expect(screen.getAllByText('+1.2%')[0]).toBeInTheDocument();
+});
+
+test('sorts the category footprint table when a header is clicked', () => {
+  useAssetManagerOverview.mockReturnValue({
+    isLoading: false,
+    isError: false,
+    data: {
+      assetManager: 'RBC Global Asset Management',
+      asofDate: '2026-03-31',
+      totals: {
+        fundCount: 3,
+        categoryCount: 2,
+        totalAum: 2000000000,
+        avgReturn1yr: 7.8,
+        avgRating: 4.0,
+        medianMer: 0.72,
+        flow1m: 1200000,
+        flowYtd: 2400000,
+        flow1yr: 9000000,
+      },
+      relativeQuality: {
+        avgExcessReturn1yr: 1.6,
+        avgRank1yr: 21,
+        topQuartileCount: 2,
+        topQuartileShare: 67,
+      },
+      categories: [
+        {
+          categorycode: 'CAEQ',
+          categoryname: 'Canadian Equity',
+          fundCount: 2,
+          totalAum: 1500000000,
+          aumShare: 75,
+          excessReturn1yr: 1.2,
+          avgRank1yr: 22,
+          topQuartileCount: 1,
+          flow1m: 1000000,
+        },
+        {
+          categorycode: 'GLEQ',
+          categoryname: 'Global Equity',
+          fundCount: 1,
+          totalAum: 500000000,
+          aumShare: 25,
+          excessReturn1yr: 2.4,
+          avgRank1yr: 14,
+          topQuartileCount: 1,
+          flow1m: 200000,
+        },
+      ],
+      leaders: {
+        bestOutperformers: [],
+        bestRanked: [],
+        largestFunds: [],
+        largestInflows: [],
+        largestOutflows: [],
+        strongestCategories: [],
+      },
+    },
+  });
+
+  renderPage();
+
+  const getCategoryRows = () => screen.getAllByRole('row').slice(1, 3);
+
+  expect(within(getCategoryRows()[0]).getByText('Canadian Equity')).toBeInTheDocument();
+  expect(within(getCategoryRows()[1]).getByText('Global Equity')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: '1Y vs Cat' }));
+
+  expect(within(getCategoryRows()[0]).getByText('Global Equity')).toBeInTheDocument();
+  expect(within(getCategoryRows()[1]).getByText('Canadian Equity')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: '1Y vs Cat' }));
+
+  expect(within(getCategoryRows()[0]).getByText('Canadian Equity')).toBeInTheDocument();
+  expect(within(getCategoryRows()[1]).getByText('Global Equity')).toBeInTheDocument();
 });

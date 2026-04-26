@@ -1378,6 +1378,7 @@ const MerCell = ({ mer }) => {
   const tier = getMerTier(mer);
   const barWidth = mer != null ? Math.min((Number(mer) / 3) * 100, 100) : 0;
   const barColor = tier ? MER_COLORS[tier] : 'var(--text-3)';
+  const barGradient = `linear-gradient(90deg, color-mix(in srgb, ${barColor} 52%, white), ${barColor})`;
   const isLow = tier === 'low';
   const isExtreme = tier === 'extreme';
 
@@ -1414,7 +1415,7 @@ const MerCell = ({ mer }) => {
               height: '100%',
               width: `${barWidth}%`,
               borderRadius: '2px',
-              background: `linear-gradient(90deg, rgba(255,255,255,0.22), ${barColor})`,
+              background: barGradient,
             }}
           />
         </Box>

@@ -107,7 +107,7 @@ const FlowBarShape = ({ x, y, width, height, value, fill, index }) => {
           x2="0"
           y2={isPositive ? '0' : '1'}
         >
-          <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+          <stop offset="0%" stopColor={fill} stopOpacity="0.52" />
           <stop offset="100%" stopColor={fill} />
         </linearGradient>
       </defs>

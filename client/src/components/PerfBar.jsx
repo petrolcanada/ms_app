@@ -1,9 +1,15 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 
+const buildBarGradient = (color) => {
+  const tintedEdge = `color-mix(in srgb, ${color} 52%, white)`;
+  return `linear-gradient(90deg, ${tintedEdge}, ${color})`;
+};
+
 const PerfBar = ({ label, value, percentage, labelWidth = '60px' }) => {
   const isPositive = percentage >= 0;
   const barWidth = Math.min(Math.abs(percentage), 100);
+  const barColor = isPositive ? 'var(--emerald)' : 'var(--red)';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', mb: '12px' }}>
@@ -34,9 +40,7 @@ const PerfBar = ({ label, value, percentage, labelWidth = '60px' }) => {
               width: `${barWidth}%`,
               minWidth: barWidth > 0 ? '10px' : 0,
               borderRadius: '999px',
-              background: isPositive
-                ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.28), var(--emerald))'
-                : 'linear-gradient(90deg, rgba(239, 68, 68, 0.28), var(--red))',
+              background: buildBarGradient(barColor),
               boxShadow: isPositive
                 ? 'inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px rgba(16, 185, 129, 0.32)'
                 : 'inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px rgba(239, 68, 68, 0.28)',

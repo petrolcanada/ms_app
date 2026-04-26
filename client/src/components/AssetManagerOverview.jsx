@@ -19,6 +19,61 @@ const PANEL_SX = {
 };
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
+const CATEGORY_FOOTPRINT_COLUMNS = [
+  {
+    key: 'categoryname',
+    label: 'Category',
+    align: 'left',
+    defaultDirection: 'asc',
+    getValue: (category) => category.categoryname,
+  },
+  {
+    key: 'fundCount',
+    label: 'Funds',
+    defaultDirection: 'desc',
+    getValue: (category) => category.fundCount,
+  },
+  {
+    key: 'totalAum',
+    label: 'AUM',
+    defaultDirection: 'desc',
+    getValue: (category) => category.totalAum,
+  },
+  {
+    key: 'aumShare',
+    label: 'AUM Share',
+    defaultDirection: 'desc',
+    getValue: (category) => category.aumShare,
+  },
+  {
+    key: 'excessReturn1yr',
+    label: '1Y vs Cat',
+    defaultDirection: 'desc',
+    getValue: (category) => category.excessReturn1yr,
+  },
+  {
+    key: 'avgRank1yr',
+    label: 'Avg Rank',
+    defaultDirection: 'asc',
+    getValue: (category) => category.avgRank1yr,
+  },
+  {
+    key: 'topQuartileCount',
+    label: 'Q1 Funds',
+    defaultDirection: 'desc',
+    getValue: (category) => category.topQuartileCount,
+  },
+  {
+    key: 'flow1m',
+    label: '1M Flow',
+    defaultDirection: 'desc',
+    getValue: (category) => category.flow1m,
+  },
+];
+const DEFAULT_CATEGORY_FOOTPRINT_SORT = {
+  key: 'totalAum',
+  direction: 'desc',
+};
 
 const toNumber = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -60,6 +115,21 @@ const formatDateLabel = (iso) => {
   const date = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const compareValues = (leftValue, rightValue) => {
+  const leftNumber = toNumber(leftValue);
+  const rightNumber = toNumber(rightValue);
+
+  if (leftNumber !== null && rightNumber !== null) {
+    return leftNumber - rightNumber;
+  }
+
+  if (leftValue == null && rightValue == null) return 0;
+  if (leftValue == null) return 1;
+  if (rightValue == null) return -1;
+
+  return String(leftValue).localeCompare(String(rightValue), undefined, { sensitivity: 'base' });
 };
 
 const valueColor = (value) => {
@@ -691,80 +761,149 @@ const SnapshotStat = ({ label, value }) => (
   </Box>
 );
 
-const CategoryFootprintTable = ({ categories }) => (
-  <Box sx={{ ...PANEL_SX, p: { xs: '18px', md: '22px' }, mb: '24px' }}>
-    <Box sx={{ mb: '16px' }}>
-      <Box
-        sx={{
-          fontFamily: 'var(--font-head)',
-          fontSize: '24px',
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: 'var(--text-1)',
-          mb: '4px',
-        }}
-      >
-        Category footprint
+const CategoryFootprintTable = ({ categories }) => {
+  const [sortConfig, setSortConfig] = useState(DEFAULT_CATEGORY_FOOTPRINT_SORT);
+
+  const sortedCategories = useMemo(() => {
+    const activeColumn =
+      CATEGORY_FOOTPRINT_COLUMNS.find((column) => column.key === sortConfig.key) ||
+      CATEGORY_FOOTPRINT_COLUMNS[0];
+
+    return [...categories].sort((left, right) => {
+      const directionMultiplier = sortConfig.direction === 'asc' ? 1 : -1;
+      const result =
+        compareValues(activeColumn.getValue(left), activeColumn.getValue(right)) *
+        directionMultiplier;
+
+      if (result !== 0) return result;
+      return compareValues(left.categoryname, right.categoryname);
+    });
+  }, [categories, sortConfig]);
+
+  const handleSort = (key, defaultDirection) => {
+    setSortConfig((current) =>
+      current.key === key
+        ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: defaultDirection },
+    );
+  };
+
+  return (
+    <Box sx={{ ...PANEL_SX, p: { xs: '18px', md: '22px' }, mb: '24px' }}>
+      <Box sx={{ mb: '16px' }}>
+        <Box
+          sx={{
+            fontFamily: 'var(--font-head)',
+            fontSize: '24px',
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
+            color: 'var(--text-1)',
+            mb: '4px',
+          }}
+        >
+          Category footprint
+        </Box>
+        <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
+          Where this manager competes, and how those products compare with category averages.
+        </Box>
       </Box>
-      <Box sx={{ fontSize: '12px', color: 'var(--text-4)' }}>
-        Where this manager competes, and how those products compare with category averages.
-      </Box>
-    </Box>
-    <Box sx={{ overflowX: 'auto' }}>
-      <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '920px' }}>
-        <Box component="thead">
-          <Box component="tr">
-            {[
-              'Category',
-              'Funds',
-              'AUM',
-              'AUM Share',
-              '1Y vs Cat',
-              'Avg Rank',
-              'Q1 Funds',
-              '1M Flow',
-            ].map((header) => (
-              <Box
-                key={header}
-                component="th"
-                sx={{
-                  textAlign: header === 'Category' ? 'left' : 'right',
-                  color: 'var(--text-4)',
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  fontWeight: 700,
-                  py: '10px',
-                  borderBottom: '1px solid var(--border)',
-                }}
-              >
-                {header}
+      <Box sx={{ overflowX: 'auto' }}>
+        <Box
+          component="table"
+          sx={{ width: '100%', borderCollapse: 'collapse', minWidth: '920px' }}
+        >
+          <Box component="thead">
+            <Box component="tr">
+              {CATEGORY_FOOTPRINT_COLUMNS.map((column) => {
+                const isActive = sortConfig.key === column.key;
+                const sortIndicator = isActive
+                  ? sortConfig.direction === 'asc'
+                    ? ' ↑'
+                    : ' ↓'
+                  : '';
+
+                return (
+                  <Box
+                    key={column.key}
+                    component="th"
+                    aria-sort={
+                      isActive
+                        ? sortConfig.direction === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                    }
+                    sx={{
+                      textAlign: column.align === 'left' ? 'left' : 'right',
+                      color: 'var(--text-4)',
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      fontWeight: 700,
+                      py: '10px',
+                      borderBottom: '1px solid var(--border)',
+                    }}
+                  >
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() => handleSort(column.key, column.defaultDirection)}
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: column.align === 'left' ? 'flex-start' : 'flex-end',
+                        gap: '4px',
+                        width: '100%',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'inherit',
+                        font: 'inherit',
+                        letterSpacing: 'inherit',
+                        textTransform: 'inherit',
+                        cursor: 'pointer',
+                        p: 0,
+                      }}
+                    >
+                      <Box component="span">{column.label}</Box>
+                      <Box
+                        component="span"
+                        aria-hidden="true"
+                        sx={{
+                          minWidth: '12px',
+                          color: isActive ? 'var(--text-2)' : 'var(--text-4)',
+                        }}
+                      >
+                        {sortIndicator || ' '}
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+          <Box component="tbody">
+            {sortedCategories.map((category) => (
+              <Box component="tr" key={category.categorycode || category.categoryname}>
+                <TableCell align="left">{category.categoryname}</TableCell>
+                <TableCell>{formatNumber(category.fundCount)}</TableCell>
+                <TableCell>{formatMoney(category.totalAum)}</TableCell>
+                <TableCell>{formatPercent(category.aumShare)}</TableCell>
+                <TableCell color={valueColor(category.excessReturn1yr)}>
+                  {formatPercent(category.excessReturn1yr, { signed: true })}
+                </TableCell>
+                <TableCell>{formatPercent(category.avgRank1yr)}</TableCell>
+                <TableCell>{formatNumber(category.topQuartileCount)}</TableCell>
+                <TableCell color={valueColor(category.flow1m)}>
+                  {formatMoney(category.flow1m, { signed: true })}
+                </TableCell>
               </Box>
             ))}
           </Box>
         </Box>
-        <Box component="tbody">
-          {categories.map((category) => (
-            <Box component="tr" key={category.categorycode || category.categoryname}>
-              <TableCell align="left">{category.categoryname}</TableCell>
-              <TableCell>{formatNumber(category.fundCount)}</TableCell>
-              <TableCell>{formatMoney(category.totalAum)}</TableCell>
-              <TableCell>{formatPercent(category.aumShare)}</TableCell>
-              <TableCell color={valueColor(category.excessReturn1yr)}>
-                {formatPercent(category.excessReturn1yr, { signed: true })}
-              </TableCell>
-              <TableCell>{formatPercent(category.avgRank1yr)}</TableCell>
-              <TableCell>{formatNumber(category.topQuartileCount)}</TableCell>
-              <TableCell color={valueColor(category.flow1m)}>
-                {formatMoney(category.flow1m, { signed: true })}
-              </TableCell>
-            </Box>
-          ))}
-        </Box>
       </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 const TableCell = ({ children, align = 'right', color = 'var(--text-2)' }) => (
   <Box
